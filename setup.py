@@ -20,7 +20,6 @@ setup(
     long_description_content_type="text/markdown",
     packages=["aioairzone"],
     python_requires=">=3.8",
-    install_requires=["websockets>=9.1"],
     include_package_data=True,
     zip_safe=False,
     classifiers=[
