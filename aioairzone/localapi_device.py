@@ -55,6 +55,7 @@ from .const import (
     AZD_MODES,
     AZD_NAME,
     AZD_ON,
+    AZD_SYSTEM,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
     AZD_TEMP,
@@ -85,7 +86,7 @@ class AirzoneLocalApi:
         self.options: ConnectionOptions = options
         self.connect_task = None
         self.connect_result = None
-        self.systems: dict[int, Zone] = {}
+        self.systems: dict[int, System] = {}
         self._loop = asyncio.get_running_loop()
 
     @property
@@ -158,9 +159,13 @@ class AirzoneLocalApi:
 
         if self.systems:
             systems = {}
-            for id, system in self.systems.items():
-                systems[id] = system.data()
+            zones = {}
+            for system_id, system in self.systems.items():
+                systems[system_id] = system.data()
+                for zone_id, zone in system.zones.items():
+                    zones[f"{system_id}:{zone_id}"] = zone.data()
             data[AZD_SYSTEMS] = systems
+            data[AZD_ZONES] = zones
 
         return data
 
@@ -269,7 +274,7 @@ class System:
 class Zone:
     """Airzone Zone."""
 
-    def __init__(self, system, zone):
+    def __init__(self, system: System, zone):
         """Zone init."""
         self.air_demand = bool(zone[API_AIR_DEMAND])
         self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
@@ -334,6 +339,7 @@ class Zone:
             AZD_MODE: self.get_mode(),
             AZD_NAME: self.get_name(),
             AZD_ON: self.get_on(),
+            AZD_SYSTEM: self.get_system_id(),
             AZD_TEMP: self.get_temp(),
             AZD_TEMP_MAX: self.get_temp_max(),
             AZD_TEMP_MIN: self.get_temp_min(),
@@ -406,6 +412,9 @@ class Zone:
     def get_on(self) -> bool:
         """Return zone on/off."""
         return self.on
+
+    def get_system_id(self) -> int:
+        return self.system.get_id()
 
     def get_temp(self) -> float:
         """Return zone temperature."""
