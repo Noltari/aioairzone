@@ -399,13 +399,13 @@ class Zone:
         """Return zone modes."""
         return self.modes
 
-    def get_on(self) -> bool:
-        """Return zone on/off."""
-        return self.on
-
     def get_name(self) -> str:
         """Return zone name."""
         return self.name
+
+    def get_on(self) -> bool:
+        """Return zone on/off."""
+        return self.on
 
     def get_temp(self) -> float:
         """Return zone temperature."""
