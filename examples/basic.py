@@ -3,6 +3,7 @@ import asyncio
 
 import aiohttp
 import json
+import time
 
 from aiohttp.client_exceptions import ClientConnectorError
 
@@ -19,6 +20,11 @@ async def main():
         client = AirzoneLocalApi(aiohttp_session, options)
         try:
             await client.validate_airzone()
+            await client.update_airzone()
+            print(json.dumps(client.data(), indent=4, sort_keys=True))
+
+            await client.put_hvac(1, 3, "mode", 1)
+            time.sleep(3)
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))
         except (ClientConnectorError, InvalidHost):

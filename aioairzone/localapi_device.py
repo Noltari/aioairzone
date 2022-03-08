@@ -23,6 +23,9 @@ from .const import (
     API_COLD_STAGES,
     API_COOL_SET_POINT,
     API_DATA,
+    API_ERROR_SYSTEM_ID_OUT_RANGE,
+    API_ERROR_ZONE_ID_NOT_AVAILABLE,
+    API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_FLOOR_DEMAND,
     API_HEAT_STAGE,
@@ -68,7 +71,14 @@ from .const import (
     AZD_ZONES_NUM,
     HTTP_CALL_TIMEOUT,
 )
-from .exceptions import InvalidHost, InvalidSystem, InvalidZone
+from .exceptions import (
+    APIError,
+    InvalidHost,
+    InvalidParam,
+    InvalidSystem,
+    InvalidZone,
+    ParamUpdateFailure,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -138,16 +148,59 @@ class AirzoneLocalApi:
         else:
             return False
 
-    async def get_hvac(self) -> dict[str, Any]:
+    async def get_hvac(self, system_id: int = 0, zone_id: int = 0) -> dict[str, Any]:
         """Return Airzone HVAC."""
         res = await self.http_request(
             "POST",
             f"{API_V1}/{API_HVAC}",
             {
-                API_SYSTEM_ID: 0,
-                API_ZONE_ID: 0,
+                API_SYSTEM_ID: system_id,
+                API_ZONE_ID: zone_id,
             },
         )
+        return res
+
+    async def put_hvac(
+        self, system_id: int, zone_id: int, key: str, value: Any
+    ) -> dict[str, Any]:
+        """Return Airzone HVAC."""
+        res = await self.http_request(
+            "PUT",
+            f"{API_V1}/{API_HVAC}",
+            {
+                API_SYSTEM_ID: system_id,
+                API_ZONE_ID: zone_id,
+                key: value,
+            },
+        )
+
+        if API_DATA not in res:
+            if API_ERRORS in res:
+                for error in res[API_ERRORS]:
+                    if error == API_ERROR_SYSTEM_ID_OUT_RANGE:
+                        raise InvalidSystem
+                    elif error == API_ERROR_ZONE_ID_OUT_RANGE:
+                        raise InvalidZone
+                    elif error == API_ERROR_ZONE_ID_NOT_AVAILABLE:
+                        raise InvalidZone
+                    else:
+                        _LOGGER.error('HVAC PUT error: "%s"', error)
+            raise APIError
+        else:
+            data: dict = res[API_DATA][0]
+
+            if system_id != data.get(API_SYSTEM_ID):
+                raise InvalidSystem
+
+            if zone_id != data.get(API_ZONE_ID):
+                raise InvalidSystem
+
+            if key not in data:
+                raise InvalidParam
+
+            if value != data[key]:
+                raise ParamUpdateFailure
+
         return res
 
     def data(self) -> dict[str, Any]:
@@ -282,6 +335,7 @@ class Zone:
         self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
         self.humidity = int(zone[API_HUMIDITY])
         self.id = int(zone[API_ZONE_ID])
+        self.master = None
         self.mode = OperationMode(zone[API_MODE])
         self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
@@ -414,6 +468,7 @@ class Zone:
         return self.on
 
     def get_system_id(self) -> int:
+        """Return system ID."""
         return self.system.get_id()
 
     def get_temp(self) -> float:

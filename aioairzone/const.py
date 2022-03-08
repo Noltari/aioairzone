@@ -26,6 +26,10 @@ API_UNITS = "units"
 API_V1 = "api/v1"
 API_ZONE_ID = "zoneID"
 
+API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
+API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"
+API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
+
 AZD_AIR_DEMAND = "air_demand"
 AZD_COLD_STAGE = "cold_stage"
 AZD_COLD_STAGES = "cold_stages"
