@@ -7,7 +7,7 @@ class AirzoneError(Exception):
 
 
 class InvalidHost(AirzoneError):
-    """Exception raised when invalid system is requested."""
+    """Exception raised when invalid host is requested."""
 
 
 class InvalidSystem(AirzoneError):
