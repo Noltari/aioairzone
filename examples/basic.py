@@ -1,13 +1,13 @@
 """Basic Airzone client example."""
 import asyncio
-
-import aiohttp
 import json
 import time
 
+import aiohttp
 from aiohttp.client_exceptions import ClientConnectorError
 
 from aioairzone.common import ConnectionOptions
+from aioairzone.const import API_MODE, API_SYSTEM_ID, API_ZONE_ID
 from aioairzone.exceptions import InvalidHost
 from aioairzone.localapi_device import AirzoneLocalApi
 
@@ -23,7 +23,13 @@ async def main():
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))
 
-            await client.put_hvac(1, 3, "mode", 1)
+            await client.put_hvac(
+                {
+                    API_SYSTEM_ID: 1,
+                    API_ZONE_ID: 3,
+                    API_MODE: 1,
+                }
+            )
             time.sleep(3)
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))

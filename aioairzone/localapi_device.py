@@ -148,30 +148,23 @@ class AirzoneLocalApi:
         else:
             return False
 
-    async def get_hvac(self, system_id: int = 0, zone_id: int = 0) -> dict[str, Any]:
+    async def get_hvac(
+        self, params: dict[str, Any] = {API_SYSTEM_ID: 0, API_ZONE_ID: 0}
+    ) -> dict[str, Any]:
         """Return Airzone HVAC."""
         res = await self.http_request(
             "POST",
             f"{API_V1}/{API_HVAC}",
-            {
-                API_SYSTEM_ID: system_id,
-                API_ZONE_ID: zone_id,
-            },
+            params,
         )
         return res
 
-    async def put_hvac(
-        self, system_id: int, zone_id: int, key: str, value: Any
-    ) -> dict[str, Any]:
+    async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any]:
         """Return Airzone HVAC."""
         res = await self.http_request(
             "PUT",
             f"{API_V1}/{API_HVAC}",
-            {
-                API_SYSTEM_ID: system_id,
-                API_ZONE_ID: zone_id,
-                key: value,
-            },
+            params,
         )
 
         if API_DATA not in res:
@@ -189,17 +182,16 @@ class AirzoneLocalApi:
         else:
             data: dict = res[API_DATA][0]
 
-            if system_id != data.get(API_SYSTEM_ID):
-                raise InvalidSystem
-
-            if zone_id != data.get(API_ZONE_ID):
-                raise InvalidSystem
-
-            if key not in data:
-                raise InvalidParam
-
-            if value != data[key]:
-                raise ParamUpdateFailure
+            for key, value in params.items():
+                if key not in data or data[key] != value:
+                    if key == API_SYSTEM_ID:
+                        raise InvalidSystem
+                    elif key == API_ZONE_ID:
+                        raise InvalidZone
+                    elif key not in data:
+                        raise InvalidParam
+                    else:
+                        raise ParamUpdateFailure
 
         return res
 
