@@ -22,6 +22,7 @@ async def main():
             await client.validate_airzone()
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))
+            print("***")
 
             await client.put_hvac(
                 {
@@ -30,6 +31,9 @@ async def main():
                     API_MODE: 1,
                 }
             )
+            print(json.dumps(client.data(), indent=4, sort_keys=True))
+            print("***")
+
             time.sleep(3)
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))

@@ -30,6 +30,15 @@ API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
 API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"
 API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
 
+API_SYSTEM_PARAMS = [API_MODE]
+API_ZONE_PARAMS = [
+    API_COLD_STAGE,
+    API_HEAT_STAGE,
+    API_NAME,
+    API_ON,
+    API_SET_POINT,
+]
+
 AZD_AIR_DEMAND = "air_demand"
 AZD_COLD_STAGE = "cold_stage"
 AZD_COLD_STAGES = "cold_stages"

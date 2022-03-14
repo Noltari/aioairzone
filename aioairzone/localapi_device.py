@@ -41,10 +41,12 @@ from .const import (
     API_ROOM_TEMP,
     API_SET_POINT,
     API_SYSTEM_ID,
+    API_SYSTEM_PARAMS,
     API_SYSTEMS,
     API_UNITS,
     API_V1,
     API_ZONE_ID,
+    API_ZONE_PARAMS,
     AZD_AIR_DEMAND,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
@@ -184,13 +186,21 @@ class AirzoneLocalApi:
         data: dict = res[API_DATA][0]
         for key, value in params.items():
             if key not in data or data[key] != value:
-                if key == API_SYSTEM_ID:
+                if key == API_SYSTEM_ID and value != 0:
                     raise InvalidSystem
-                if key == API_ZONE_ID:
+                if key == API_ZONE_ID and value != 0:
                     raise InvalidZone
                 if key not in data:
                     raise InvalidParam
                 raise ParamUpdateFailure
+
+        system: System = self.get_system(data[API_SYSTEM_ID])
+        zone: Zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
+        for key, value in data.items():
+            if key in API_SYSTEM_PARAMS:
+                system.set_param(key, value)
+            elif key in API_ZONE_PARAMS:
+                zone.set_param(key, value)
 
         return res
 
@@ -313,6 +323,11 @@ class System:
     def num_zones(self) -> int:
         """Return number of system zones."""
         return len(self.zones)
+
+    def set_param(self, key: str, value: Any) -> None:
+        """Update zones parameters by key and value."""
+        for zone in self.zones.values():
+            zone.set_param(key, value)
 
 
 class Zone:
@@ -495,3 +510,18 @@ class Zone:
     def is_master(self) -> bool:
         """Zone is master if mode can be changed."""
         return self.modes is not None
+
+    def set_param(self, key: str, value: Any) -> None:
+        """Update zone parameter by key and value."""
+        if key == API_COLD_STAGE:
+            self.cold_stage = value
+        elif key == API_HEAT_STAGE:
+            self.heat_stage = value
+        elif key == API_MODE:
+            self.mode = value
+        elif key == API_NAME:
+            self.name = value
+        elif key == API_ON:
+            self.on = value
+        elif key == API_SET_POINT:
+            self.temp_set = value
