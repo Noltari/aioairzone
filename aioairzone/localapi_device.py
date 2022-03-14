@@ -59,6 +59,7 @@ from .const import (
     AZD_MODES,
     AZD_NAME,
     AZD_ON,
+    AZD_PROBLEMS,
     AZD_SYSTEM,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
@@ -384,6 +385,7 @@ class Zone:
             AZD_MODE: self.get_mode(),
             AZD_NAME: self.get_name(),
             AZD_ON: self.get_on(),
+            AZD_PROBLEMS: self.get_problems(),
             AZD_SYSTEM: self.get_system_id(),
             AZD_TEMP: self.get_temp(),
             AZD_TEMP_MAX: self.get_temp_max(),
@@ -461,6 +463,10 @@ class Zone:
     def get_on(self) -> bool:
         """Return zone on/off."""
         return self.on
+
+    def get_problems(self) -> bool:
+        """Return zone problems."""
+        return bool(self.errors)
 
     def get_system_id(self) -> int:
         """Return system ID."""
