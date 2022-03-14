@@ -48,6 +48,7 @@ from .const import (
     AZD_AIR_DEMAND,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
+    AZD_DEMAND,
     AZD_ERRORS,
     AZD_FLOOR_DEMAND,
     AZD_HEAT_STAGE,
@@ -375,6 +376,7 @@ class Zone:
         data = {
             AZD_AIR_DEMAND: self.get_air_demand(),
             AZD_COLD_STAGE: self.get_cold_stage(),
+            AZD_DEMAND: self.get_demand(),
             AZD_FLOOR_DEMAND: self.get_floor_demand(),
             AZD_HEAT_STAGE: self.get_heat_stage(),
             AZD_HUMIDITY: self.get_humidity(),
@@ -415,6 +417,10 @@ class Zone:
     def get_cold_stages(self) -> list[AirzoneStages]:
         """Return zone cold stages."""
         return self.cold_stages
+
+    def get_demand(self) -> bool:
+        """Return zone demand."""
+        return self.get_air_demand() or self.get_floor_demand()
 
     def get_errors(self) -> list:
         """Return zone errors."""
