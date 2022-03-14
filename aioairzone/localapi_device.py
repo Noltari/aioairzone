@@ -143,15 +143,15 @@ class AirzoneLocalApi:
 
         self.systems = systems
 
-        if systems:
-            return True
-        else:
-            return False
+        return bool(systems)
 
-    async def get_hvac(
-        self, params: dict[str, Any] = {API_SYSTEM_ID: 0, API_ZONE_ID: 0}
-    ) -> dict[str, Any]:
+    async def get_hvac(self, params: dict[str, Any] = None) -> dict[str, Any]:
         """Return Airzone HVAC."""
+        if not params:
+            params = {
+                API_SYSTEM_ID: 0,
+                API_ZONE_ID: 0,
+            }
         res = await self.http_request(
             "POST",
             f"{API_V1}/{API_HVAC}",
@@ -172,39 +172,36 @@ class AirzoneLocalApi:
                 for error in res[API_ERRORS]:
                     if error == API_ERROR_SYSTEM_ID_OUT_RANGE:
                         raise InvalidSystem
-                    elif error == API_ERROR_ZONE_ID_OUT_RANGE:
+                    if error == API_ERROR_ZONE_ID_OUT_RANGE:
                         raise InvalidZone
-                    elif error == API_ERROR_ZONE_ID_NOT_AVAILABLE:
+                    if error == API_ERROR_ZONE_ID_NOT_AVAILABLE:
                         raise InvalidZone
-                    else:
-                        _LOGGER.error('HVAC PUT error: "%s"', error)
+                    _LOGGER.error('HVAC PUT error: "%s"', error)
             raise APIError
-        else:
-            data: dict = res[API_DATA][0]
 
-            for key, value in params.items():
-                if key not in data or data[key] != value:
-                    if key == API_SYSTEM_ID:
-                        raise InvalidSystem
-                    elif key == API_ZONE_ID:
-                        raise InvalidZone
-                    elif key not in data:
-                        raise InvalidParam
-                    else:
-                        raise ParamUpdateFailure
+        data: dict = res[API_DATA][0]
+        for key, value in params.items():
+            if key not in data or data[key] != value:
+                if key == API_SYSTEM_ID:
+                    raise InvalidSystem
+                if key == API_ZONE_ID:
+                    raise InvalidZone
+                if key not in data:
+                    raise InvalidParam
+                raise ParamUpdateFailure
 
         return res
 
     def data(self) -> dict[str, Any]:
         """Return Airzone device data."""
-        data = {
+        data: dict[str, Any] = {
             AZD_SYSTEMS_NUM: self.num_systems(),
             AZD_ZONES_NUM: self.num_zones(),
         }
 
         if self.systems:
-            systems = {}
-            zones = {}
+            systems: dict[int, Any] = {}
+            zones: dict[str, Any] = {}
             for system_id, system in self.systems.items():
                 systems[system_id] = system.data()
                 for zone_id, zone in system.zones.items():
@@ -217,7 +214,7 @@ class AirzoneLocalApi:
     def get_system(self, system_id) -> System:
         """Return Airzone system."""
         system: System
-        for system in self.systems:
+        for system in self.systems.values():
             if system.get_id() == system_id:
                 return system
         raise InvalidSystem
@@ -255,10 +252,10 @@ class System:
         for airzone_zone in airzone_system:
             zone = Zone(self, airzone_zone)
             if zone:
-                id = int(airzone_zone[API_SYSTEM_ID])
+                _id = int(airzone_zone[API_SYSTEM_ID])
                 if not self.id:
-                    self.id = id
-                elif self.id != id:
+                    self.id = _id
+                elif self.id != _id:
                     _LOGGER.error("System ID mismatch across zones")
 
                 self.zones[zone.get_id()] = zone
@@ -276,7 +273,7 @@ class System:
     def data(self):
         """Return Airzone system data."""
         data = {
-            AZD_ID: self.id,
+            AZD_ID: self.get_id(),
             AZD_ZONES_NUM: self.num_zones(),
         }
 
@@ -285,8 +282,8 @@ class System:
 
         if self.zones:
             zones = {}
-            for id, zone in self.zones.items():
-                zones[id] = zone.data()
+            for _id, zone in self.zones.items():
+                zones[_id] = zone.data()
             data[AZD_ZONES] = zones
 
         return data
@@ -306,7 +303,7 @@ class System:
     def get_zone(self, zone_id) -> Zone:
         """Return Airzone zone."""
         zone: Zone
-        for zone in self.zones:
+        for zone in self.zones.values():
             if zone.get_id() == zone_id:
                 return zone
         raise InvalidZone
@@ -345,9 +342,9 @@ class Zone:
                     stages.append(AirzoneStages(stage))
                 self.cold_stages = stages
             else:
-                self.cold_stages = None
+                self.cold_stages = []
         else:
-            self.cold_stages = None
+            self.cold_stages = []
 
         if len(zone[API_ERRORS]):
             self.errors = zone[API_ERRORS]
@@ -361,9 +358,9 @@ class Zone:
                     stages.append(AirzoneStages(stage))
                 self.heat_stages = stages
             else:
-                self.heat_stages = None
+                self.heat_stages = []
         else:
-            self.heat_stages = None
+            self.heat_stages = []
 
         if API_MODES in zone:
             modes = []
@@ -371,7 +368,7 @@ class Zone:
                 modes.append(OperationMode(mode))
             self.modes = modes
         else:
-            self.modes = None
+            self.modes = []
 
     def data(self):
         """Return Airzone zone data."""
