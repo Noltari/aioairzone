@@ -9,19 +9,11 @@ from typing import Any, cast
 from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
-from .common import (
-    AirzoneStages,
-    AirzoneType,
-    ConnectionOptions,
-    OperationMode,
-    TemperatureUnit,
-)
+from .common import AirzoneStages, ConnectionOptions, OperationMode, TemperatureUnit
 from .const import (
-    API_ACS_POINT,
     API_AIR_DEMAND,
     API_COLD_STAGE,
     API_COLD_STAGES,
-    API_COOL_SET_POINT,
     API_DATA,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
@@ -57,6 +49,7 @@ from .const import (
     AZD_HEAT_STAGES,
     AZD_HUMIDITY,
     AZD_ID,
+    AZD_MASTER,
     AZD_MODE,
     AZD_MODES,
     AZD_NAME,
@@ -70,7 +63,6 @@ from .const import (
     AZD_TEMP_MIN,
     AZD_TEMP_SET,
     AZD_TEMP_UNIT,
-    AZD_TYPE,
     AZD_ZONES,
     AZD_ZONES_NUM,
     HTTP_CALL_TIMEOUT,
@@ -257,8 +249,6 @@ class System:
         """System init."""
         self.airzone = airzone
         self.id = None
-        self.master_zone = None
-        self.type = None
         self.zones: dict[int, Zone] = {}
 
         for airzone_zone in airzone_system:
@@ -272,25 +262,12 @@ class System:
 
                 self.zones[zone.get_id()] = zone
 
-                if zone.is_master():
-                    self.master_zone = zone
-
-                    if API_COOL_SET_POINT in airzone_zone:
-                        self.type = AirzoneType.B
-                    elif API_ACS_POINT in airzone_zone:
-                        self.type = AirzoneType.A
-                    else:
-                        self.type = AirzoneType.C
-
     def data(self) -> dict[str, Any]:
         """Return Airzone system data."""
         data: dict[str, Any] = {
             AZD_ID: self.get_id(),
             AZD_ZONES_NUM: self.num_zones(),
         }
-
-        if self.type:
-            data[AZD_TYPE] = self.get_type()
 
         if self.zones:
             zones: dict[int, Any] = {}
@@ -303,14 +280,6 @@ class System:
     def get_id(self) -> int:
         """Return system ID."""
         return self.id
-
-    def get_master_zone(self) -> Zone:
-        """Return Airzone master zone."""
-        return self.master_zone
-
-    def get_type(self) -> AirzoneType:
-        """Return system type."""
-        return self.type
 
     def get_zone(self, zone_id: int) -> Zone:
         """Return Airzone zone."""
@@ -342,7 +311,7 @@ class Zone:
         self.heat_stages: list[AirzoneStages] = []
         self.humidity = int(zone[API_HUMIDITY])
         self.id = int(zone[API_ZONE_ID])
-        self.master = None
+        self.master = bool(API_MODES in zone)
         self.mode = OperationMode(zone[API_MODE])
         self.modes: list[OperationMode] = []
         self.name = str(zone[API_NAME])
@@ -369,9 +338,13 @@ class Zone:
                 for stage in zone[API_HEAT_STAGES]:
                     self.heat_stages.append(AirzoneStages(stage))
 
-        if API_MODES in zone:
+        if self.master:
             for mode in zone[API_MODES]:
                 self.modes.append(OperationMode(mode))
+        else:
+            self.modes.append(self.mode)
+        if OperationMode.STOP not in self.modes:
+            self.modes.append(OperationMode.STOP)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
@@ -383,6 +356,7 @@ class Zone:
             AZD_HEAT_STAGE: self.get_heat_stage(),
             AZD_HUMIDITY: self.get_humidity(),
             AZD_ID: self.get_id(),
+            AZD_MASTER: self.get_master(),
             AZD_MODE: self.get_mode(),
             AZD_NAME: self.get_name(),
             AZD_ON: self.get_on(),
@@ -449,6 +423,10 @@ class Zone:
         """Return zone humidity."""
         return self.humidity
 
+    def get_master(self) -> bool:
+        """Return zone master/slave."""
+        return self.master
+
     def get_mode(self) -> OperationMode:
         """Return zone mode."""
         return self.mode
@@ -492,10 +470,6 @@ class Zone:
     def get_temp_unit(self) -> TemperatureUnit:
         """Return zone temperature unit."""
         return self.temp_unit
-
-    def is_master(self) -> bool:
-        """Zone is master if mode can be changed."""
-        return self.modes is not None
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""

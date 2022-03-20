@@ -13,14 +13,6 @@ class AirzoneStages(int, Enum):
     Combined = 3
 
 
-class AirzoneType(int, Enum):
-    """Airzone operation modes."""
-
-    A = 1
-    B = 2
-    C = 3
-
-
 @dataclass
 class ConnectionOptions:
     """Airzone options for connection."""
