@@ -6,7 +6,7 @@ import json
 import logging
 from typing import Any, cast
 
-import aiohttp
+from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
 from .common import (
@@ -92,12 +92,12 @@ class AirzoneLocalApi:
 
     def __init__(
         self,
-        aiohttp_session: aiohttp.ClientSession,
+        aiohttp_session: ClientSession,
         options: ConnectionOptions,
     ):
         """Device init."""
-        self.aiohttp_session: aiohttp.ClientSession = aiohttp_session
-        self.options: ConnectionOptions = options
+        self.aiohttp_session = aiohttp_session
+        self.options = options
         self.connect_task = None
         self.connect_result = None
         self.systems: dict[int, System] = {}
@@ -129,7 +129,7 @@ class AirzoneLocalApi:
         _LOGGER.debug("aiohttp response: %s", resp_json)
         return cast(dict, resp_json)
 
-    async def validate_airzone(self):
+    async def validate_airzone(self) -> None:
         """Gather Airzone systems."""
         response = await self.get_hvac()
         if API_SYSTEMS not in response:
@@ -137,7 +137,7 @@ class AirzoneLocalApi:
 
     async def update_airzone(self) -> bool:
         """Gather Airzone systems."""
-        systems = {}
+        systems: dict[int, System] = {}
 
         airzone_systems = await self.get_hvac()
         for airzone_system in airzone_systems[API_SYSTEMS]:
@@ -194,8 +194,8 @@ class AirzoneLocalApi:
                     raise InvalidParam
                 raise ParamUpdateFailure
 
-        system: System = self.get_system(data[API_SYSTEM_ID])
-        zone: Zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
+        system = self.get_system(data[API_SYSTEM_ID])
+        zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
         for key, value in data.items():
             if key in API_SYSTEM_PARAMS:
                 system.set_param(key, value)
@@ -223,7 +223,7 @@ class AirzoneLocalApi:
 
         return data
 
-    def get_system(self, system_id) -> System:
+    def get_system(self, system_id: int) -> System:
         """Return Airzone system."""
         system: System
         for system in self.systems.values():
@@ -231,7 +231,7 @@ class AirzoneLocalApi:
                 return system
         raise InvalidSystem
 
-    def get_zone(self, system_id, zone_id) -> Zone:
+    def get_zone(self, system_id: int, zone_id: int) -> Zone:
         """Return Airzone system zone."""
         return self.get_system(system_id).get_zone(zone_id)
 
@@ -282,9 +282,9 @@ class System:
                     else:
                         self.type = AirzoneType.C
 
-    def data(self):
+    def data(self) -> dict[str, Any]:
         """Return Airzone system data."""
-        data = {
+        data: dict[str, Any] = {
             AZD_ID: self.get_id(),
             AZD_ZONES_NUM: self.num_zones(),
         }
@@ -293,7 +293,7 @@ class System:
             data[AZD_TYPE] = self.get_type()
 
         if self.zones:
-            zones = {}
+            zones: dict[int, Any] = {}
             for _id, zone in self.zones.items():
                 zones[_id] = zone.data()
             data[AZD_ZONES] = zones
@@ -312,9 +312,8 @@ class System:
         """Return system type."""
         return self.type
 
-    def get_zone(self, zone_id) -> Zone:
+    def get_zone(self, zone_id: int) -> Zone:
         """Return Airzone zone."""
-        zone: Zone
         for zone in self.zones.values():
             if zone.get_id() == zone_id:
                 return zone
@@ -333,16 +332,19 @@ class System:
 class Zone:
     """Airzone Zone."""
 
-    def __init__(self, system: System, zone):
+    def __init__(self, system: System, zone: dict[str, Any]):
         """Zone init."""
         self.air_demand = bool(zone[API_AIR_DEMAND])
         self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
+        self.cold_stages: list[AirzoneStages] = []
         self.floor_demand = bool(zone[API_FLOOR_DEMAND])
         self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
+        self.heat_stages: list[AirzoneStages] = []
         self.humidity = int(zone[API_HUMIDITY])
         self.id = int(zone[API_ZONE_ID])
         self.master = None
         self.mode = OperationMode(zone[API_MODE])
+        self.modes: list[OperationMode] = []
         self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
         self.temp = float(zone[API_ROOM_TEMP])
@@ -354,14 +356,8 @@ class Zone:
 
         if API_COLD_STAGES in zone:
             if isinstance(zone[API_COLD_STAGES], list):
-                stages = []
                 for stage in zone[API_COLD_STAGES]:
-                    stages.append(AirzoneStages(stage))
-                self.cold_stages = stages
-            else:
-                self.cold_stages = []
-        else:
-            self.cold_stages = []
+                    self.cold_stages.append(AirzoneStages(stage))
 
         if len(zone[API_ERRORS]):
             self.errors = zone[API_ERRORS]
@@ -370,24 +366,14 @@ class Zone:
 
         if API_HEAT_STAGES in zone:
             if isinstance(zone[API_HEAT_STAGES], list):
-                stages = []
                 for stage in zone[API_HEAT_STAGES]:
-                    stages.append(AirzoneStages(stage))
-                self.heat_stages = stages
-            else:
-                self.heat_stages = []
-        else:
-            self.heat_stages = []
+                    self.heat_stages.append(AirzoneStages(stage))
 
         if API_MODES in zone:
-            modes = []
             for mode in zone[API_MODES]:
-                modes.append(OperationMode(mode))
-            self.modes = modes
-        else:
-            self.modes = []
+                self.modes.append(OperationMode(mode))
 
-    def data(self):
+    def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
         data = {
             AZD_AIR_DEMAND: self.get_air_demand(),
@@ -514,14 +500,14 @@ class Zone:
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
         if key == API_COLD_STAGE:
-            self.cold_stage = value
+            self.cold_stage = AirzoneStages(value)
         elif key == API_HEAT_STAGE:
-            self.heat_stage = value
+            self.heat_stage = AirzoneStages(value)
         elif key == API_MODE:
-            self.mode = value
+            self.mode = OperationMode(value)
         elif key == API_NAME:
-            self.name = value
+            self.name = str(value)
         elif key == API_ON:
-            self.on = value
+            self.on = bool(value)
         elif key == API_SET_POINT:
-            self.temp_set = value
+            self.temp_set = float(value)
