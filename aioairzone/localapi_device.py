@@ -1,7 +1,6 @@
 """Airzone Local API based device."""
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any, cast
@@ -90,10 +89,7 @@ class AirzoneLocalApi:
         """Device init."""
         self.aiohttp_session = aiohttp_session
         self.options = options
-        self.connect_task = None
-        self.connect_result = None
         self.systems: dict[int, System] = {}
-        self._loop = asyncio.get_running_loop()
 
     @property
     def ip_address(self) -> str:
@@ -133,7 +129,7 @@ class AirzoneLocalApi:
 
         airzone_systems = await self.get_hvac()
         for airzone_system in airzone_systems[API_SYSTEMS]:
-            system = System(self, airzone_system[API_DATA])
+            system = System(airzone_system[API_DATA])
             if system:
                 systems[system.get_id()] = system
 
@@ -245,9 +241,8 @@ class AirzoneLocalApi:
 class System:
     """Airzone System."""
 
-    def __init__(self, airzone, airzone_system):
+    def __init__(self, airzone_system):
         """System init."""
-        self.airzone = airzone
         self.id = None
         self.zones: dict[int, Zone] = {}
 
