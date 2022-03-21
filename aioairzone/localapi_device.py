@@ -8,7 +8,13 @@ from typing import Any, cast
 from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
-from .common import AirzoneStages, ConnectionOptions, OperationMode, TemperatureUnit
+from .common import (
+    AirzoneStages,
+    ConnectionOptions,
+    OperationMode,
+    TemperatureUnit,
+    system_zone_id,
+)
 from .const import (
     API_AIR_DEMAND,
     API_COLD_STAGE,
@@ -205,7 +211,7 @@ class AirzoneLocalApi:
             for system_id, system in self.systems.items():
                 systems[system_id] = system.data()
                 for zone_id, zone in system.zones.items():
-                    zones[f"{system_id}:{zone_id}"] = zone.data()
+                    zones[system_zone_id(system_id, zone_id)] = zone.data()
             data[AZD_SYSTEMS] = systems
             data[AZD_ZONES] = zones
 
