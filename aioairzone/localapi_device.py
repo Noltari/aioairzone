@@ -219,7 +219,6 @@ class AirzoneLocalApi:
 
     def get_system(self, system_id: int) -> System:
         """Return Airzone system."""
-        system: System
         for system in self.systems.values():
             if system.get_id() == system_id:
                 return system
