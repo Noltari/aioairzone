@@ -1,4 +1,4 @@
-"""Common code for Airzone library."""
+"""Airzone library common code."""
 from __future__ import annotations
 
 from dataclasses import dataclass

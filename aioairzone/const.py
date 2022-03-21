@@ -1,4 +1,4 @@
-"""Constants for aioairzone."""
+"""Airzone library constants."""
 
 API_ACS_POINT = "acs_temp"
 API_AIR_DEMAND = "air_demand"

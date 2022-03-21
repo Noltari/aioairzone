@@ -1,4 +1,4 @@
-"""Airzone exceptions."""
+"""Airzone library exceptions."""
 from __future__ import annotations
 
 
