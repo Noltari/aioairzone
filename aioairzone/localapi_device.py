@@ -230,16 +230,13 @@ class AirzoneLocalApi:
 
     def num_systems(self) -> int:
         """Return number of airzone systems."""
-        if self.systems:
-            return len(self.systems)
-        return 0
+        return len(self.systems)
 
     def num_zones(self) -> int:
         """Return total number of zones."""
         count = 0
-        if self.systems:
-            for system in self.systems.values():
-                count += system.num_zones()
+        for system in self.systems.values():
+            count += system.num_zones()
         return count
 
 
