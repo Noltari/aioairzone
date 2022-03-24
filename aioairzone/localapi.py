@@ -8,7 +8,13 @@ from typing import Any, cast
 from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
-from .common import AirzoneStages, ConnectionOptions, OperationMode, TemperatureUnit
+from .common import (
+    AirzoneStages,
+    ConnectionOptions,
+    OperationMode,
+    TemperatureUnit,
+    ThermostatType,
+)
 from .const import (
     API_AIR_DEMAND,
     API_COLD_STAGE,
@@ -40,6 +46,9 @@ from .const import (
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
+    API_THERMOS_FIRMWARE,
+    API_THERMOS_RADIO,
+    API_THERMOS_TYPE,
     API_UNITS,
     API_V1,
     API_ZONE_ID,
@@ -74,9 +83,14 @@ from .const import (
     AZD_TEMP_MIN,
     AZD_TEMP_SET,
     AZD_TEMP_UNIT,
+    AZD_THERMOSTAT_FW,
+    AZD_THERMOSTAT_MODEL,
+    AZD_THERMOSTAT_RADIO,
     AZD_ZONES,
     AZD_ZONES_NUM,
     HTTP_CALL_TIMEOUT,
+    THERMOSTAT_RADIO,
+    THERMOSTAT_WIRED,
 )
 from .exceptions import (
     APIError,
@@ -301,6 +315,40 @@ class System:
             zone.set_param(key, value)
 
 
+class Thermostat:
+    """Airzone Thermostat."""
+
+    def __init__(self, data: dict[str, Any]):
+        self.firmware: str | None = None
+        self.radio: bool | None = None
+        self.type: ThermostatType | None = None
+
+        if API_THERMOS_FIRMWARE in data:
+            self.firmware = str(data[API_THERMOS_FIRMWARE])
+        if API_THERMOS_RADIO in data:
+            self.radio = bool(data[API_THERMOS_RADIO])
+        if API_THERMOS_TYPE in data:
+            self.type = ThermostatType(data[API_THERMOS_TYPE])
+
+    def get_firmware(self) -> str | None:
+        """Return Airzone Thermostat firmware."""
+        if self.firmware and "." not in self.firmware and len(self.firmware) > 2:
+            return f"{self.firmware[0:1]}.{self.firmware[1:]}"
+        return self.firmware
+
+    def get_model(self) -> str | None:
+        """Return Airzone Thermostat model."""
+        if self.type:
+            name = str(self.type)
+            sfx = THERMOSTAT_RADIO if self.radio else THERMOSTAT_WIRED
+            return f"{name} ({sfx})"
+        return None
+
+    def get_radio(self) -> bool | None:
+        """Return Airzone Thermostat radio."""
+        return self.radio
+
+
 class Zone:
     """Airzone Zone."""
 
@@ -331,6 +379,7 @@ class Zone:
         self.temp_min = float(zone[API_MIN_TEMP])
         self.temp_set = float(zone[API_SET_POINT])
         self.temp_unit = TemperatureUnit(zone[API_UNITS])
+        self.thermostat = Thermostat(zone)
         self.system = system
 
         if API_COLD_STAGES in zone:
@@ -414,6 +463,13 @@ class Zone:
 
         if self.modes:
             data[AZD_MODES] = self.get_modes()
+
+        if self.thermostat.firmware:
+            data[AZD_THERMOSTAT_FW] = self.thermostat.get_firmware()
+        if self.thermostat.type:
+            data[AZD_THERMOSTAT_MODEL] = self.thermostat.get_model()
+        if self.thermostat.radio:
+            data[AZD_THERMOSTAT_RADIO] = self.thermostat.get_radio()
 
         return data
 

@@ -45,3 +45,22 @@ class TemperatureUnit(int, Enum):
 
     CELSIUS = 0
     FAHRENHEIT = 1
+
+
+class ThermostatType(int, Enum):
+    """Airzone Thermostat Types."""
+
+    Blueface = 1
+    BluefaceZero = 2
+    Lite = 3
+    Think = 4
+
+    def __str__(self) -> str:
+        """Convert ThermostatType value to string."""
+        models: dict[int, str] = {
+            self.Blueface: "Blueface",
+            self.BluefaceZero: "Blueface Zero",
+            self.Lite: "Lite",
+            self.Think: "Think",
+        }
+        return models[self.value]
