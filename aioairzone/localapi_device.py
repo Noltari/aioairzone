@@ -340,13 +340,15 @@ class Zone:
         self.system = system
 
         if API_COLD_STAGES in zone:
-            if isinstance(zone[API_COLD_STAGES], list):
-                for stage in zone[API_COLD_STAGES]:
-                    self.cold_stages.append(AirzoneStages(stage))
+            cold_stages = AirzoneStages(zone[API_COLD_STAGES])
+            self.cold_stages = cold_stages.to_list()
+        elif self.cold_stage:
+            self.cold_stages = [self.cold_stage]
         if API_HEAT_STAGES in zone:
-            if isinstance(zone[API_HEAT_STAGES], list):
-                for stage in zone[API_HEAT_STAGES]:
-                    self.heat_stages.append(AirzoneStages(stage))
+            heat_stages = AirzoneStages(zone[API_HEAT_STAGES])
+            self.heat_stages = heat_stages.to_list()
+        elif self.heat_stage:
+            self.heat_stages = [self.heat_stage]
 
         if API_COOL_MAX_TEMP in zone:
             self.cool_temp_max = float(zone[API_COOL_MAX_TEMP])

@@ -17,6 +17,14 @@ class AirzoneStages(int, Enum):
     Radiant = 2
     Combined = 3
 
+    def to_list(self) -> list[AirzoneStages]:
+        """Convert AirzoneStages value to list."""
+        if self.value == self.Combined:
+            return [AirzoneStages.Air, AirzoneStages.Radiant, AirzoneStages.Combined]
+        if self.value in (self.Air, self.Radiant):
+            return [self]
+        return []
+
 
 @dataclass
 class ConnectionOptions:
