@@ -19,12 +19,18 @@ from .const import (
     API_AIR_DEMAND,
     API_COLD_STAGE,
     API_COLD_STAGES,
+    API_COOL_MAX_TEMP,
+    API_COOL_MIN_TEMP,
+    API_COOL_SET_POINT,
     API_DATA,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_FLOOR_DEMAND,
+    API_HEAT_MAX_TEMP,
+    API_HEAT_MIN_TEMP,
+    API_HEAT_SET_POINT,
     API_HEAT_STAGE,
     API_HEAT_STAGES,
     API_HUMIDITY,
@@ -47,11 +53,17 @@ from .const import (
     AZD_AIR_DEMAND,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
+    AZD_COOL_TEMP_MAX,
+    AZD_COOL_TEMP_MIN,
+    AZD_COOL_TEMP_SET,
     AZD_DEMAND,
     AZD_ERRORS,
     AZD_FLOOR_DEMAND,
     AZD_HEAT_STAGE,
     AZD_HEAT_STAGES,
+    AZD_HEAT_TEMP_MAX,
+    AZD_HEAT_TEMP_MIN,
+    AZD_HEAT_TEMP_SET,
     AZD_HUMIDITY,
     AZD_ID,
     AZD_MASTER,
@@ -303,7 +315,14 @@ class Zone:
         self.air_demand = bool(zone[API_AIR_DEMAND])
         self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
         self.cold_stages: list[AirzoneStages] = []
+        self.cool_temp_max: float | None = None
+        self.cool_temp_min: float | None = None
+        self.cool_temp_set: float | None = None
+        self.errors: list | None = None
         self.floor_demand = bool(zone[API_FLOOR_DEMAND])
+        self.heat_temp_max: float | None = None
+        self.heat_temp_min: float | None = None
+        self.heat_temp_set: float | None = None
         self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
         self.heat_stages: list[AirzoneStages] = []
         self.humidity = int(zone[API_HUMIDITY])
@@ -324,16 +343,26 @@ class Zone:
             if isinstance(zone[API_COLD_STAGES], list):
                 for stage in zone[API_COLD_STAGES]:
                     self.cold_stages.append(AirzoneStages(stage))
-
-        if len(zone[API_ERRORS]):
-            self.errors = zone[API_ERRORS]
-        else:
-            self.errors = None
-
         if API_HEAT_STAGES in zone:
             if isinstance(zone[API_HEAT_STAGES], list):
                 for stage in zone[API_HEAT_STAGES]:
                     self.heat_stages.append(AirzoneStages(stage))
+
+        if API_COOL_MAX_TEMP in zone:
+            self.cool_temp_max = float(zone[API_COOL_MAX_TEMP])
+        if API_COOL_MIN_TEMP in zone:
+            self.cool_temp_min = float(zone[API_COOL_MIN_TEMP])
+        if API_COOL_SET_POINT in zone:
+            self.cool_temp_set = float(zone[API_COOL_SET_POINT])
+        if API_HEAT_MAX_TEMP in zone:
+            self.heat_temp_max = float(zone[API_HEAT_MAX_TEMP])
+        if API_HEAT_MIN_TEMP in zone:
+            self.heat_temp_min = float(zone[API_HEAT_MIN_TEMP])
+        if API_HEAT_SET_POINT in zone:
+            self.heat_temp_set = float(zone[API_HEAT_SET_POINT])
+
+        if len(zone[API_ERRORS]):
+            self.errors = zone[API_ERRORS]
 
         if self.master:
             for mode in zone[API_MODES]:
@@ -366,14 +395,26 @@ class Zone:
             AZD_TEMP_UNIT: self.get_temp_unit(),
         }
 
+        if self.cool_temp_max:
+            data[AZD_COOL_TEMP_MAX] = self.get_cool_temp_max()
+        if self.cool_temp_min:
+            data[AZD_COOL_TEMP_MIN] = self.get_cool_temp_min()
+        if self.cool_temp_set:
+            data[AZD_COOL_TEMP_SET] = self.get_cool_temp_set()
+        if self.heat_temp_max:
+            data[AZD_HEAT_TEMP_MAX] = self.get_heat_temp_max()
+        if self.heat_temp_min:
+            data[AZD_HEAT_TEMP_MIN] = self.get_heat_temp_min()
+        if self.heat_temp_set:
+            data[AZD_HEAT_TEMP_SET] = self.get_heat_temp_set()
+
         if self.cold_stages:
             data[AZD_COLD_STAGES] = self.get_cold_stages()
+        if self.heat_stages:
+            data[AZD_HEAT_STAGES] = self.get_heat_stages()
 
         if self.errors:
             data[AZD_ERRORS] = self.get_errors()
-
-        if self.heat_stages:
-            data[AZD_HEAT_STAGES] = self.get_heat_stages()
 
         if self.modes:
             data[AZD_MODES] = self.get_modes()
@@ -392,11 +433,47 @@ class Zone:
         """Return zone cold stages."""
         return self.cold_stages
 
+    def get_cool_temp_max(self) -> float | None:
+        """Return zone maximum cool temperature."""
+        if self.cool_temp_max:
+            return round(self.cool_temp_max, 1)
+        return None
+
+    def get_cool_temp_min(self) -> float | None:
+        """Return zone minimum cool temperature."""
+        if self.cool_temp_min:
+            return round(self.cool_temp_min, 1)
+        return None
+
+    def get_cool_temp_set(self) -> float | None:
+        """Return zone set cool temperature."""
+        if self.cool_temp_set:
+            return round(self.cool_temp_set, 1)
+        return None
+
     def get_demand(self) -> bool:
         """Return zone demand."""
         return self.get_air_demand() or self.get_floor_demand()
 
-    def get_errors(self) -> list:
+    def get_heat_temp_max(self) -> float | None:
+        """Return zone maximum heat temperature."""
+        if self.heat_temp_max:
+            return round(self.heat_temp_max, 1)
+        return None
+
+    def get_heat_temp_min(self) -> float | None:
+        """Return zone minimum heat temperature."""
+        if self.heat_temp_min:
+            return round(self.heat_temp_min, 1)
+        return None
+
+    def get_heat_temp_set(self) -> float | None:
+        """Return zone set heat temperature."""
+        if self.heat_temp_set:
+            return round(self.heat_temp_set, 1)
+        return None
+
+    def get_errors(self) -> list | None:
         """Return zone errors."""
         return self.errors
 
@@ -470,8 +547,12 @@ class Zone:
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
-        if key == API_COLD_STAGE:
+        if key == API_COOL_SET_POINT:
+            self.cool_temp_set = float(value)
+        elif key == API_COLD_STAGE:
             self.cold_stage = AirzoneStages(value)
+        elif key == API_HEAT_SET_POINT:
+            self.heat_temp_set = float(value)
         elif key == API_HEAT_STAGE:
             self.heat_stage = AirzoneStages(value)
         elif key == API_MODE:

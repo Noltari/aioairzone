@@ -4,10 +4,15 @@ API_ACS_POINT = "acs_temp"
 API_AIR_DEMAND = "air_demand"
 API_COLD_STAGE = "coldStage"
 API_COLD_STAGES = "coldStages"
+API_COOL_MAX_TEMP = "coolmaxtemp"
+API_COOL_MIN_TEMP = "coolmintemp"
 API_COOL_SET_POINT = "coolsetpoint"
 API_DATA = "data"
 API_ERRORS = "errors"
 API_FLOOR_DEMAND = "floor_demand"
+API_HEAT_MAX_TEMP = "heatmaxtemp"
+API_HEAT_MIN_TEMP = "heatmintemp"
+API_HEAT_SET_POINT = "heatsetpoint"
 API_HEAT_STAGE = "heatStage"
 API_HEAT_STAGES = "heatStages"
 API_HUMIDITY = "humidity"
@@ -32,7 +37,9 @@ API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
 
 API_SYSTEM_PARAMS = [API_MODE]
 API_ZONE_PARAMS = [
+    API_COOL_SET_POINT,
     API_COLD_STAGE,
+    API_HEAT_SET_POINT,
     API_HEAT_STAGE,
     API_NAME,
     API_ON,
@@ -42,9 +49,15 @@ API_ZONE_PARAMS = [
 AZD_AIR_DEMAND = "air_demand"
 AZD_COLD_STAGE = "cold_stage"
 AZD_COLD_STAGES = "cold_stages"
+AZD_COOL_TEMP_MAX = "cool_temp_max"
+AZD_COOL_TEMP_MIN = "cool_temp_min"
+AZD_COOL_TEMP_SET = "cool_temp_set"
 AZD_DEMAND = "demand"
 AZD_ERRORS = "errors"
 AZD_FLOOR_DEMAND = "floor_demand"
+AZD_HEAT_TEMP_MAX = "heat_temp_max"
+AZD_HEAT_TEMP_MIN = "heat_temp_min"
+AZD_HEAT_TEMP_SET = "heat_temp_set"
 AZD_HEAT_STAGE = "heat_stage"
 AZD_HEAT_STAGES = "heat_stages"
 AZD_HUMIDITY = "humidity"
