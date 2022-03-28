@@ -5,11 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 
 
-def system_zone_id(system_id: int, zone_id: int) -> str:
-    """Combine System and Zone IDs into a single ID."""
-    return f"{system_id}:{zone_id}"
-
-
 class AirzoneStages(int, Enum):
     """Airzone stages."""
 
