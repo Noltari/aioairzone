@@ -21,6 +21,7 @@ setup(
     packages=["aioairzone"],
     python_requires=">=3.8",
     include_package_data=True,
+    install_requires=["aiohttp"],
     zip_safe=False,
     classifiers=[
         "Development Status :: 4 - Beta",
