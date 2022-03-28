@@ -9,7 +9,7 @@ from aiohttp.client_exceptions import ClientConnectorError
 from aioairzone.common import ConnectionOptions
 from aioairzone.const import API_MODE, API_SYSTEM_ID, API_ZONE_ID
 from aioairzone.exceptions import InvalidHost
-from aioairzone.localapi_device import AirzoneLocalApi
+from aioairzone.localapi import AirzoneLocalApi
 
 
 async def main():
