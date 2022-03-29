@@ -412,10 +412,6 @@ class Zone:
         if self.master:
             for mode in zone[API_MODES]:
                 self.modes.append(OperationMode(mode))
-        else:
-            self.modes.append(self.mode)
-        if OperationMode.STOP not in self.modes:
-            self.modes.append(OperationMode.STOP)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
@@ -461,8 +457,9 @@ class Zone:
         if self.errors:
             data[AZD_ERRORS] = self.get_errors()
 
-        if self.modes:
-            data[AZD_MODES] = self.get_modes()
+        modes = self.get_modes()
+        if modes:
+            data[AZD_MODES] = modes
 
         if self.thermostat.firmware:
             data[AZD_THERMOSTAT_FW] = self.thermostat.get_firmware()
@@ -559,7 +556,13 @@ class Zone:
 
     def get_modes(self) -> list[OperationMode]:
         """Return zone modes."""
-        return self.modes
+        if self.master:
+            modes = self.modes
+        else:
+            modes = [self.mode]
+        if OperationMode.STOP not in modes:
+            modes.append(OperationMode.STOP)
+        return modes
 
     def get_name(self) -> str:
         """Return zone name."""
