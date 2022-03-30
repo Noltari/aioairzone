@@ -64,3 +64,13 @@ class ThermostatType(int, Enum):
             self.Think: "Think",
         }
         return models[self.value]
+
+    def exists_radio(self) -> bool:
+        """Return if a radio version of the Thermostat exists."""
+        models: dict[int, bool] = {
+            self.Blueface: False,
+            self.BluefaceZero: False,
+            self.Lite: True,
+            self.Think: True,
+        }
+        return models[self.value]

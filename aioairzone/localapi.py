@@ -349,8 +349,11 @@ class Thermostat:
         """Return Airzone Thermostat model."""
         if self.type:
             name = str(self.type)
-            sfx = THERMOSTAT_RADIO if self.radio else THERMOSTAT_WIRED
-            return f"{name} ({sfx})"
+            if self.type.exists_radio():
+                sfx = f" ({THERMOSTAT_RADIO if self.radio else THERMOSTAT_WIRED})"
+            else:
+                sfx = ""
+            return f"{name}{sfx}"
         return None
 
     def get_radio(self) -> bool | None:
