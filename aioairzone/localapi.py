@@ -15,6 +15,7 @@ from .common import (
     SystemType,
     TemperatureUnit,
     ThermostatType,
+    WebServerInterface,
 )
 from .const import (
     API_AIR_DEMAND,
@@ -36,6 +37,8 @@ from .const import (
     API_HEAT_STAGES,
     API_HUMIDITY,
     API_HVAC,
+    API_INTERFACE,
+    API_MAC,
     API_MAX_TEMP,
     API_MIN_TEMP,
     API_MODE,
@@ -55,6 +58,11 @@ from .const import (
     API_THERMOS_TYPE,
     API_UNITS,
     API_V1,
+    API_WEBSERVER,
+    API_WIFI,
+    API_WIFI_CHANNEL,
+    API_WIFI_QUALITY,
+    API_WIFI_SIGNAL,
     API_ZONE_ID,
     API_ZONE_PARAMS,
     AZD_AIR_DEMAND,
@@ -74,6 +82,8 @@ from .const import (
     AZD_HEAT_TEMP_SET,
     AZD_HUMIDITY,
     AZD_ID,
+    AZD_INTERFACE,
+    AZD_MAC,
     AZD_MASTER,
     AZD_MODE,
     AZD_MODEL,
@@ -93,6 +103,10 @@ from .const import (
     AZD_THERMOSTAT_FW,
     AZD_THERMOSTAT_MODEL,
     AZD_THERMOSTAT_RADIO,
+    AZD_WEBSERVER,
+    AZD_WIFI_CHANNEL,
+    AZD_WIFI_QUALITY,
+    AZD_WIFI_SIGNAL,
     AZD_ZONES,
     AZD_ZONES_NUM,
     HTTP_CALL_TIMEOUT,
@@ -123,7 +137,9 @@ class AirzoneLocalApi:
         self.aiohttp_session = aiohttp_session
         self.options = options
         self.supports_systems: bool = False
+        self.supports_webserver: bool = False
         self.systems: dict[int, System] = {}
+        self.webserver: WebServer | None = None
 
     @property
     def ip_address(self) -> str:
@@ -154,6 +170,12 @@ class AirzoneLocalApi:
     async def validate_airzone(self) -> None:
         """Validate Airzone API methods."""
         try:
+            response = await self.get_webserver()
+            self.supports_webserver = API_MAC in response
+        except ClientResponseError:
+            self.supports_webserver = False
+
+        try:
             response = await self.get_hvac_systems()
             if API_SYSTEMS in response:
                 self.supports_systems = True
@@ -183,6 +205,10 @@ class AirzoneLocalApi:
                 if system:
                     system.update_data(api_system)
 
+        if self.supports_webserver:
+            webserver_data = await self.get_webserver()
+            self.webserver = WebServer(webserver_data)
+
         return bool(systems)
 
     async def get_hvac_systems(self, params: dict[str, Any] = None) -> dict[str, Any]:
@@ -209,6 +235,14 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_HVAC}",
             params,
+        )
+        return res
+
+    async def get_webserver(self) -> dict[str, Any]:
+        """Return Airzone WebServer."""
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_WEBSERVER}",
         )
         return res
 
@@ -268,6 +302,8 @@ class AirzoneLocalApi:
                 for zone in system.zones.values():
                     zones[zone.get_system_zone_id()] = zone.data()
             data[AZD_SYSTEMS] = systems
+            if self.webserver:
+                data[AZD_WEBSERVER] = self.webserver.data()
             data[AZD_ZONES] = zones
 
         return data
@@ -427,6 +463,73 @@ class Thermostat:
     def get_radio(self) -> bool | None:
         """Return Airzone Thermostat radio."""
         return self.radio
+
+
+class WebServer:
+    """Airzone WebServer."""
+
+    def __init__(self, data: dict[str, Any]):
+        """WebServer init."""
+        self.interface: WebServerInterface | None = None
+        self.mac: str | None = None
+        self.wifi_channel: int | None = None
+        self.wifi_quality: int | None = None
+        self.wifi_signal: int | None = None
+
+        if API_INTERFACE in data:
+            if data[API_INTERFACE] == API_WIFI:
+                self.interface = WebServerInterface.WIFI
+            else:
+                self.interface = WebServerInterface.ETHERNET
+
+        if API_MAC in data:
+            self.mac = str(data[API_MAC])
+
+        if API_WIFI_CHANNEL in data:
+            self.wifi_channel = int(data[API_WIFI_CHANNEL])
+        if API_WIFI_QUALITY in data:
+            self.wifi_quality = int(data[API_WIFI_QUALITY])
+        if API_WIFI_SIGNAL in data:
+            self.wifi_signal = int(data[API_WIFI_SIGNAL])
+
+    def data(self) -> dict[str, Any]:
+        """Return Airzone system data."""
+        data: dict[str, Any] = {}
+
+        if self.interface is not None:
+            data[AZD_INTERFACE] = self.get_interface()
+
+        if self.mac is not None:
+            data[AZD_MAC] = self.get_mac()
+
+        if self.wifi_channel is not None:
+            data[AZD_WIFI_CHANNEL] = self.get_wifi_channel()
+        if self.wifi_quality is not None:
+            data[AZD_WIFI_QUALITY] = self.get_wifi_quality()
+        if self.wifi_signal is not None:
+            data[AZD_WIFI_SIGNAL] = self.get_wifi_signal()
+
+        return data
+
+    def get_interface(self) -> WebServerInterface | None:
+        """Return WebServer network interface."""
+        return self.interface
+
+    def get_mac(self) -> str | None:
+        """Return WebServer MAC address."""
+        return self.mac
+
+    def get_wifi_channel(self) -> int | None:
+        """Return WebServer wifi channel."""
+        return self.wifi_channel
+
+    def get_wifi_quality(self) -> int | None:
+        """Return WebServer wifi quality."""
+        return self.wifi_quality
+
+    def get_wifi_signal(self) -> int | None:
+        """Return WebServer wifi signal."""
+        return self.wifi_signal
 
 
 class Zone:

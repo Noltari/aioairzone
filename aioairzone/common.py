@@ -99,3 +99,10 @@ class ThermostatType(int, Enum):
             self.Think: True,
         }
         return models[self.value]
+
+
+class WebServerInterface(int, Enum):
+    """Airzone WebServer Interface type."""
+
+    ETHERNET = 1
+    WIFI = 2
