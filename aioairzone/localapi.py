@@ -171,14 +171,13 @@ class AirzoneLocalApi:
         """Validate Airzone API methods."""
         try:
             response = await self.get_webserver()
-            self.supports_webserver = API_MAC in response
+            self.supports_webserver = bool(API_MAC in response)
         except ClientResponseError:
             self.supports_webserver = False
 
         try:
             response = await self.get_hvac_systems()
-            if API_SYSTEMS in response:
-                self.supports_systems = True
+            self.supports_systems = bool(API_SYSTEMS in response)
         except ClientResponseError:
             self.supports_systems = False
 
