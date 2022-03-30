@@ -287,12 +287,6 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
-        if self.zones:
-            zones: dict[int, Any] = {}
-            for _id, zone in self.zones.items():
-                zones[_id] = zone.data()
-            data[AZD_ZONES] = zones
-
         return data
 
     def get_id(self) -> int:
