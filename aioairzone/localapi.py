@@ -5,13 +5,14 @@ import json
 import logging
 from typing import Any, cast
 
-from aiohttp import ClientSession
+from aiohttp import ClientResponseError, ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
 from .common import (
     AirzoneStages,
     ConnectionOptions,
     OperationMode,
+    SystemType,
     TemperatureUnit,
     ThermostatType,
 )
@@ -41,10 +42,13 @@ from .const import (
     API_MODES,
     API_NAME,
     API_ON,
+    API_POWER,
     API_ROOM_TEMP,
     API_SET_POINT,
+    API_SYSTEM_FIRMWARE,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
+    API_SYSTEM_TYPE,
     API_SYSTEMS,
     API_THERMOS_FIRMWARE,
     API_THERMOS_RADIO,
@@ -61,6 +65,7 @@ from .const import (
     AZD_COOL_TEMP_SET,
     AZD_DEMAND,
     AZD_ERRORS,
+    AZD_FIRMWARE,
     AZD_FLOOR_DEMAND,
     AZD_HEAT_STAGE,
     AZD_HEAT_STAGES,
@@ -71,9 +76,11 @@ from .const import (
     AZD_ID,
     AZD_MASTER,
     AZD_MODE,
+    AZD_MODEL,
     AZD_MODES,
     AZD_NAME,
     AZD_ON,
+    AZD_POWER,
     AZD_PROBLEMS,
     AZD_SYSTEM,
     AZD_SYSTEMS,
@@ -115,6 +122,7 @@ class AirzoneLocalApi:
         """Device init."""
         self.aiohttp_session = aiohttp_session
         self.options = options
+        self.supports_systems: bool = False
         self.systems: dict[int, System] = {}
 
     @property
@@ -144,7 +152,14 @@ class AirzoneLocalApi:
         return cast(dict, resp_json)
 
     async def validate_airzone(self) -> None:
-        """Gather Airzone systems."""
+        """Validate Airzone API methods."""
+        try:
+            response = await self.get_hvac_systems()
+            if API_SYSTEMS in response:
+                self.supports_systems = True
+        except ClientResponseError:
+            self.supports_systems = False
+
         response = await self.get_hvac()
         if API_SYSTEMS not in response:
             raise InvalidHost
@@ -153,18 +168,38 @@ class AirzoneLocalApi:
         """Gather Airzone systems."""
         systems: dict[int, System] = {}
 
-        airzone_systems = await self.get_hvac()
-        for airzone_system in airzone_systems[API_SYSTEMS]:
-            system = System(airzone_system[API_DATA])
+        api_systems = await self.get_hvac()
+        for api_system in api_systems[API_SYSTEMS]:
+            system = System(api_system[API_DATA])
             if system:
                 systems[system.get_id()] = system
 
         self.systems = systems
 
+        if self.supports_systems:
+            api_systems = await self.get_hvac_systems()
+            for api_system in api_systems[API_SYSTEMS]:
+                system = self.get_system(api_system[API_SYSTEM_ID])
+                if system:
+                    system.update_data(api_system)
+
         return bool(systems)
 
+    async def get_hvac_systems(self, params: dict[str, Any] = None) -> dict[str, Any]:
+        """Return Airzone HVAC systems."""
+        if not params:
+            params = {
+                API_SYSTEM_ID: 127,
+            }
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_HVAC}",
+            params,
+        )
+        return res
+
     async def get_hvac(self, params: dict[str, Any] = None) -> dict[str, Any]:
-        """Return Airzone HVAC."""
+        """Return Airzone HVAC zones."""
         if not params:
             params = {
                 API_SYSTEM_ID: 0,
@@ -266,7 +301,10 @@ class System:
     def __init__(self, airzone_system):
         """System init."""
         self.id = None
+        self.firmware: str | None = None
         self.modes: list[OperationMode] = []
+        self.power: bool | None = None
+        self.type: SystemType | None = None
         self.zones: dict[int, Zone] = {}
 
         for airzone_zone in airzone_system:
@@ -287,15 +325,40 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
+        if self.firmware:
+            data[AZD_FIRMWARE] = self.get_firmware()
+
+        if self.type:
+            data[AZD_MODEL] = self.get_model()
+
+        if self.power is not None:
+            data[AZD_POWER] = self.get_power()
+
         return data
 
     def get_id(self) -> int:
         """Return system ID."""
         return self.id
 
+    def get_firmware(self) -> str | None:
+        """Return system firmware."""
+        if self.firmware and "." not in self.firmware and len(self.firmware) > 2:
+            return f"{self.firmware[0:1]}.{self.firmware[1:]}"
+        return self.firmware
+
+    def get_model(self) -> str | None:
+        """Return system model."""
+        if self.type:
+            return str(self.type)
+        return None
+
     def get_modes(self) -> list[OperationMode]:
         """Return system modes."""
         return self.modes
+
+    def get_power(self) -> bool | None:
+        """Return system power."""
+        return self.power
 
     def get_zone(self, zone_id: int) -> Zone:
         """Return Airzone zone."""
@@ -316,6 +379,17 @@ class System:
         """Update zones parameters by key and value."""
         for zone in self.zones.values():
             zone.set_param(key, value)
+
+    def update_data(self, data: dict[str, Any]) -> None:
+        """Update system parameters by dict."""
+        if API_SYSTEM_FIRMWARE in data:
+            self.firmware = str(data[API_SYSTEM_FIRMWARE])
+
+        if API_POWER in data:
+            self.power = bool(data[API_POWER])
+
+        if API_SYSTEM_TYPE in data:
+            self.type = SystemType(data[API_SYSTEM_TYPE])
 
 
 class Thermostat:

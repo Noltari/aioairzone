@@ -40,6 +40,31 @@ class OperationMode(int, Enum):
     AUTO = 7
 
 
+class SystemType(int, Enum):
+    """Airzone System Types."""
+
+    C6 = 1
+    AQUAGLASS = 2
+    DZK = 3
+    RADIANT = 4
+    C3 = 5
+    ZBS = 6
+    ZS6 = 7
+
+    def __str__(self) -> str:
+        """Convert ThermostatType value to string."""
+        models: dict[int, str] = {
+            self.C6: "C6",
+            self.AQUAGLASS: "AQUAGLASS",
+            self.DZK: "DZK",
+            self.RADIANT: "Radiant",
+            self.C3: "C3",
+            self.ZBS: "ZBS",
+            self.ZS6: "ZS6",
+        }
+        return models[self.value]
+
+
 class TemperatureUnit(int, Enum):
     """Airzone temperature units."""
 
