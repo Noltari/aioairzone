@@ -167,11 +167,15 @@ class AirzoneLocalApi:
         _LOGGER.debug("aiohttp response: %s", resp_json)
         return cast(dict, resp_json)
 
-    async def validate_airzone(self) -> None:
+    async def validate_airzone(self) -> str | None:
         """Validate Airzone API methods."""
+        airzone_mac: str | None = None
+
         try:
             response = await self.get_webserver()
             self.supports_webserver = bool(API_MAC in response)
+            if self.supports_webserver:
+                airzone_mac = str(response[API_MAC])
         except ClientResponseError:
             self.supports_webserver = False
 
@@ -184,6 +188,8 @@ class AirzoneLocalApi:
         response = await self.get_hvac()
         if API_SYSTEMS not in response:
             raise InvalidHost
+
+        return airzone_mac
 
     async def update_airzone(self) -> bool:
         """Gather Airzone systems."""

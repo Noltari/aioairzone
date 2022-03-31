@@ -19,7 +19,9 @@ async def main():
     async with aiohttp.ClientSession() as aiohttp_session:
         client = AirzoneLocalApi(aiohttp_session, options)
         try:
-            await client.validate_airzone()
+            airzone_mac = await client.validate_airzone()
+            if airzone_mac is not None:
+                print(f"Airzone WebServer: {airzone_mac}")
             await client.update_airzone()
             print(json.dumps(client.data(), indent=4, sort_keys=True))
             print("***")
