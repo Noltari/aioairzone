@@ -45,6 +45,7 @@ API_WIFI_QUALITY = "wifi_quality"
 API_WIFI_SIGNAL = "wifi_signal"
 API_ZONE_ID = "zoneID"
 
+API_ERROR_LOW_BATTERY = "Low battery"
 API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
 API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"
 API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
@@ -61,6 +62,7 @@ API_ZONE_PARAMS = [
 ]
 
 AZD_AIR_DEMAND = "air_demand"
+AZD_BATTERY_LOW = "battery_low"
 AZD_COLD_STAGE = "cold_stage"
 AZD_COLD_STAGES = "cold_stages"
 AZD_COOL_TEMP_MAX = "cool_temp_max"
@@ -105,6 +107,9 @@ AZD_WIFI_QUALITY = "wifi_quality"
 AZD_WIFI_SIGNAL = "wifi_signal"
 AZD_ZONES = "zones"
 AZD_ZONES_NUM = "num_zones"
+
+ERROR_SYSTEM = "system"
+ERROR_ZONE = "zone"
 
 HTTP_CALL_TIMEOUT = 10
 

@@ -26,6 +26,7 @@ from .const import (
     API_COOL_SET_POINT,
     API_DATA,
     API_DOUBLE_SET_POINT,
+    API_ERROR_LOW_BATTERY,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
     API_ERROR_ZONE_ID_OUT_RANGE,
@@ -67,6 +68,7 @@ from .const import (
     API_ZONE_ID,
     API_ZONE_PARAMS,
     AZD_AIR_DEMAND,
+    AZD_BATTERY_LOW,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
     AZD_COOL_TEMP_MAX,
@@ -111,6 +113,8 @@ from .const import (
     AZD_WIFI_SIGNAL,
     AZD_ZONES,
     AZD_ZONES_NUM,
+    ERROR_SYSTEM,
+    ERROR_ZONE,
     HTTP_CALL_TIMEOUT,
     THERMOSTAT_RADIO,
     THERMOSTAT_WIRED,
@@ -343,6 +347,7 @@ class System:
 
     def __init__(self, airzone_system):
         """System init."""
+        self.errors: list[str] = []
         self.id = None
         self.firmware: str | None = None
         self.modes: list[OperationMode] = []
@@ -368,6 +373,9 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
+        if len(self.errors) > 0:
+            data[AZD_ERRORS] = self.get_errors()
+
         if self.firmware:
             data[AZD_FIRMWARE] = self.get_firmware()
 
@@ -378,6 +386,15 @@ class System:
             data[AZD_POWER] = self.get_power()
 
         return data
+
+    def add_error(self, val: str) -> None:
+        """Add system error."""
+        if val not in self.errors:
+            self.errors.append(val)
+
+    def get_errors(self) -> list[str]:
+        """Return system errors."""
+        return self.errors
 
     def get_id(self) -> int:
         """Return system ID."""
@@ -551,7 +568,7 @@ class Zone:
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
         self.double_set_point: bool = False
-        self.errors: list | None = None
+        self.errors: list[str] = []
         self.floor_demand = bool(zone[API_FLOOR_DEMAND])
         self.heat_temp_max: float | None = None
         self.heat_temp_min: float | None = None
@@ -599,8 +616,11 @@ class Zone:
         if API_HEAT_SET_POINT in zone:
             self.heat_temp_set = float(zone[API_HEAT_SET_POINT])
 
-        if len(zone[API_ERRORS]):
-            self.errors = zone[API_ERRORS]
+        if API_ERRORS in zone:
+            errors: list[dict[str, str]] = zone[API_ERRORS]
+            for error in errors:
+                for key, val in error.items():
+                    self.add_error(key, val)
 
         if self.master:
             for mode in zone[API_MODES]:
@@ -651,7 +671,7 @@ class Zone:
         if self.heat_stages:
             data[AZD_HEAT_STAGES] = self.get_heat_stages()
 
-        if self.errors:
+        if len(self.errors) > 0:
             data[AZD_ERRORS] = self.get_errors()
 
         modes = self.get_modes()
@@ -665,11 +685,30 @@ class Zone:
         if self.thermostat.radio:
             data[AZD_THERMOSTAT_RADIO] = self.thermostat.get_radio()
 
+        battery_low = self.get_battery_low()
+        if battery_low is not None:
+            data[AZD_BATTERY_LOW] = battery_low
+
         return data
+
+    def add_error(self, key: str, val: str) -> None:
+        """Add system or zone error."""
+        _key = key.casefold()
+        if _key == ERROR_SYSTEM:
+            self.system.add_error(val)
+        elif _key == ERROR_ZONE:
+            if val not in self.errors:
+                self.errors.append(val)
 
     def get_air_demand(self) -> bool:
         """Return zone air demand."""
         return self.air_demand
+
+    def get_battery_low(self) -> bool | None:
+        """Return battery status."""
+        if self.thermostat.get_radio():
+            return API_ERROR_LOW_BATTERY in self.errors
+        return None
 
     def get_cold_stage(self) -> AirzoneStages:
         """Return zone cold stage."""
@@ -723,7 +762,7 @@ class Zone:
             return round(self.heat_temp_set, 1)
         return None
 
-    def get_errors(self) -> list | None:
+    def get_errors(self) -> list[str]:
         """Return zone errors."""
         return self.errors
 
