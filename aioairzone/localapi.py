@@ -25,6 +25,7 @@ from .const import (
     API_COOL_MIN_TEMP,
     API_COOL_SET_POINT,
     API_DATA,
+    API_DOUBLE_SET_POINT,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
     API_ERROR_ZONE_ID_OUT_RANGE,
@@ -72,6 +73,7 @@ from .const import (
     AZD_COOL_TEMP_MIN,
     AZD_COOL_TEMP_SET,
     AZD_DEMAND,
+    AZD_DOUBLE_SET_POINT,
     AZD_ERRORS,
     AZD_FIRMWARE,
     AZD_FLOOR_DEMAND,
@@ -548,6 +550,7 @@ class Zone:
         self.cool_temp_max: float | None = None
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
+        self.double_set_point: bool = False
         self.errors: list | None = None
         self.floor_demand = bool(zone[API_FLOOR_DEMAND])
         self.heat_temp_max: float | None = None
@@ -587,6 +590,8 @@ class Zone:
             self.cool_temp_min = float(zone[API_COOL_MIN_TEMP])
         if API_COOL_SET_POINT in zone:
             self.cool_temp_set = float(zone[API_COOL_SET_POINT])
+        if API_DOUBLE_SET_POINT in zone:
+            self.double_set_point = bool(zone[API_DOUBLE_SET_POINT])
         if API_HEAT_MAX_TEMP in zone:
             self.heat_temp_max = float(zone[API_HEAT_MAX_TEMP])
         if API_HEAT_MIN_TEMP in zone:
@@ -610,6 +615,7 @@ class Zone:
             AZD_AIR_DEMAND: self.get_air_demand(),
             AZD_COLD_STAGE: self.get_cold_stage(),
             AZD_DEMAND: self.get_demand(),
+            AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
             AZD_FLOOR_DEMAND: self.get_floor_demand(),
             AZD_HEAT_STAGE: self.get_heat_stage(),
             AZD_HUMIDITY: self.get_humidity(),
@@ -694,6 +700,10 @@ class Zone:
     def get_demand(self) -> bool:
         """Return zone demand."""
         return self.get_air_demand() or self.get_floor_demand()
+
+    def get_double_set_point(self) -> bool:
+        """Return zone double set point."""
+        return self.double_set_point
 
     def get_heat_temp_max(self) -> float | None:
         """Return zone maximum heat temperature."""
