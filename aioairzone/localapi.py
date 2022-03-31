@@ -50,6 +50,8 @@ from .const import (
     API_POWER,
     API_ROOM_TEMP,
     API_SET_POINT,
+    API_SPEED,
+    API_SPEEDS,
     API_SYSTEM_FIRMWARE,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
@@ -96,6 +98,8 @@ from .const import (
     AZD_ON,
     AZD_POWER,
     AZD_PROBLEMS,
+    AZD_SPEED,
+    AZD_SPEEDS,
     AZD_SYSTEM,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
@@ -582,6 +586,8 @@ class Zone:
         self.modes: list[OperationMode] = []
         self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
+        self.speed: int | None = None
+        self.speeds: int | None = None
         self.temp = float(zone[API_ROOM_TEMP])
         self.temp_max = float(zone[API_MAX_TEMP])
         self.temp_min = float(zone[API_MIN_TEMP])
@@ -621,6 +627,11 @@ class Zone:
             for error in errors:
                 for key, val in error.items():
                     self.add_error(key, val)
+
+        if API_SPEED in zone:
+            self.speed = int(zone[API_SPEED])
+        if API_SPEEDS in zone:
+            self.speeds = int(zone[API_SPEEDS])
 
         if self.master:
             for mode in zone[API_MODES]:
@@ -670,6 +681,11 @@ class Zone:
             data[AZD_COLD_STAGES] = self.get_cold_stages()
         if self.heat_stages:
             data[AZD_HEAT_STAGES] = self.get_heat_stages()
+
+        if self.speed:
+            data[AZD_SPEED] = self.speed
+        if self.speeds:
+            data[AZD_SPEEDS] = self.speeds
 
         if len(self.errors) > 0:
             data[AZD_ERRORS] = self.get_errors()
@@ -811,6 +827,14 @@ class Zone:
     def get_problems(self) -> bool:
         """Return zone problems."""
         return bool(self.errors)
+
+    def get_speed(self) -> int | None:
+        """Return zone speed."""
+        return self.speed
+
+    def get_speeds(self) -> int | None:
+        """Return zone speedS."""
+        return self.speeds
 
     def get_system_id(self) -> int:
         """Return system ID."""

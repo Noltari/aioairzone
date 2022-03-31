@@ -29,6 +29,8 @@ API_ON = "on"
 API_POWER = "power"
 API_ROOM_TEMP = "roomTemp"
 API_SET_POINT = "setpoint"
+API_SPEED = "speed"
+API_SPEEDS = "speeds"
 API_SYSTEM_FIRMWARE = "system_firmware"
 API_SYSTEM_ID = "systemID"
 API_SYSTEM_TYPE = "system_type"
@@ -50,7 +52,10 @@ API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
 API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"
 API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
 
-API_SYSTEM_PARAMS = [API_MODE]
+API_SYSTEM_PARAMS = [
+    API_MODE,
+    API_SPEED,
+]
 API_ZONE_PARAMS = [
     API_COOL_SET_POINT,
     API_COLD_STAGE,
@@ -90,6 +95,8 @@ AZD_NAME = "name"
 AZD_ON = "on"
 AZD_POWER = "power"
 AZD_PROBLEMS = "problems"
+AZD_SPEED = "speed"
+AZD_SPEEDS = "speeds"
 AZD_SYSTEM = "system"
 AZD_SYSTEMS = "systems"
 AZD_SYSTEMS_NUM = "num_systems"
