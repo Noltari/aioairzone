@@ -374,6 +374,7 @@ class System:
         """Return Airzone system data."""
         data: dict[str, Any] = {
             AZD_ID: self.get_id(),
+            AZD_PROBLEMS: self.get_problems(),
             AZD_ZONES_NUM: self.num_zones(),
         }
 
@@ -423,6 +424,10 @@ class System:
     def get_power(self) -> bool | None:
         """Return system power."""
         return self.power
+
+    def get_problems(self) -> bool:
+        """Return system problems."""
+        return bool(self.errors)
 
     def get_zone(self, zone_id: int) -> Zone:
         """Return Airzone zone."""
