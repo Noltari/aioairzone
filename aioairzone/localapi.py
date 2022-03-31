@@ -664,18 +664,19 @@ class Zone:
             AZD_TEMP_UNIT: self.get_temp_unit(),
         }
 
-        if self.cool_temp_max:
-            data[AZD_COOL_TEMP_MAX] = self.get_cool_temp_max()
-        if self.cool_temp_min:
-            data[AZD_COOL_TEMP_MIN] = self.get_cool_temp_min()
-        if self.cool_temp_set:
-            data[AZD_COOL_TEMP_SET] = self.get_cool_temp_set()
-        if self.heat_temp_max:
-            data[AZD_HEAT_TEMP_MAX] = self.get_heat_temp_max()
-        if self.heat_temp_min:
-            data[AZD_HEAT_TEMP_MIN] = self.get_heat_temp_min()
-        if self.heat_temp_set:
-            data[AZD_HEAT_TEMP_SET] = self.get_heat_temp_set()
+        if data[AZD_DOUBLE_SET_POINT]:
+            if self.cool_temp_max:
+                data[AZD_COOL_TEMP_MAX] = self.get_cool_temp_max()
+            if self.cool_temp_min:
+                data[AZD_COOL_TEMP_MIN] = self.get_cool_temp_min()
+            if self.cool_temp_set:
+                data[AZD_COOL_TEMP_SET] = self.get_cool_temp_set()
+            if self.heat_temp_max:
+                data[AZD_HEAT_TEMP_MAX] = self.get_heat_temp_max()
+            if self.heat_temp_min:
+                data[AZD_HEAT_TEMP_MIN] = self.get_heat_temp_min()
+            if self.heat_temp_set:
+                data[AZD_HEAT_TEMP_SET] = self.get_heat_temp_set()
 
         if self.cold_stages:
             data[AZD_COLD_STAGES] = self.get_cold_stages()
