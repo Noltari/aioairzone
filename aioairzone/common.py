@@ -8,9 +8,15 @@ from enum import Enum
 class AirzoneStages(int, Enum):
     """Airzone stages."""
 
+    UNKNOWN = -1
+
     Air = 1
     Radiant = 2
     Combined = 3
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
 
     def to_list(self) -> list[AirzoneStages]:
         """Convert AirzoneStages value to list."""
@@ -32,6 +38,8 @@ class ConnectionOptions:
 class OperationMode(int, Enum):
     """Airzone operation modes."""
 
+    UNKNOWN = -1
+
     STOP = 1
     COOLING = 2
     HEATING = 3
@@ -39,9 +47,15 @@ class OperationMode(int, Enum):
     DRY = 5
     AUTO = 7
 
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
 
 class SystemType(int, Enum):
     """Airzone System Types."""
+
+    UNKNOWN = -1
 
     C6 = 1
     AQUAGLASS = 2
@@ -51,9 +65,14 @@ class SystemType(int, Enum):
     ZBS = 6
     ZS6 = 7
 
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
     def __str__(self) -> str:
         """Convert ThermostatType value to string."""
         models: dict[int, str] = {
+            self.UNKNOWN: "Unknown",
             self.C6: "C6",
             self.AQUAGLASS: "AQUAGLASS",
             self.DZK: "DZK",
@@ -75,14 +94,21 @@ class TemperatureUnit(int, Enum):
 class ThermostatType(int, Enum):
     """Airzone Thermostat Types."""
 
+    UNKNOWN = -1
+
     Blueface = 1
     BluefaceZero = 2
     Lite = 3
     Think = 4
 
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
     def __str__(self) -> str:
         """Convert ThermostatType value to string."""
         models: dict[int, str] = {
+            self.UNKNOWN: "Unknown",
             self.Blueface: "Blueface",
             self.BluefaceZero: "Blueface Zero",
             self.Lite: "Lite",
@@ -93,6 +119,7 @@ class ThermostatType(int, Enum):
     def exists_radio(self) -> bool:
         """Return if a radio version of the Thermostat exists."""
         models: dict[int, bool] = {
+            self.UNKNOWN: False,
             self.Blueface: False,
             self.BluefaceZero: False,
             self.Lite: True,
@@ -104,5 +131,11 @@ class ThermostatType(int, Enum):
 class WebServerInterface(int, Enum):
     """Airzone WebServer Interface type."""
 
+    UNKNOWN = -1
+
     ETHERNET = 1
     WIFI = 2
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
