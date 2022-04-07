@@ -511,7 +511,12 @@ class Zone:
         """Return zone modes."""
         if self.master:
             return self.modes
-        return self.system.get_modes()
+        modes = self.system.get_modes()
+        if len(modes) == 0:
+            modes = [self.mode]
+            if OperationMode.STOP not in modes:
+                modes.append(OperationMode.STOP)
+        return modes
 
     def get_name(self) -> str:
         """Return zone name."""
