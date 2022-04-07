@@ -19,6 +19,7 @@ from .const import (
     API_COOL_MIN_TEMP,
     API_COOL_SET_POINT,
     API_DOUBLE_SET_POINT,
+    API_DOUBLE_SET_POINT_PARAMS,
     API_ERROR_LOW_BATTERY,
     API_ERRORS,
     API_FLOOR_DEMAND,
@@ -128,13 +129,14 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
-        if len(self.errors) > 0:
-            data[AZD_ERRORS] = self.get_errors()
+        errors = self.get_errors()
+        if len(errors) > 0:
+            data[AZD_ERRORS] = errors
 
-        if self.firmware:
+        if self.firmware is not None:
             data[AZD_FIRMWARE] = self.get_firmware()
 
-        if self.type:
+        if self.type is not None:
             data[AZD_MODEL] = self.get_model()
 
         if self.power is not None:
@@ -311,6 +313,8 @@ class Zone:
             self.cool_temp_set = float(zone[API_COOL_SET_POINT])
         if API_DOUBLE_SET_POINT in zone:
             self.double_set_point = bool(zone[API_DOUBLE_SET_POINT])
+        else:
+            self.double_set_point = zone.keys() >= API_DOUBLE_SET_POINT_PARAMS
         if API_HEAT_MAX_TEMP in zone:
             self.heat_temp_max = float(zone[API_HEAT_MAX_TEMP])
         if API_HEAT_MIN_TEMP in zone:
@@ -362,18 +366,24 @@ class Zone:
             data[AZD_HUMIDITY] = humidity
 
         if data[AZD_DOUBLE_SET_POINT]:
-            if self.cool_temp_max:
-                data[AZD_COOL_TEMP_MAX] = self.get_cool_temp_max()
-            if self.cool_temp_min:
-                data[AZD_COOL_TEMP_MIN] = self.get_cool_temp_min()
-            if self.cool_temp_set:
-                data[AZD_COOL_TEMP_SET] = self.get_cool_temp_set()
-            if self.heat_temp_max:
-                data[AZD_HEAT_TEMP_MAX] = self.get_heat_temp_max()
-            if self.heat_temp_min:
-                data[AZD_HEAT_TEMP_MIN] = self.get_heat_temp_min()
-            if self.heat_temp_set:
-                data[AZD_HEAT_TEMP_SET] = self.get_heat_temp_set()
+            cool_temp_max = self.get_cool_temp_max()
+            if cool_temp_max:
+                data[AZD_COOL_TEMP_MAX] = cool_temp_max
+            cool_temp_min = self.get_cool_temp_min()
+            if cool_temp_min:
+                data[AZD_COOL_TEMP_MIN] = cool_temp_min
+            cool_temp_set = self.get_cool_temp_set()
+            if cool_temp_set:
+                data[AZD_COOL_TEMP_SET] = cool_temp_set
+            heat_temp_max = self.get_heat_temp_max()
+            if heat_temp_max:
+                data[AZD_HEAT_TEMP_MAX] = heat_temp_max
+            heat_temp_min = self.get_heat_temp_min()
+            if heat_temp_min:
+                data[AZD_HEAT_TEMP_MIN] = heat_temp_min
+            heat_temp_set = self.get_heat_temp_set()
+            if heat_temp_set:
+                data[AZD_HEAT_TEMP_SET] = heat_temp_set
 
         cold_stage = self.get_cold_stage()
         if cold_stage is not None:
@@ -396,19 +406,23 @@ class Zone:
         if speeds is not None:
             data[AZD_SPEEDS] = speeds
 
-        if len(self.errors) > 0:
-            data[AZD_ERRORS] = self.get_errors()
+        errors = self.get_errors()
+        if len(errors) > 0:
+            data[AZD_ERRORS] = errors
 
         modes = self.get_modes()
-        if modes:
+        if modes is not None:
             data[AZD_MODES] = modes
 
-        if self.thermostat.firmware:
-            data[AZD_THERMOSTAT_FW] = self.thermostat.get_firmware()
-        if self.thermostat.type:
-            data[AZD_THERMOSTAT_MODEL] = self.thermostat.get_model()
-        if self.thermostat.radio:
-            data[AZD_THERMOSTAT_RADIO] = self.thermostat.get_radio()
+        thermostat_firmware = self.thermostat.get_firmware()
+        if thermostat_firmware is not None:
+            data[AZD_THERMOSTAT_FW] = thermostat_firmware
+        thermostat_model = self.thermostat.get_model()
+        if thermostat_model is not None:
+            data[AZD_THERMOSTAT_MODEL] = thermostat_model
+        thermostat_radio = self.thermostat.get_radio()
+        if thermostat_radio is not None:
+            data[AZD_THERMOSTAT_RADIO] = thermostat_radio
 
         battery_low = self.get_battery_low()
         if battery_low is not None:
