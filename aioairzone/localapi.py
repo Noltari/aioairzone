@@ -31,6 +31,7 @@ from .const import (
     AZD_ZONES_NUM,
     HTTP_CALL_TIMEOUT,
 )
+from .device import System, Zone
 from .exceptions import (
     APIError,
     InvalidHost,
@@ -39,9 +40,7 @@ from .exceptions import (
     InvalidZone,
     ParamUpdateFailure,
 )
-from .system import System
 from .webserver import WebServer
-from .zone import Zone
 
 _LOGGER = logging.getLogger(__name__)
 
