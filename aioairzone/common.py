@@ -10,6 +10,7 @@ class AirzoneStages(int, Enum):
 
     UNKNOWN = -1
 
+    EMPTY = 0
     Air = 1
     Radiant = 2
     Combined = 3
@@ -17,6 +18,10 @@ class AirzoneStages(int, Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.UNKNOWN
+
+    def exists(self) -> bool:
+        """Return if Airzone Stage exits."""
+        return self.value != self.EMPTY
 
     def to_list(self) -> list[AirzoneStages]:
         """Convert AirzoneStages value to list."""

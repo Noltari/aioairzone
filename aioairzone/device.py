@@ -254,7 +254,7 @@ class Zone:
     def __init__(self, system: System, zone: dict[str, Any]):
         """Zone init."""
         self.air_demand = bool(zone[API_AIR_DEMAND])
-        self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
+        self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
         self.cool_temp_max: float | None = None
         self.cool_temp_min: float | None = None
@@ -265,7 +265,7 @@ class Zone:
         self.heat_temp_max: float | None = None
         self.heat_temp_min: float | None = None
         self.heat_temp_set: float | None = None
-        self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
+        self.heat_stage: AirzoneStages | None = None
         self.heat_stages: list[AirzoneStages] = []
         self.humidity: int | None = None
         self.id = int(zone[API_ZONE_ID])
@@ -287,15 +287,20 @@ class Zone:
         if API_HUMIDITY in zone:
             self.humidity = int(zone[API_HUMIDITY])
 
+        if API_COLD_STAGE in zone:
+            self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
         if API_COLD_STAGES in zone:
             cold_stages = AirzoneStages(zone[API_COLD_STAGES])
             self.cold_stages = cold_stages.to_list()
-        elif self.cold_stage:
+        elif self.cold_stage and self.cold_stage.exists():
             self.cold_stages = [self.cold_stage]
+
+        if API_HEAT_STAGE in zone:
+            self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
         if API_HEAT_STAGES in zone:
             heat_stages = AirzoneStages(zone[API_HEAT_STAGES])
             self.heat_stages = heat_stages.to_list()
-        elif self.heat_stage:
+        elif self.heat_stage and self.heat_stage.exists():
             self.heat_stages = [self.heat_stage]
 
         if API_COOL_MAX_TEMP in zone:
@@ -335,11 +340,9 @@ class Zone:
         """Return Airzone zone data."""
         data = {
             AZD_AIR_DEMAND: self.get_air_demand(),
-            AZD_COLD_STAGE: self.get_cold_stage(),
             AZD_DEMAND: self.get_demand(),
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
             AZD_FLOOR_DEMAND: self.get_floor_demand(),
-            AZD_HEAT_STAGE: self.get_heat_stage(),
             AZD_ID: self.get_id(),
             AZD_MASTER: self.get_master(),
             AZD_MODE: self.get_mode(),
@@ -372,10 +375,19 @@ class Zone:
             if self.heat_temp_set:
                 data[AZD_HEAT_TEMP_SET] = self.get_heat_temp_set()
 
-        if self.cold_stages:
-            data[AZD_COLD_STAGES] = self.get_cold_stages()
-        if self.heat_stages:
-            data[AZD_HEAT_STAGES] = self.get_heat_stages()
+        cold_stage = self.get_cold_stage()
+        if cold_stage is not None:
+            data[AZD_COLD_STAGE] = cold_stage
+        cold_stages = self.get_cold_stages()
+        if cold_stages is not None:
+            data[AZD_COLD_STAGES] = cold_stages
+
+        heat_stage = self.get_heat_stage()
+        if heat_stage is not None:
+            data[AZD_HEAT_STAGE] = heat_stage
+        heat_stages = self.get_heat_stages()
+        if heat_stages is not None:
+            data[AZD_HEAT_STAGES] = heat_stages
 
         if self.speed:
             data[AZD_SPEED] = self.speed
@@ -421,13 +433,15 @@ class Zone:
             return API_ERROR_LOW_BATTERY in self.errors
         return None
 
-    def get_cold_stage(self) -> AirzoneStages:
+    def get_cold_stage(self) -> AirzoneStages | None:
         """Return zone cold stage."""
         return self.cold_stage
 
-    def get_cold_stages(self) -> list[AirzoneStages]:
+    def get_cold_stages(self) -> list[AirzoneStages] | None:
         """Return zone cold stages."""
-        return self.cold_stages
+        if len(self.cold_stages) > 0:
+            return self.cold_stages
+        return None
 
     def get_cool_temp_max(self) -> float | None:
         """Return zone maximum cool temperature."""
@@ -485,13 +499,15 @@ class Zone:
         """Return zone ID."""
         return self.id
 
-    def get_heat_stage(self) -> AirzoneStages:
+    def get_heat_stage(self) -> AirzoneStages | None:
         """Return zone heat stage."""
         return self.heat_stage
 
-    def get_heat_stages(self) -> list[AirzoneStages]:
+    def get_heat_stages(self) -> list[AirzoneStages] | None:
         """Return zone heat stages."""
-        return self.heat_stages
+        if len(self.heat_stages) > 0:
+            return self.heat_stages
+        return None
 
     def get_humidity(self) -> int | None:
         """Return zone humidity."""
