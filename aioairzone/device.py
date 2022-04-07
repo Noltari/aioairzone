@@ -389,10 +389,12 @@ class Zone:
         if heat_stages is not None:
             data[AZD_HEAT_STAGES] = heat_stages
 
-        if self.speed:
-            data[AZD_SPEED] = self.speed
-        if self.speeds:
-            data[AZD_SPEEDS] = self.speeds
+        speed = self.get_speed()
+        if speed is not None:
+            data[AZD_SPEED] = speed
+        speeds = self.get_speeds()
+        if speeds is not None:
+            data[AZD_SPEEDS] = speeds
 
         if len(self.errors) > 0:
             data[AZD_ERRORS] = self.get_errors()
@@ -551,7 +553,7 @@ class Zone:
         return self.speed
 
     def get_speeds(self) -> int | None:
-        """Return zone speedS."""
+        """Return zone speeds."""
         return self.speeds
 
     def get_system_id(self) -> int:
