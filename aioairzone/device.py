@@ -267,7 +267,7 @@ class Zone:
         self.heat_temp_set: float | None = None
         self.heat_stage = AirzoneStages(zone[API_HEAT_STAGE])
         self.heat_stages: list[AirzoneStages] = []
-        self.humidity = int(zone[API_HUMIDITY])
+        self.humidity: int | None = None
         self.id = int(zone[API_ZONE_ID])
         self.master = bool(API_MODES in zone)
         self.mode = OperationMode(zone[API_MODE])
@@ -283,6 +283,9 @@ class Zone:
         self.temp_unit = TemperatureUnit(zone[API_UNITS])
         self.thermostat = Thermostat(zone)
         self.system = system
+
+        if API_HUMIDITY in zone:
+            self.humidity = int(zone[API_HUMIDITY])
 
         if API_COLD_STAGES in zone:
             cold_stages = AirzoneStages(zone[API_COLD_STAGES])
@@ -337,7 +340,6 @@ class Zone:
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
             AZD_FLOOR_DEMAND: self.get_floor_demand(),
             AZD_HEAT_STAGE: self.get_heat_stage(),
-            AZD_HUMIDITY: self.get_humidity(),
             AZD_ID: self.get_id(),
             AZD_MASTER: self.get_master(),
             AZD_MODE: self.get_mode(),
@@ -351,6 +353,10 @@ class Zone:
             AZD_TEMP_SET: self.get_temp_set(),
             AZD_TEMP_UNIT: self.get_temp_unit(),
         }
+
+        humidity = self.get_humidity()
+        if humidity is not None:
+            data[AZD_HUMIDITY] = humidity
 
         if data[AZD_DOUBLE_SET_POINT]:
             if self.cool_temp_max:
@@ -487,9 +493,11 @@ class Zone:
         """Return zone heat stages."""
         return self.heat_stages
 
-    def get_humidity(self) -> int:
+    def get_humidity(self) -> int | None:
         """Return zone humidity."""
-        return self.humidity
+        if self.humidity is not None and self.humidity != 0:
+            return self.humidity
+        return None
 
     def get_master(self) -> bool:
         """Return zone master/slave."""
