@@ -1,0 +1,40 @@
+{
+  "systems": [
+    {
+      "data": [
+        {
+          "systemID": 1,
+          "zoneID": 1,
+          "name": "DKN Plus",
+          "on": 1,
+          "coolsetpoint": 81,
+          "coolmaxtemp": 90,
+          "coolmintemp": 63,
+          "heatsetpoint": 79,
+          "heatmaxtemp": 88,
+          "heatmintemp": 60,
+          "maxTemp": 88,
+          "minTemp": 60,
+          "setpoint": 79,
+          "roomTemp": 75,
+          "modes": [
+            4,
+            3
+          ],
+          "mode": 3,
+          "speeds": 2,
+          "speed": 2,
+          "coldStages": 0,
+          "coldStage": 0,
+          "heatStages": 0,
+          "heatStage": 0,
+          "humidity": 0,
+          "units": 1,
+          "errors": [],
+          "air_demand": 1,
+          "floor_demand": 0
+        }
+      ]
+    }
+  ]
+}

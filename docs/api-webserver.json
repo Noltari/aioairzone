@@ -1,0 +1,8 @@
+{
+  "mac": "11:22:33:44:55:66",
+  "wifi_channel": 10,
+  "wifi_quality": 10,
+  "wifi_noise": 0,
+  "wifi_signal": -47,
+  "wifi_interf": "wifi"
+}

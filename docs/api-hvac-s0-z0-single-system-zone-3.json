@@ -1,0 +1,30 @@
+{
+  "systems": [
+    {
+      "data": [
+        {
+          "systemID": 1,
+          "zoneID": 1,
+          "name": "",
+          "on": 0,
+          "maxTemp": 88,
+          "minTemp": 63,
+          "setpoint": 68,
+          "roomTemp": 71,
+          "mode": 3,
+          "speeds": 3,
+          "speed": 1,
+          "coldStages": 0,
+          "coldStage": 0,
+          "heatStages": 0,
+          "heatStage": 0,
+          "humidity": 0,
+          "units": 1,
+          "errors": [],
+          "air_demand": 0,
+          "floor_demand": 0
+        }
+      ]
+    }
+  ]
+}
