@@ -38,6 +38,7 @@ class ConnectionOptions:
 
     ip_address: str
     port: int
+    system_id: int = 0
 
 
 class OperationMode(int, Enum):

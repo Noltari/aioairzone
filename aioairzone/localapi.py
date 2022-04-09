@@ -106,7 +106,10 @@ class AirzoneLocalApi:
             self.supports_systems = False
 
         response = await self.get_hvac()
-        if API_SYSTEMS not in response:
+        if self.options.system_id == 0:
+            if API_SYSTEMS not in response:
+                raise InvalidHost
+        elif API_DATA not in response:
             raise InvalidHost
 
         return airzone_mac
@@ -115,9 +118,14 @@ class AirzoneLocalApi:
         """Gather Airzone systems."""
         systems: dict[int, System] = {}
 
-        api_systems = await self.get_hvac()
-        for api_system in api_systems[API_SYSTEMS]:
-            system = System(api_system[API_DATA])
+        hvac = await self.get_hvac()
+        if self.options.system_id == 0:
+            for hvac_system in hvac[API_SYSTEMS]:
+                system = System(hvac_system[API_DATA])
+                if system:
+                    systems[system.get_id()] = system
+        else:
+            system = System(hvac[API_DATA])
             if system:
                 systems[system.get_id()] = system
 
@@ -153,7 +161,7 @@ class AirzoneLocalApi:
         """Return Airzone HVAC zones."""
         if not params:
             params = {
-                API_SYSTEM_ID: 0,
+                API_SYSTEM_ID: self.options.system_id,
                 API_ZONE_ID: 0,
             }
         res = await self.http_request(
