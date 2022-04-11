@@ -145,3 +145,25 @@ class WebServerInterface(int, Enum):
     @classmethod
     def _missing_(cls, value):
         return cls.UNKNOWN
+
+
+class WebServerType(int, Enum):
+    """Airzone WebServer Types."""
+
+    UNKNOWN = -1
+
+    AIRZONE = 1
+    AIDOO = 2
+
+    @classmethod
+    def _missing_(cls, value):
+        return cls.UNKNOWN
+
+    def __str__(self) -> str:
+        """Convert WebServerType value to string."""
+        models: dict[int, str] = {
+            self.UNKNOWN: "Unknown",
+            self.AIRZONE: "WebServer Airzone",
+            self.AIDOO: "WebServer Aidoo",
+        }
+        return models[self.value]
