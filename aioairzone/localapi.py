@@ -42,6 +42,8 @@ from .exceptions import (
     InvalidSystem,
     InvalidZone,
     ParamUpdateFailure,
+    SystemNotAvailable,
+    SystemOutOfRange,
 )
 from .webserver import WebServer
 
@@ -74,6 +76,23 @@ class AirzoneLocalApi:
         """Device port."""
         return self.options.port
 
+    @staticmethod
+    def handle_errors(errors: list[dict[str, str]]) -> None:
+        """Handle API errors."""
+        for error in errors:
+            for val in error.values():
+                if val == API_ERROR_SYSTEM_ID_NOT_AVAILABLE:
+                    raise SystemNotAvailable
+                if val == API_ERROR_SYSTEM_ID_OUT_RANGE:
+                    raise SystemOutOfRange
+                if val == API_ERROR_METHOD_NOT_SUPPORTED:
+                    raise InvalidMethod
+                if val == API_ERROR_ZONE_ID_OUT_RANGE:
+                    raise InvalidZone
+                if val == API_ERROR_ZONE_ID_NOT_AVAILABLE:
+                    raise InvalidZone
+                _LOGGER.error('API error: "%s"', error)
+
     async def http_request(
         self, method: str, path: str, data: Any | None = None
     ) -> dict[str, Any]:
@@ -89,15 +108,7 @@ class AirzoneLocalApi:
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
             if API_ERRORS in resp_json:
-                errors: list[dict[str, str]] = resp_json[API_ERRORS]
-                for error in errors:
-                    for val in error.values():
-                        if val == API_ERROR_SYSTEM_ID_NOT_AVAILABLE:
-                            raise InvalidSystem
-                        if val == API_ERROR_SYSTEM_ID_OUT_RANGE:
-                            raise InvalidSystem
-                        if val == API_ERROR_METHOD_NOT_SUPPORTED:
-                            raise InvalidMethod
+                self.handle_errors(resp_json[API_ERRORS])
             raise APIError
         return cast(dict, resp_json)
 
@@ -116,7 +127,7 @@ class AirzoneLocalApi:
         try:
             response = await self.get_hvac_systems()
             self.supports_systems = bool(API_SYSTEMS in response)
-        except InvalidMethod:
+        except SystemOutOfRange:
             self.supports_systems = False
 
         response = await self.get_hvac()
@@ -203,14 +214,7 @@ class AirzoneLocalApi:
 
         if API_DATA not in res:
             if API_ERRORS in res:
-                for error in res[API_ERRORS]:
-                    if error == API_ERROR_SYSTEM_ID_OUT_RANGE:
-                        raise InvalidSystem
-                    if error == API_ERROR_ZONE_ID_OUT_RANGE:
-                        raise InvalidZone
-                    if error == API_ERROR_ZONE_ID_NOT_AVAILABLE:
-                        raise InvalidZone
-                    _LOGGER.error('HVAC PUT error: "%s"', error)
+                self.handle_errors(res[API_ERRORS])
             raise APIError
 
         data: dict = res[API_DATA][0]
