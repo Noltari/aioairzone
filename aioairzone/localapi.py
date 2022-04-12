@@ -5,12 +5,14 @@ import json
 import logging
 from typing import Any, cast
 
-from aiohttp import ClientResponseError, ClientSession
+from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
 from .common import ConnectionOptions
 from .const import (
     API_DATA,
+    API_ERROR_METHOD_NOT_SUPPORTED,
+    API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
     API_ERROR_ZONE_ID_OUT_RANGE,
@@ -35,6 +37,7 @@ from .device import System, Zone
 from .exceptions import (
     APIError,
     InvalidHost,
+    InvalidMethod,
     InvalidParam,
     InvalidSystem,
     InvalidZone,
@@ -80,11 +83,22 @@ class AirzoneLocalApi:
             method,
             f"http://{self.options.ip_address}:{self.options.port}/{path}",
             data=json.dumps(data),
-            raise_for_status=True,
             timeout=HTTP_CALL_TIMEOUT,
         )
         resp_json = await resp.json(content_type=None)
         _LOGGER.debug("aiohttp response: %s", resp_json)
+        if resp.status != 200:
+            if API_ERRORS in resp_json:
+                errors: list[dict[str, str]] = resp_json[API_ERRORS]
+                for error in errors:
+                    for val in error.values():
+                        if val == API_ERROR_SYSTEM_ID_NOT_AVAILABLE:
+                            raise InvalidSystem
+                        if val == API_ERROR_SYSTEM_ID_OUT_RANGE:
+                            raise InvalidSystem
+                        if val == API_ERROR_METHOD_NOT_SUPPORTED:
+                            raise InvalidMethod
+            raise APIError
         return cast(dict, resp_json)
 
     async def validate_airzone(self) -> str | None:
@@ -96,13 +110,13 @@ class AirzoneLocalApi:
             self.supports_webserver = bool(API_MAC in response)
             if self.supports_webserver:
                 airzone_mac = str(response[API_MAC])
-        except ClientResponseError:
+        except InvalidMethod:
             self.supports_webserver = False
 
         try:
             response = await self.get_hvac_systems()
             self.supports_systems = bool(API_SYSTEMS in response)
-        except ClientResponseError:
+        except InvalidMethod:
             self.supports_systems = False
 
         response = await self.get_hvac()

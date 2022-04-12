@@ -14,6 +14,10 @@ class InvalidHost(AirzoneError):
     """Exception raised when invalid host is requested."""
 
 
+class InvalidMethod(AirzoneError):
+    """Exception raised when invalid method is requested."""
+
+
 class InvalidParam(AirzoneError):
     """Exception raised when invalid param is requested."""
 
