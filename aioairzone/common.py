@@ -4,6 +4,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from aioairzone.const import DEFAULT_PORT, DEFAULT_SYSTEM_ID
+
 
 class AirzoneStages(int, Enum):
     """Airzone stages."""
@@ -37,8 +39,8 @@ class ConnectionOptions:
     """Airzone options for connection."""
 
     ip_address: str
-    port: int
-    system_id: int = 0
+    port: int = DEFAULT_PORT
+    system_id: int = DEFAULT_SYSTEM_ID
 
 
 class OperationMode(int, Enum):

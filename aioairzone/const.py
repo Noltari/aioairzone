@@ -130,6 +130,9 @@ AZD_WIFI_RSSI = "wifi_rssi"
 AZD_ZONES = "zones"
 AZD_ZONES_NUM = "num_zones"
 
+DEFAULT_PORT = 3000
+DEFAULT_SYSTEM_ID = 0
+
 ERROR_SYSTEM = "system"
 ERROR_ZONE = "zone"
 
