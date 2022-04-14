@@ -66,16 +66,6 @@ class AirzoneLocalApi:
         self.systems: dict[int, System] = {}
         self.webserver: WebServer | None = None
 
-    @property
-    def ip_address(self) -> str:
-        """Device ip address."""
-        return self.options.ip_address
-
-    @property
-    def port(self) -> int:
-        """Device port."""
-        return self.options.port
-
     @staticmethod
     def handle_errors(errors: list[dict[str, str]]) -> None:
         """Handle API errors."""
