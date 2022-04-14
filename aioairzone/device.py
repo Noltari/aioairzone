@@ -610,18 +610,21 @@ class Zone:
 
     def is_stage_supported(self, stage: AirzoneStages) -> bool:
         """Check if Airzone Stage is supported."""
-        if stage == AirzoneStages.EMPTY:
-            return True
-
         cold_stages = self.get_cold_stages()
-        if cold_stages is not None and stage in cold_stages:
-            return True
+        if cold_stages is not None:
+            if stage in cold_stages:
+                return True
+            if len(cold_stages) == 0:
+                return True
 
         heat_stages = self.get_heat_stages()
-        if heat_stages is not None and stage in heat_stages:
-            return True
+        if heat_stages is not None:
+            if stage in heat_stages:
+                return True
+            if len(heat_stages) == 0:
+                return True
 
-        return False
+        return cold_stages is None and heat_stages is None
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
