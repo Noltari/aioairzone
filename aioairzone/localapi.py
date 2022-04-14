@@ -90,7 +90,7 @@ class AirzoneLocalApi:
         _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
         resp: ClientResponse = await self.aiohttp_session.request(
             method,
-            f"http://{self.options.ip_address}:{self.options.port}/{path}",
+            f"http://{self.options.host}:{self.options.port}/{path}",
             data=json.dumps(data),
             timeout=HTTP_CALL_TIMEOUT,
         )

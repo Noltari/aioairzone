@@ -38,7 +38,7 @@ class AirzoneStages(int, Enum):
 class ConnectionOptions:
     """Airzone options for connection."""
 
-    ip_address: str
+    host: str
     port: int = DEFAULT_PORT
     system_id: int = DEFAULT_SYSTEM_ID
 
