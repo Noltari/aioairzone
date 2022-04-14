@@ -343,10 +343,8 @@ class Zone:
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
         data = {
-            AZD_AIR_DEMAND: self.get_air_demand(),
             AZD_DEMAND: self.get_demand(),
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
-            AZD_FLOOR_DEMAND: self.get_floor_demand(),
             AZD_ID: self.get_id(),
             AZD_MASTER: self.get_master(),
             AZD_MODE: self.get_mode(),
@@ -360,6 +358,14 @@ class Zone:
             AZD_TEMP_SET: self.get_temp_set(),
             AZD_TEMP_UNIT: self.get_temp_unit(),
         }
+
+        air_demand = self.get_air_demand()
+        if air_demand is not None:
+            data[AZD_AIR_DEMAND] = air_demand
+
+        floor_demand = self.get_floor_demand()
+        if floor_demand is not None:
+            data[AZD_FLOOR_DEMAND] = floor_demand
 
         humidity = self.get_humidity()
         if humidity is not None:
@@ -439,9 +445,11 @@ class Zone:
             if val not in self.errors:
                 self.errors.append(val)
 
-    def get_air_demand(self) -> bool:
+    def get_air_demand(self) -> bool | None:
         """Return zone air demand."""
-        return self.air_demand
+        if self.is_stage_supported(AirzoneStages.Air):
+            return self.air_demand
+        return None
 
     def get_battery_low(self) -> bool | None:
         """Return battery status."""
@@ -479,7 +487,7 @@ class Zone:
 
     def get_demand(self) -> bool:
         """Return zone demand."""
-        return self.get_air_demand() or self.get_floor_demand()
+        return self.air_demand or self.floor_demand
 
     def get_double_set_point(self) -> bool:
         """Return zone double set point."""
@@ -507,9 +515,11 @@ class Zone:
         """Return zone errors."""
         return self.errors
 
-    def get_floor_demand(self) -> bool:
+    def get_floor_demand(self) -> bool | None:
         """Return zone floor demand."""
-        return self.floor_demand
+        if self.is_stage_supported(AirzoneStages.Radiant):
+            return self.floor_demand
+        return None
 
     def get_id(self) -> int:
         """Return zone ID."""
@@ -597,6 +607,21 @@ class Zone:
     def get_temp_unit(self) -> TemperatureUnit:
         """Return zone temperature unit."""
         return self.temp_unit
+
+    def is_stage_supported(self, stage: AirzoneStages) -> bool:
+        """Check if Airzone Stage is supported."""
+        if stage == AirzoneStages.EMPTY:
+            return True
+
+        cold_stages = self.get_cold_stages()
+        if cold_stages is not None and stage in cold_stages:
+            return True
+
+        heat_stages = self.get_heat_stages()
+        if heat_stages is not None and stage in heat_stages:
+            return True
+
+        return False
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
