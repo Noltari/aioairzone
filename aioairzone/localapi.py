@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+from enum import IntEnum
 from typing import Any, cast
 
 from aiohttp import ClientSession
@@ -50,6 +51,14 @@ from .webserver import WebServer
 _LOGGER = logging.getLogger(__name__)
 
 
+class ApiFeature(IntEnum):
+    """Supported features of the Airzone Local API."""
+
+    HVAC = 0
+    SYSTEMS = 1
+    WEBSERVER = 2
+
+
 class AirzoneLocalApi:
     """Airzone Local API device representation."""
 
@@ -60,9 +69,9 @@ class AirzoneLocalApi:
     ):
         """Device init."""
         self.aiohttp_session = aiohttp_session
+        self.api_features: int = ApiFeature.HVAC
+        self.api_features_checked = False
         self.options = options
-        self.supports_systems: bool = False
-        self.supports_webserver: bool = False
         self.systems: dict[int, System] = {}
         self.webserver: WebServer | None = None
 
@@ -102,23 +111,53 @@ class AirzoneLocalApi:
             raise APIError
         return cast(dict, resp_json)
 
+    def update_systems(self, data) -> None:
+        """Gather Systems data."""
+        for api_system in data[API_SYSTEMS]:
+            system = self.get_system(api_system[API_SYSTEM_ID])
+            if system:
+                system.update_data(api_system)
+
+    def update_webserver(self, data) -> None:
+        """Gather WebServer data."""
+        self.webserver = WebServer(data)
+
+    async def check_features(self, update: bool) -> None:
+        """Check Airzone API features."""
+        try:
+            self.webserver = None
+            webserver = await self.get_webserver()
+            if API_MAC in webserver:
+                self.api_features |= ApiFeature.WEBSERVER
+                self.update_webserver(webserver)
+        except InvalidMethod:
+            pass
+
+        try:
+            systems = await self.get_hvac_systems()
+            if API_SYSTEMS in systems:
+                self.api_features |= ApiFeature.SYSTEMS
+                if update:
+                    self.update_systems(systems)
+        except SystemOutOfRange:
+            pass
+
+        self.api_features_checked = True
+
+    async def update_features(self) -> None:
+        """Gather Airzone features data."""
+        if not self.api_features_checked:
+            await self.check_features(True)
+        else:
+            if self.api_features & ApiFeature.SYSTEMS:
+                self.update_systems(await self.get_hvac_systems())
+
+            if self.api_features & ApiFeature.WEBSERVER:
+                self.update_webserver(await self.get_webserver())
+
     async def validate(self) -> str | None:
         """Validate Airzone API."""
-        airzone_mac: str | None = None
-
-        try:
-            response = await self.get_webserver()
-            self.supports_webserver = bool(API_MAC in response)
-            if self.supports_webserver:
-                airzone_mac = str(response[API_MAC])
-        except InvalidMethod:
-            self.supports_webserver = False
-
-        try:
-            response = await self.get_hvac_systems()
-            self.supports_systems = bool(API_SYSTEMS in response)
-        except SystemOutOfRange:
-            self.supports_systems = False
+        await self.check_features(False)
 
         response = await self.get_hvac()
         if self.options.system_id == 0:
@@ -127,7 +166,10 @@ class AirzoneLocalApi:
         elif API_DATA not in response:
             raise InvalidHost
 
-        return airzone_mac
+        if self.webserver:
+            return self.webserver.get_mac()
+
+        return None
 
     async def update(self) -> bool:
         """Gather Airzone data."""
@@ -143,19 +185,9 @@ class AirzoneLocalApi:
             system = System(hvac[API_DATA])
             if system:
                 systems[system.get_id()] = system
-
         self.systems = systems
 
-        if self.supports_systems:
-            api_systems = await self.get_hvac_systems()
-            for api_system in api_systems[API_SYSTEMS]:
-                system = self.get_system(api_system[API_SYSTEM_ID])
-                if system:
-                    system.update_data(api_system)
-
-        if self.supports_webserver:
-            webserver_data = await self.get_webserver()
-            self.webserver = WebServer(webserver_data)
+        await self.update_features()
 
         return bool(systems)
 
