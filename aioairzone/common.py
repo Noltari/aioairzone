@@ -1,10 +1,10 @@
 """Airzone library common code."""
 from __future__ import annotations
 
-from enum import Enum
+from enum import IntEnum
 
 
-class AirzoneStages(int, Enum):
+class AirzoneStages(IntEnum):
     """Airzone stages."""
 
     UNKNOWN = -1
@@ -31,7 +31,7 @@ class AirzoneStages(int, Enum):
         return []
 
 
-class OperationMode(int, Enum):
+class OperationMode(IntEnum):
     """Airzone operation modes."""
 
     UNKNOWN = -1
@@ -48,7 +48,7 @@ class OperationMode(int, Enum):
         return cls.UNKNOWN
 
 
-class SystemType(int, Enum):
+class SystemType(IntEnum):
     """Airzone System Types."""
 
     UNKNOWN = -1
@@ -80,14 +80,14 @@ class SystemType(int, Enum):
         return models[self.value]
 
 
-class TemperatureUnit(int, Enum):
+class TemperatureUnit(IntEnum):
     """Airzone temperature units."""
 
     CELSIUS = 0
     FAHRENHEIT = 1
 
 
-class ThermostatType(int, Enum):
+class ThermostatType(IntEnum):
     """Airzone Thermostat Types."""
 
     UNKNOWN = -1
@@ -124,7 +124,7 @@ class ThermostatType(int, Enum):
         return models[self.value]
 
 
-class WebServerInterface(int, Enum):
+class WebServerInterface(IntEnum):
     """Airzone WebServer Interface type."""
 
     UNKNOWN = -1
@@ -137,7 +137,7 @@ class WebServerInterface(int, Enum):
         return cls.UNKNOWN
 
 
-class WebServerType(int, Enum):
+class WebServerType(IntEnum):
     """Airzone WebServer Types."""
 
     UNKNOWN = -1
