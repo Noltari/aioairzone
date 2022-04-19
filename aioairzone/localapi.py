@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import json
 import logging
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Any, cast
 
 from aiohttp import ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
-from .common import ConnectionOptions
 from .const import (
     API_DATA,
     API_ERROR_METHOD_NOT_SUPPORTED,
@@ -32,6 +32,8 @@ from .const import (
     AZD_WEBSERVER,
     AZD_ZONES,
     AZD_ZONES_NUM,
+    DEFAULT_PORT,
+    DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
 )
 from .device import System, Zone
@@ -57,6 +59,15 @@ class ApiFeature(IntEnum):
     HVAC = 0
     SYSTEMS = 1
     WEBSERVER = 2
+
+
+@dataclass
+class ConnectionOptions:
+    """Airzone Local API options for connection."""
+
+    host: str
+    port: int = DEFAULT_PORT
+    system_id: int = DEFAULT_SYSTEM_ID
 
 
 class AirzoneLocalApi:
