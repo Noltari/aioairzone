@@ -14,13 +14,13 @@ async def main():
     """Basic Airzone client example."""
 
     async with aiohttp.ClientSession() as aiohttp_session:
-        client = AirzoneLocalApi(aiohttp_session, _config.AIRZONE_OPTIONS)
+        airzone = AirzoneLocalApi(aiohttp_session, _config.AIRZONE_OPTIONS)
         try:
-            airzone_mac = await client.validate_airzone()
+            airzone_mac = await airzone.validate()
             if airzone_mac is not None:
                 print(f"Airzone WebServer: {airzone_mac}")
-            await client.update_airzone()
-            print(json.dumps(client.data(), indent=4, sort_keys=True))
+            await airzone.update()
+            print(json.dumps(airzone.data(), indent=4, sort_keys=True))
         except (ClientConnectorError, InvalidHost):
             print("Invalid host.")
 

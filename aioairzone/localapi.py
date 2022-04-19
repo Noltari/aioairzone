@@ -102,8 +102,8 @@ class AirzoneLocalApi:
             raise APIError
         return cast(dict, resp_json)
 
-    async def validate_airzone(self) -> str | None:
-        """Validate Airzone API methods."""
+    async def validate(self) -> str | None:
+        """Validate Airzone API."""
         airzone_mac: str | None = None
 
         try:
@@ -129,8 +129,8 @@ class AirzoneLocalApi:
 
         return airzone_mac
 
-    async def update_airzone(self) -> bool:
-        """Gather Airzone systems."""
+    async def update(self) -> bool:
+        """Gather Airzone data."""
         systems: dict[int, System] = {}
 
         hvac = await self.get_hvac()
