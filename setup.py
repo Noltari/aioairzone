@@ -16,6 +16,7 @@ setup(
     author="Álvaro Fernández Rojas",
     author_email="noltari@gmail.com",
     description="Library to control Airzone devices",
+    license="ASL 2.0",
     long_description=README_FILE.read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     packages=["aioairzone"],
