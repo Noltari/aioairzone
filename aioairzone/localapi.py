@@ -13,6 +13,7 @@ from aiohttp.client_reqrep import ClientResponse
 from .const import (
     API_DATA,
     API_ERROR_METHOD_NOT_SUPPORTED,
+    API_ERROR_REQUEST_MALFORMED,
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
@@ -45,8 +46,11 @@ from .exceptions import (
     InvalidSystem,
     InvalidZone,
     ParamUpdateFailure,
+    RequestMalformed,
     SystemNotAvailable,
     SystemOutOfRange,
+    ZoneNotAvailable,
+    ZoneOutOfRange,
 )
 from .webserver import WebServer
 
@@ -91,16 +95,18 @@ class AirzoneLocalApi:
         """Handle API errors."""
         for error in errors:
             for val in error.values():
+                if val == API_ERROR_METHOD_NOT_SUPPORTED:
+                    raise InvalidMethod
+                if val == API_ERROR_REQUEST_MALFORMED:
+                    raise RequestMalformed
                 if val == API_ERROR_SYSTEM_ID_NOT_AVAILABLE:
                     raise SystemNotAvailable
                 if val == API_ERROR_SYSTEM_ID_OUT_RANGE:
                     raise SystemOutOfRange
-                if val == API_ERROR_METHOD_NOT_SUPPORTED:
-                    raise InvalidMethod
                 if val == API_ERROR_ZONE_ID_OUT_RANGE:
-                    raise InvalidZone
+                    raise ZoneOutOfRange
                 if val == API_ERROR_ZONE_ID_NOT_AVAILABLE:
-                    raise InvalidZone
+                    raise ZoneNotAvailable
                 _LOGGER.error('API error: "%s"', error)
 
     async def http_request(

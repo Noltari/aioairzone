@@ -54,6 +54,7 @@ API_ZONE_ID = "zoneID"
 
 API_ERROR_LOW_BATTERY = "Low battery"
 API_ERROR_METHOD_NOT_SUPPORTED = "Method not provided or not supported"
+API_ERROR_REQUEST_MALFORMED = "request malformed"
 API_ERROR_SYSTEM_ID_NOT_AVAILABLE = "systemid not avaiable"
 API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
 API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"

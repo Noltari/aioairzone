@@ -34,9 +34,21 @@ class ParamUpdateFailure(AirzoneError):
     """Exception raised when parameter isn't updated."""
 
 
+class RequestMalformed(AirzoneError):
+    """Exception raised when API receives a malformed request."""
+
+
 class SystemOutOfRange(InvalidSystem):
     """Exception raised when system id is out of range."""
 
 
 class SystemNotAvailable(InvalidSystem):
     """Exception raised when system id is not available."""
+
+
+class ZoneOutOfRange(InvalidZone):
+    """Exception raised when zone id is out of range."""
+
+
+class ZoneNotAvailable(InvalidZone):
+    """Exception raised when zone id is not available."""
