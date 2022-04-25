@@ -107,7 +107,7 @@ class AirzoneLocalApi:
                     raise ZoneOutOfRange
                 if val == API_ERROR_ZONE_ID_NOT_AVAILABLE:
                     raise ZoneNotAvailable
-                _LOGGER.error('API error: "%s"', error)
+                raise APIError(error)
 
     async def http_request(
         self, method: str, path: str, data: Any | None = None
@@ -125,7 +125,7 @@ class AirzoneLocalApi:
         if resp.status != 200:
             if API_ERRORS in resp_json:
                 self.handle_errors(resp_json[API_ERRORS])
-            raise APIError
+            raise APIError(f"HTTP status: {resp.status}")
         return cast(dict, resp_json)
 
     def update_systems(self, data) -> None:
@@ -254,7 +254,7 @@ class AirzoneLocalApi:
         if API_DATA not in res:
             if API_ERRORS in res:
                 self.handle_errors(res[API_ERRORS])
-            raise APIError
+            raise APIError(f"{API_DATA} not in API response")
 
         data: dict = res[API_DATA][0]
         for key, value in params.items():
