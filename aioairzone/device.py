@@ -134,18 +134,21 @@ class System:
         if len(errors) > 0:
             data[AZD_ERRORS] = errors
 
-        if self.firmware is not None:
-            data[AZD_FIRMWARE] = self.get_firmware()
+        firmware = self.get_firmware()
+        if firmware is not None:
+            data[AZD_FIRMWARE] = firmware
 
         full_name = self.get_full_name()
         if full_name is not None:
             data[AZD_FULL_NAME] = full_name
 
+        model = self.get_model()
         if self.type is not None:
-            data[AZD_MODEL] = self.get_model()
+            data[AZD_MODEL] = model
 
-        if self.power is not None:
-            data[AZD_POWER] = self.get_power()
+        power = self.get_power()
+        if power is not None:
+            data[AZD_POWER] = power
 
         return data
 
