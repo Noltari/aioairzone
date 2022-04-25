@@ -642,11 +642,31 @@ class Zone:
 
     def get_temp_max(self) -> float:
         """Return zone maximum temperature."""
-        return round(self.temp_max, 1)
+        temps: list[float] = [self.temp_max]
+
+        cool = self.get_cool_temp_max()
+        if cool is not None:
+            temps.append(cool)
+
+        heat = self.get_heat_temp_max()
+        if heat is not None:
+            temps.append(heat)
+
+        return round(max(temps), 1)
 
     def get_temp_min(self) -> float:
         """Return zone minimum temperature."""
-        return round(self.temp_min, 1)
+        temps: list[float] = [self.temp_max]
+
+        cool = self.get_cool_temp_min()
+        if cool is not None:
+            temps.append(cool)
+
+        heat = self.get_heat_temp_min()
+        if heat is not None:
+            temps.append(heat)
+
+        return round(min(temps), 1)
 
     def get_temp_set(self) -> float:
         """Return zone set temperature."""
