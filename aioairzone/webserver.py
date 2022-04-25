@@ -16,6 +16,7 @@ from .const import (
     API_WS_FIRMWARE,
     API_WS_TYPE,
     AZD_FIRMWARE,
+    AZD_FULL_NAME,
     AZD_INTERFACE,
     AZD_MAC,
     AZD_MODEL,
@@ -73,6 +74,10 @@ class WebServer:
         if firmware is not None:
             data[AZD_FIRMWARE] = firmware
 
+        full_name = self.get_full_name()
+        if full_name is not None:
+            data[AZD_FULL_NAME] = full_name
+
         interface = self.get_interface()
         if interface is not None:
             data[AZD_INTERFACE] = interface
@@ -102,6 +107,10 @@ class WebServer:
         if self.firmware and "." not in self.firmware and len(self.firmware) > 2:
             return f"{self.firmware[0:1]}.{self.firmware[1:]}"
         return self.firmware
+
+    def get_full_name(self) -> str | None:
+        """Return full name."""
+        return self.get_model()
 
     def get_interface(self) -> WebServerInterface | None:
         """Return WebServer network interface."""

@@ -153,7 +153,7 @@ class WebServerType(IntEnum):
         """Convert WebServerType value to string."""
         models: dict[int, str] = {
             self.UNKNOWN: "Unknown",
-            self.AIRZONE: "WebServer Airzone",
-            self.AIDOO: "WebServer Aidoo",
+            self.AIRZONE: "Airzone WebServer",
+            self.AIDOO: "Aidoo WebServer",
         }
         return models[self.value]

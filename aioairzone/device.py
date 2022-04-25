@@ -60,6 +60,7 @@ from .const import (
     AZD_ERRORS,
     AZD_FIRMWARE,
     AZD_FLOOR_DEMAND,
+    AZD_FULL_NAME,
     AZD_HEAT_STAGE,
     AZD_HEAT_STAGES,
     AZD_HEAT_TEMP_MAX,
@@ -136,6 +137,10 @@ class System:
         if self.firmware is not None:
             data[AZD_FIRMWARE] = self.get_firmware()
 
+        full_name = self.get_full_name()
+        if full_name is not None:
+            data[AZD_FULL_NAME] = full_name
+
         if self.type is not None:
             data[AZD_MODEL] = self.get_model()
 
@@ -162,6 +167,10 @@ class System:
         if self.firmware and "." not in self.firmware and len(self.firmware) > 2:
             return f"{self.firmware[0:1]}.{self.firmware[1:]}"
         return self.firmware
+
+    def get_full_name(self) -> str:
+        """Return full name."""
+        return f"Airzone [{self.get_id()}] System"
 
     def get_model(self) -> str | None:
         """Return system model."""
@@ -367,6 +376,10 @@ class Zone:
         if floor_demand is not None:
             data[AZD_FLOOR_DEMAND] = floor_demand
 
+        full_name = self.get_full_name()
+        if full_name is not None:
+            data[AZD_FULL_NAME] = full_name
+
         humidity = self.get_humidity()
         if humidity is not None:
             data[AZD_HUMIDITY] = humidity
@@ -502,6 +515,10 @@ class Zone:
         if self.is_stage_supported(AirzoneStages.Radiant):
             return self.floor_demand
         return None
+
+    def get_full_name(self) -> str:
+        """Return full name."""
+        return f"Airzone [{self.get_system_zone_id()}] {self.get_name()}"
 
     def get_id(self) -> int:
         """Return zone ID."""
