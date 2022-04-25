@@ -57,6 +57,7 @@ from .const import (
     AZD_COOL_TEMP_SET,
     AZD_DEMAND,
     AZD_DOUBLE_SET_POINT,
+    AZD_ENERGY,
     AZD_ERRORS,
     AZD_FIRMWARE,
     AZD_FLOOR_DEMAND,
@@ -74,7 +75,6 @@ from .const import (
     AZD_MODES,
     AZD_NAME,
     AZD_ON,
-    AZD_POWER,
     AZD_PROBLEMS,
     AZD_SPEED,
     AZD_SPEEDS,
@@ -103,11 +103,11 @@ class System:
 
     def __init__(self, airzone_system):
         """System init."""
+        self.energy: int | None = None
         self.errors: list[str] = []
         self.id = None
         self.firmware: str | None = None
         self.modes: list[OperationMode] = []
-        self.power: bool | None = None
         self.type: SystemType | None = None
         self.zones: dict[int, Zone] = {}
 
@@ -130,6 +130,10 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
+        energy = self.get_energy()
+        if energy is not None:
+            data[AZD_ENERGY] = energy
+
         errors = self.get_errors()
         if len(errors) > 0:
             data[AZD_ERRORS] = errors
@@ -146,16 +150,16 @@ class System:
         if self.type is not None:
             data[AZD_MODEL] = model
 
-        power = self.get_power()
-        if power is not None:
-            data[AZD_POWER] = power
-
         return data
 
     def add_error(self, val: str) -> None:
         """Add system error."""
         if val not in self.errors:
             self.errors.append(val)
+
+    def get_energy(self) -> int | None:
+        """Return system energy consumption."""
+        return self.energy
 
     def get_errors(self) -> list[str]:
         """Return system errors."""
@@ -185,10 +189,6 @@ class System:
         """Return system modes."""
         return self.modes
 
-    def get_power(self) -> bool | None:
-        """Return system power."""
-        return self.power
-
     def get_problems(self) -> bool:
         """Return system problems."""
         return bool(self.errors)
@@ -215,11 +215,12 @@ class System:
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update system parameters by dict."""
-        if API_SYSTEM_FIRMWARE in data:
-            self.firmware = str(data[API_SYSTEM_FIRMWARE])
 
         if API_POWER in data:
-            self.power = bool(data[API_POWER])
+            self.energy = int(data[API_POWER])
+
+        if API_SYSTEM_FIRMWARE in data:
+            self.firmware = str(data[API_SYSTEM_FIRMWARE])
 
         if API_SYSTEM_TYPE in data:
             self.type = SystemType(data[API_SYSTEM_TYPE])
