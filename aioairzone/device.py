@@ -493,24 +493,6 @@ class Zone:
         """Return zone double set point."""
         return self.double_set_point
 
-    def get_heat_temp_max(self) -> float | None:
-        """Return zone maximum heat temperature."""
-        if self.heat_temp_max:
-            return round(self.heat_temp_max, 1)
-        return None
-
-    def get_heat_temp_min(self) -> float | None:
-        """Return zone minimum heat temperature."""
-        if self.heat_temp_min:
-            return round(self.heat_temp_min, 1)
-        return None
-
-    def get_heat_temp_set(self) -> float | None:
-        """Return zone set heat temperature."""
-        if self.heat_temp_set:
-            return round(self.heat_temp_set, 1)
-        return None
-
     def get_errors(self) -> list[str]:
         """Return zone errors."""
         return self.errors
@@ -533,6 +515,24 @@ class Zone:
         """Return zone heat stages."""
         if len(self.heat_stages) > 0:
             return self.heat_stages
+        return None
+
+    def get_heat_temp_max(self) -> float | None:
+        """Return zone maximum heat temperature."""
+        if self.heat_temp_max:
+            return round(self.heat_temp_max, 1)
+        return None
+
+    def get_heat_temp_min(self) -> float | None:
+        """Return zone minimum heat temperature."""
+        if self.heat_temp_min:
+            return round(self.heat_temp_min, 1)
+        return None
+
+    def get_heat_temp_set(self) -> float | None:
+        """Return zone set heat temperature."""
+        if self.heat_temp_set:
+            return round(self.heat_temp_set, 1)
         return None
 
     def get_humidity(self) -> int | None:
