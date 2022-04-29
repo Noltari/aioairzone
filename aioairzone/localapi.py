@@ -244,12 +244,16 @@ class AirzoneLocalApi:
         return res
 
     async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any]:
-        """Return Airzone HVAC."""
-        res = await self.http_request(
+        """Perform a PUT request to update HVAC parameters."""
+        return await self.http_request(
             "PUT",
             f"{API_V1}/{API_HVAC}",
             params,
         )
+
+    async def set_hvac_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Set Airzone HVAC parameters and handle response."""
+        res = await self.put_hvac(params)
 
         if API_DATA not in res:
             if API_ERRORS in res:

@@ -25,7 +25,7 @@ async def main():
             print(json.dumps(airzone.data(), indent=4, sort_keys=True))
             print("***")
 
-            await airzone.put_hvac(
+            await airzone.set_hvac_parameters(
                 {
                     API_SYSTEM_ID: 1,
                     API_ZONE_ID: 3,
