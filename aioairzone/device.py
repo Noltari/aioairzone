@@ -107,6 +107,7 @@ class System:
         self.errors: list[str] = []
         self.id = None
         self.firmware: str | None = None
+        self.mode: OperationMode | None = None
         self.modes: list[OperationMode] = []
         self.type: SystemType | None = None
         self.zones: dict[int, Zone] = {}
@@ -146,9 +147,17 @@ class System:
         if full_name is not None:
             data[AZD_FULL_NAME] = full_name
 
+        mode = self.get_mode()
+        if mode is not None:
+            data[AZD_MODE] = mode
+
         model = self.get_model()
         if self.type is not None:
             data[AZD_MODEL] = model
+
+        modes = self.get_modes()
+        if modes is not None:
+            data[AZD_MODES] = modes
 
         return data
 
@@ -185,9 +194,17 @@ class System:
             return str(self.type)
         return None
 
-    def get_modes(self) -> list[OperationMode]:
+    def get_mode(self) -> OperationMode | None:
+        """Return system mode."""
+        return self.mode
+
+    def get_modes(self) -> list[OperationMode] | None:
         """Return system modes."""
-        return self.modes
+        if len(self.modes) > 0:
+            return self.modes
+        if self.mode is not None:
+            return [self.mode]
+        return None
 
     def get_problems(self) -> bool:
         """Return system problems."""
@@ -204,12 +221,19 @@ class System:
         """Return number of system zones."""
         return len(self.zones)
 
+    def set_mode(self, mode: OperationMode) -> None:
+        """Set system mode."""
+        self.mode = mode
+
     def set_modes(self, modes: list[OperationMode]) -> None:
         """Set system modes."""
         self.modes = modes
 
     def set_param(self, key: str, value: Any) -> None:
-        """Update zones parameters by key and value."""
+        """Update parameters by key and value."""
+        if key == API_MODE:
+            self.mode = OperationMode(value)
+
         for zone in self.zones.values():
             zone.set_param(key, value)
 
@@ -349,9 +373,12 @@ class Zone:
         if self.master:
             for mode in zone[API_MODES]:
                 self.modes.append(OperationMode(mode))
+            self.system.set_mode(self.mode)
+            self.system.set_modes(self.modes)
             if OperationMode.STOP not in self.modes:
                 self.modes.append(OperationMode.STOP)
-            self.system.set_modes(self.modes)
+        elif self.system.get_mode() is None:
+            self.system.set_mode(self.mode)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
@@ -575,10 +602,10 @@ class Zone:
         if self.master:
             return self.modes
         modes = self.system.get_modes()
-        if len(modes) == 0:
+        if modes is None:
             modes = [self.mode]
-            if OperationMode.STOP not in modes:
-                modes.append(OperationMode.STOP)
+        if OperationMode.STOP not in modes:
+            modes.append(OperationMode.STOP)
         return modes
 
     def get_name(self) -> str:
