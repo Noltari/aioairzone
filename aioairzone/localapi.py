@@ -177,7 +177,7 @@ class AirzoneLocalApi:
         await self.check_features(False)
 
         response = await self.get_hvac()
-        if self.options.system_id == 0:
+        if self.options.system_id == DEFAULT_SYSTEM_ID:
             if API_SYSTEMS not in response:
                 raise InvalidHost
         elif API_DATA not in response:
@@ -193,7 +193,7 @@ class AirzoneLocalApi:
         systems: dict[int, System] = {}
 
         hvac = await self.get_hvac()
-        if self.options.system_id == 0:
+        if self.options.system_id == DEFAULT_SYSTEM_ID:
             for hvac_system in hvac[API_SYSTEMS]:
                 system = System(hvac_system[API_DATA])
                 if system:
