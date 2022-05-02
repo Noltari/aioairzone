@@ -1,4 +1,4 @@
-"""Modify Airzone parameters example."""
+"""Airzone modify parameters example."""
 import asyncio
 import json
 import time
@@ -13,7 +13,7 @@ from aioairzone.localapi import AirzoneLocalApi
 
 
 async def main():
-    """Basic Airzone client example."""
+    """Airzone modify parameters example."""
 
     async with aiohttp.ClientSession() as aiohttp_session:
         airzone = AirzoneLocalApi(aiohttp_session, _config.AIRZONE_OPTIONS)

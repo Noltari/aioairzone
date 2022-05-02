@@ -36,6 +36,9 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
+    RAW_HVAC,
+    RAW_SYSTEMS,
+    RAW_WEBSERVER,
 )
 from .device import System, Zone
 from .exceptions import (
@@ -83,6 +86,7 @@ class AirzoneLocalApi:
         options: ConnectionOptions,
     ):
         """Device init."""
+        self._api_raw_data: dict[str, Any] = {}
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
@@ -219,6 +223,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
+        self._api_raw_data[RAW_SYSTEMS] = res
         return res
 
     async def get_hvac(self, params: dict[str, Any] = None) -> dict[str, Any]:
@@ -233,6 +238,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
+        self._api_raw_data[RAW_HVAC] = res
         return res
 
     async def get_webserver(self) -> dict[str, Any]:
@@ -241,6 +247,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_WEBSERVER}",
         )
+        self._api_raw_data[RAW_WEBSERVER] = res
         return res
 
     async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -280,6 +287,10 @@ class AirzoneLocalApi:
                 zone.set_param(key, value)
 
         return res
+
+    def raw_data(self) -> dict[str, Any]:
+        """Return raw Airzone API data."""
+        return self._api_raw_data
 
     def data(self) -> dict[str, Any]:
         """Return Airzone device data."""

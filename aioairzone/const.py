@@ -140,5 +140,9 @@ ERROR_ZONE = "zone"
 
 HTTP_CALL_TIMEOUT = 10
 
+RAW_HVAC = "hvac"
+RAW_SYSTEMS = "systems"
+RAW_WEBSERVER = "webserver"
+
 THERMOSTAT_RADIO = "Radio"
 THERMOSTAT_WIRED = "Wired"

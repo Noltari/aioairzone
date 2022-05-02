@@ -1,4 +1,4 @@
-"""Airzone basic example."""
+"""Airzone raw API data example."""
 import asyncio
 import json
 
@@ -11,7 +11,7 @@ from aioairzone.localapi import AirzoneLocalApi
 
 
 async def main():
-    """Airzone basic example."""
+    """Airzone raw API data example."""
 
     async with aiohttp.ClientSession() as aiohttp_session:
         airzone = AirzoneLocalApi(aiohttp_session, _config.AIRZONE_OPTIONS)
@@ -23,6 +23,8 @@ async def main():
 
             await airzone.update()
             print(json.dumps(airzone.data(), indent=4, sort_keys=True))
+            print("***")
+            print(json.dumps(airzone.raw_data(), indent=4, sort_keys=True))
         except (ClientConnectorError, InvalidHost):
             print("Invalid host.")
 
