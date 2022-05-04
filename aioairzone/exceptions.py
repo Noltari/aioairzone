@@ -52,3 +52,7 @@ class ZoneOutOfRange(InvalidZone):
 
 class ZoneNotAvailable(InvalidZone):
     """Exception raised when zone id is not available."""
+
+
+class ZoneNotProvided(AirzoneError):
+    """Exception raised when zone id is not provided."""

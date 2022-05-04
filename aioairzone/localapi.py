@@ -17,6 +17,7 @@ from .const import (
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
     API_ERROR_SYSTEM_ID_OUT_RANGE,
     API_ERROR_ZONE_ID_NOT_AVAILABLE,
+    API_ERROR_ZONE_ID_NOT_PROVIDED,
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_HVAC,
@@ -53,6 +54,7 @@ from .exceptions import (
     SystemNotAvailable,
     SystemOutOfRange,
     ZoneNotAvailable,
+    ZoneNotProvided,
     ZoneOutOfRange,
 )
 from .webserver import WebServer
@@ -111,6 +113,8 @@ class AirzoneLocalApi:
                     raise ZoneOutOfRange
                 if val == API_ERROR_ZONE_ID_NOT_AVAILABLE:
                     raise ZoneNotAvailable
+                if val == API_ERROR_ZONE_ID_NOT_PROVIDED:
+                    raise ZoneNotProvided
                 raise APIError(error)
 
     async def http_request(
@@ -160,7 +164,7 @@ class AirzoneLocalApi:
                 self.api_features |= ApiFeature.SYSTEMS
                 if update:
                     self.update_systems(systems)
-        except SystemOutOfRange:
+        except (SystemOutOfRange, ZoneNotProvided):
             pass
 
         self.api_features_checked = True

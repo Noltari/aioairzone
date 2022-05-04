@@ -58,6 +58,7 @@ API_ERROR_REQUEST_MALFORMED = "request malformed"
 API_ERROR_SYSTEM_ID_NOT_AVAILABLE = "systemid not avaiable"
 API_ERROR_SYSTEM_ID_OUT_RANGE = "systemid out of range"
 API_ERROR_ZONE_ID_NOT_AVAILABLE = "zoneid not avaiable"
+API_ERROR_ZONE_ID_NOT_PROVIDED = "zoneid not provided"
 API_ERROR_ZONE_ID_OUT_RANGE = "zoneid out of range"
 
 API_DOUBLE_SET_POINT_PARAMS = {
