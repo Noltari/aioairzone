@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
+from typing import Any
 
 
 class AirzoneStages(IntEnum):
@@ -15,7 +16,7 @@ class AirzoneStages(IntEnum):
     Combined = 3
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> AirzoneStages:
         return cls.UNKNOWN
 
     def exists(self) -> bool:
@@ -44,7 +45,7 @@ class OperationMode(IntEnum):
     AUTO = 7
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> OperationMode:
         return cls.UNKNOWN
 
 
@@ -62,7 +63,7 @@ class SystemType(IntEnum):
     ZS6 = 7
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> SystemType:
         return cls.UNKNOWN
 
     def __str__(self) -> str:
@@ -98,7 +99,7 @@ class ThermostatType(IntEnum):
     Think = 4
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> ThermostatType:
         return cls.UNKNOWN
 
     def __str__(self) -> str:
@@ -133,7 +134,7 @@ class WebServerInterface(IntEnum):
     WIFI = 2
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> WebServerInterface:
         return cls.UNKNOWN
 
 
@@ -146,7 +147,7 @@ class WebServerType(IntEnum):
     AIDOO = 2
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> WebServerType:
         return cls.UNKNOWN
 
     def __str__(self) -> str:

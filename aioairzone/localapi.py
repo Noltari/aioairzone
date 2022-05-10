@@ -134,16 +134,16 @@ class AirzoneLocalApi:
             if API_ERRORS in resp_json:
                 self.handle_errors(resp_json[API_ERRORS])
             raise APIError(f"HTTP status: {resp.status}")
-        return cast(dict, resp_json)
+        return cast(dict[str, Any], resp_json)
 
-    def update_systems(self, data) -> None:
+    def update_systems(self, data: dict[str, Any]) -> None:
         """Gather Systems data."""
         for api_system in data[API_SYSTEMS]:
             system = self.get_system(api_system[API_SYSTEM_ID])
             if system:
                 system.update_data(api_system)
 
-    def update_webserver(self, data) -> None:
+    def update_webserver(self, data: dict[str, Any]) -> None:
         """Gather WebServer data."""
         self.webserver = WebServer(data)
 
@@ -204,19 +204,21 @@ class AirzoneLocalApi:
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             for hvac_system in hvac[API_SYSTEMS]:
                 system = System(hvac_system[API_DATA])
-                if system:
-                    systems[system.get_id()] = system
+                if system and (_id := system.get_id()):
+                    systems[_id] = system
         else:
             system = System(hvac[API_DATA])
-            if system:
-                systems[system.get_id()] = system
+            if system and (_id := system.get_id()):
+                systems[_id] = system
         self.systems = systems
 
         await self.update_features()
 
         return bool(systems)
 
-    async def get_hvac_systems(self, params: dict[str, Any] = None) -> dict[str, Any]:
+    async def get_hvac_systems(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Return Airzone HVAC systems."""
         if not params:
             params = {
@@ -230,7 +232,7 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_SYSTEMS] = res
         return res
 
-    async def get_hvac(self, params: dict[str, Any] = None) -> dict[str, Any]:
+    async def get_hvac(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
         """Return Airzone HVAC zones."""
         if not params:
             params = {
@@ -271,7 +273,7 @@ class AirzoneLocalApi:
                 self.handle_errors(res[API_ERRORS])
             raise APIError(f"{API_DATA} not in API response")
 
-        data: dict = res[API_DATA][0]
+        data: dict[str, Any] = res[API_DATA][0]
         for key, value in params.items():
             if key not in data or data[key] != value:
                 if key == API_SYSTEM_ID and value != 0:

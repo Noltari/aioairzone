@@ -101,11 +101,11 @@ _LOGGER = logging.getLogger(__name__)
 class System:
     """Airzone System."""
 
-    def __init__(self, airzone_system):
+    def __init__(self, airzone_system: list[dict[str, Any]]):
         """System init."""
         self.energy: int | None = None
         self.errors: list[str] = []
-        self.id = None
+        self.id: int | None = None
         self.firmware: str | None = None
         self.mode: OperationMode | None = None
         self.modes: list[OperationMode] = []
@@ -174,7 +174,7 @@ class System:
         """Return system errors."""
         return self.errors
 
-    def get_id(self) -> int:
+    def get_id(self) -> int | None:
         """Return system ID."""
         return self.id
 
@@ -628,7 +628,7 @@ class Zone:
         """Return zone speeds."""
         return self.speeds
 
-    def get_system_id(self) -> int:
+    def get_system_id(self) -> int | None:
         """Return system ID."""
         return self.system.get_id()
 
