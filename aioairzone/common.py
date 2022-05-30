@@ -32,6 +32,19 @@ class AirzoneStages(IntEnum):
         return []
 
 
+class GrilleAngle(IntEnum):
+    """Airzone grille angles."""
+
+    DEG_90 = 0
+    DEG_50 = 1
+    DEG_45 = 2
+    DEG_40 = 3
+
+    @classmethod
+    def _missing_(cls, value: Any) -> GrilleAngle:
+        return cls.DEG_90
+
+
 class OperationMode(IntEnum):
     """Airzone operation modes."""
 

@@ -6,6 +6,7 @@ from typing import Any
 
 from .common import (
     AirzoneStages,
+    GrilleAngle,
     OperationMode,
     SystemType,
     TemperatureUnit,
@@ -13,6 +14,7 @@ from .common import (
 )
 from .const import (
     API_AIR_DEMAND,
+    API_COLD_ANGLE,
     API_COLD_STAGE,
     API_COLD_STAGES,
     API_COOL_MAX_TEMP,
@@ -23,6 +25,7 @@ from .const import (
     API_ERROR_LOW_BATTERY,
     API_ERRORS,
     API_FLOOR_DEMAND,
+    API_HEAT_ANGLE,
     API_HEAT_MAX_TEMP,
     API_HEAT_MIN_TEMP,
     API_HEAT_SET_POINT,
@@ -40,11 +43,13 @@ from .const import (
     API_POWER,
     API_ROOM_TEMP,
     API_SET_POINT,
+    API_SLEEP,
     API_SPEED,
     API_SPEEDS,
     API_SYSTEM_FIRMWARE,
     API_SYSTEM_ID,
     API_SYSTEM_TYPE,
+    API_TEMP_STEP,
     API_THERMOS_FIRMWARE,
     API_THERMOS_RADIO,
     API_THERMOS_TYPE,
@@ -53,6 +58,7 @@ from .const import (
     AZD_AIR_DEMAND,
     AZD_BATTERY_LOW,
     AZD_CLAMP_METER,
+    AZD_COLD_ANGLE,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
     AZD_COOL_TEMP_MAX,
@@ -65,6 +71,7 @@ from .const import (
     AZD_FIRMWARE,
     AZD_FLOOR_DEMAND,
     AZD_FULL_NAME,
+    AZD_HEAT_ANGLE,
     AZD_HEAT_STAGE,
     AZD_HEAT_STAGES,
     AZD_HEAT_TEMP_MAX,
@@ -80,6 +87,7 @@ from .const import (
     AZD_NAME,
     AZD_ON,
     AZD_PROBLEMS,
+    AZD_SLEEP,
     AZD_SPEED,
     AZD_SPEEDS,
     AZD_SYSTEM,
@@ -87,6 +95,7 @@ from .const import (
     AZD_TEMP_MAX,
     AZD_TEMP_MIN,
     AZD_TEMP_SET,
+    AZD_TEMP_STEP,
     AZD_TEMP_UNIT,
     AZD_THERMOSTAT_FW,
     AZD_THERMOSTAT_MODEL,
@@ -328,6 +337,7 @@ class Zone:
     def __init__(self, system: System, zone: dict[str, Any]):
         """Zone init."""
         self.air_demand = bool(zone[API_AIR_DEMAND])
+        self.cold_angle: GrilleAngle | None = None
         self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
         self.cool_temp_max: float | None = None
@@ -336,6 +346,7 @@ class Zone:
         self.double_set_point: bool = False
         self.errors: list[str] = []
         self.floor_demand = bool(zone[API_FLOOR_DEMAND])
+        self.heat_angle: GrilleAngle | None = None
         self.heat_temp_max: float | None = None
         self.heat_temp_min: float | None = None
         self.heat_temp_set: float | None = None
@@ -348,18 +359,25 @@ class Zone:
         self.modes: list[OperationMode] = []
         self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
+        self.sleep: int | None = None
         self.speed: int | None = None
         self.speeds: int | None = None
         self.temp = float(zone[API_ROOM_TEMP])
         self.temp_max = float(zone[API_MAX_TEMP])
         self.temp_min = float(zone[API_MIN_TEMP])
         self.temp_set = float(zone[API_SET_POINT])
+        self.temp_step: float | None = None
         self.temp_unit = TemperatureUnit(zone[API_UNITS])
         self.thermostat = Thermostat(zone)
         self.system = system
 
         if API_HUMIDITY in zone:
             self.humidity = int(zone[API_HUMIDITY])
+
+        if API_COLD_ANGLE in zone:
+            self.cold_angle = GrilleAngle(zone[API_COLD_ANGLE])
+        if API_HEAT_ANGLE in zone:
+            self.heat_angle = GrilleAngle(zone[API_HEAT_ANGLE])
 
         if API_COLD_STAGE in zone:
             self.cold_stage = AirzoneStages(zone[API_COLD_STAGE])
@@ -400,10 +418,16 @@ class Zone:
                 for key, val in error.items():
                     self.add_error(key, val)
 
+        if API_SLEEP in zone:
+            self.sleep = int(zone[API_SLEEP])
+
         if API_SPEED in zone:
             self.speed = int(zone[API_SPEED])
         if API_SPEEDS in zone:
             self.speeds = int(zone[API_SPEEDS])
+
+        if API_TEMP_STEP in zone:
+            self.temp_step = float(zone[API_TEMP_STEP])
 
         if self.master:
             for mode in zone[API_MODES]:
@@ -470,6 +494,13 @@ class Zone:
             if heat_temp_set:
                 data[AZD_HEAT_TEMP_SET] = heat_temp_set
 
+        cold_angle = self.get_cold_angle()
+        if cold_angle is not None:
+            data[AZD_COLD_ANGLE] = cold_angle
+        heat_angle = self.get_heat_angle()
+        if heat_angle is not None:
+            data[AZD_HEAT_ANGLE] = heat_angle
+
         cold_stage = self.get_cold_stage()
         if cold_stage is not None:
             data[AZD_COLD_STAGE] = cold_stage
@@ -483,6 +514,10 @@ class Zone:
         heat_stages = self.get_heat_stages()
         if heat_stages is not None:
             data[AZD_HEAT_STAGES] = heat_stages
+
+        sleep = self.get_sleep()
+        if sleep is not None:
+            data[AZD_SLEEP] = sleep
 
         speed = self.get_speed()
         if speed is not None:
@@ -498,6 +533,10 @@ class Zone:
         modes = self.get_modes()
         if modes is not None:
             data[AZD_MODES] = modes
+
+        temp_step = self.get_temp_step()
+        if temp_step is not None:
+            data[AZD_TEMP_STEP] = temp_step
 
         thermostat_firmware = self.thermostat.get_firmware()
         if thermostat_firmware is not None:
@@ -535,6 +574,10 @@ class Zone:
         if self.thermostat.get_radio():
             return API_ERROR_LOW_BATTERY in self.errors
         return None
+
+    def get_cold_angle(self) -> GrilleAngle | None:
+        """Return zone cold angle."""
+        return self.cold_angle
 
     def get_cold_stage(self) -> AirzoneStages | None:
         """Return zone cold stage."""
@@ -589,6 +632,10 @@ class Zone:
     def get_id(self) -> int:
         """Return zone ID."""
         return self.id
+
+    def get_heat_angle(self) -> GrilleAngle | None:
+        """Return zone heat angle."""
+        return self.heat_angle
 
     def get_heat_stage(self) -> AirzoneStages | None:
         """Return zone heat stage."""
@@ -655,6 +702,10 @@ class Zone:
         """Return zone problems."""
         return bool(self.errors)
 
+    def get_sleep(self) -> int | None:
+        """Return zone sleep time in minutes."""
+        return self.sleep
+
     def get_speed(self) -> int | None:
         """Return zone speed."""
         return self.speed
@@ -686,6 +737,12 @@ class Zone:
     def get_temp_set(self) -> float:
         """Return zone set temperature."""
         return round(self.temp_set, 1)
+
+    def get_temp_step(self) -> float | None:
+        """Return zone step temperature."""
+        if self.temp_step is not None:
+            return round(self.temp_step, 1)
+        return None
 
     def get_temp_unit(self) -> TemperatureUnit:
         """Return zone temperature unit."""
