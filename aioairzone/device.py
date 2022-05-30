@@ -29,7 +29,9 @@ from .const import (
     API_HEAT_STAGE,
     API_HEAT_STAGES,
     API_HUMIDITY,
+    API_MANUFACTURER,
     API_MAX_TEMP,
+    API_MC_CONNECTED,
     API_MIN_TEMP,
     API_MODE,
     API_MODES,
@@ -50,6 +52,7 @@ from .const import (
     API_ZONE_ID,
     AZD_AIR_DEMAND,
     AZD_BATTERY_LOW,
+    AZD_CLAMP_METER,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
     AZD_COOL_TEMP_MAX,
@@ -69,6 +72,7 @@ from .const import (
     AZD_HEAT_TEMP_SET,
     AZD_HUMIDITY,
     AZD_ID,
+    AZD_MANUFACTURER,
     AZD_MASTER,
     AZD_MODE,
     AZD_MODEL,
@@ -103,10 +107,12 @@ class System:
 
     def __init__(self, airzone_system: list[dict[str, Any]]):
         """System init."""
+        self.clamp_meter: bool | None = None
         self.energy: int | None = None
         self.errors: list[str] = []
         self.id: int | None = None
         self.firmware: str | None = None
+        self.manufacturer: str | None = None
         self.mode: OperationMode | None = None
         self.modes: list[OperationMode] = []
         self.type: SystemType | None = None
@@ -131,9 +137,14 @@ class System:
             AZD_ZONES_NUM: self.num_zones(),
         }
 
-        energy = self.get_energy()
-        if energy is not None:
-            data[AZD_ENERGY] = energy
+        clamp_meter = self.get_clamp_meter()
+        if clamp_meter is not None:
+            data[AZD_CLAMP_METER] = clamp_meter
+
+            if clamp_meter:
+                energy = self.get_energy()
+                if energy is not None:
+                    data[AZD_ENERGY] = energy
 
         errors = self.get_errors()
         if len(errors) > 0:
@@ -146,6 +157,10 @@ class System:
         full_name = self.get_full_name()
         if full_name is not None:
             data[AZD_FULL_NAME] = full_name
+
+        manufacturer = self.get_manufacturer()
+        if manufacturer is not None:
+            data[AZD_MANUFACTURER] = manufacturer
 
         mode = self.get_mode()
         if mode is not None:
@@ -165,6 +180,10 @@ class System:
         """Add system error."""
         if val not in self.errors:
             self.errors.append(val)
+
+    def get_clamp_meter(self) -> bool | None:
+        """Return system clamp meter connection."""
+        return self.clamp_meter
 
     def get_energy(self) -> int | None:
         """Return system energy consumption."""
@@ -187,6 +206,10 @@ class System:
     def get_full_name(self) -> str:
         """Return full name."""
         return f"Airzone [{self.get_id()}] System"
+
+    def get_manufacturer(self) -> str | None:
+        """Return system manufacturer."""
+        return self.manufacturer
 
     def get_model(self) -> str | None:
         """Return system model."""
@@ -239,6 +262,18 @@ class System:
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update system parameters by dict."""
+
+        if API_MC_CONNECTED in data:
+            self.clamp_meter = bool(data[API_MC_CONNECTED])
+
+        if API_ERRORS in data:
+            errors: list[dict[str, str]] = data[API_ERRORS]
+            for error in errors:
+                for val in error.values():
+                    self.add_error(val)
+
+        if API_MANUFACTURER in data:
+            self.manufacturer = str(data[API_MANUFACTURER])
 
         if API_POWER in data:
             self.energy = int(data[API_POWER])
