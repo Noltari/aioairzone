@@ -215,7 +215,7 @@ class System:
         for zone in self.zones.values():
             if zone.get_id() == zone_id:
                 return zone
-        raise InvalidZone
+        raise InvalidZone(f"Zone {zone_id} not present in System {self.id}")
 
     def num_zones(self) -> int:
         """Return number of system zones."""

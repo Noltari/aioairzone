@@ -100,22 +100,22 @@ class AirzoneLocalApi:
     def handle_errors(errors: list[dict[str, str]]) -> None:
         """Handle API errors."""
         for error in errors:
-            for val in error.values():
+            for key, val in error.items():
                 if val == API_ERROR_METHOD_NOT_SUPPORTED:
-                    raise InvalidMethod
+                    raise InvalidMethod(f"{key}: {val}")
                 if val == API_ERROR_REQUEST_MALFORMED:
-                    raise RequestMalformed
+                    raise RequestMalformed(f"{key}: {val}")
                 if val == API_ERROR_SYSTEM_ID_NOT_AVAILABLE:
-                    raise SystemNotAvailable
+                    raise SystemNotAvailable(f"{key}: {val}")
                 if val == API_ERROR_SYSTEM_ID_OUT_RANGE:
-                    raise SystemOutOfRange
+                    raise SystemOutOfRange(f"{key}: {val}")
                 if val == API_ERROR_ZONE_ID_OUT_RANGE:
-                    raise ZoneOutOfRange
+                    raise ZoneOutOfRange(f"{key}: {val}")
                 if val == API_ERROR_ZONE_ID_NOT_AVAILABLE:
-                    raise ZoneNotAvailable
+                    raise ZoneNotAvailable(f"{key}: {val}")
                 if val == API_ERROR_ZONE_ID_NOT_PROVIDED:
-                    raise ZoneNotProvided
-                raise APIError(error)
+                    raise ZoneNotProvided(f"{key}: {val}")
+                raise APIError(f"{key}: {val}")
 
     async def http_request(
         self, method: str, path: str, data: Any | None = None
@@ -187,9 +187,9 @@ class AirzoneLocalApi:
         response = await self.get_hvac()
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             if API_SYSTEMS not in response:
-                raise InvalidHost
+                raise InvalidHost(f"validate: {API_SYSTEMS} not in API response")
         elif API_DATA not in response:
-            raise InvalidHost
+            raise InvalidHost(f"validate: {API_DATA} not in API response")
 
         if self.webserver:
             return self.webserver.get_mac()
@@ -271,18 +271,24 @@ class AirzoneLocalApi:
         if API_DATA not in res:
             if API_ERRORS in res:
                 self.handle_errors(res[API_ERRORS])
-            raise APIError(f"{API_DATA} not in API response")
+            raise APIError(f"set_hvac: {API_DATA} not in API response")
 
         data: dict[str, Any] = res[API_DATA][0]
         for key, value in params.items():
             if key not in data or data[key] != value:
                 if key == API_SYSTEM_ID and value != 0:
-                    raise InvalidSystem
+                    raise InvalidSystem(
+                        f"set_hvac: System mismatch: {data.get(key)} vs {value}"
+                    )
                 if key == API_ZONE_ID and value != 0:
-                    raise InvalidZone
+                    raise InvalidZone(
+                        f"set_hvac: Zone mismatch: {data.get(key)} vs {value}"
+                    )
                 if key not in data:
-                    raise InvalidParam
-                raise ParamUpdateFailure
+                    raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
+                raise ParamUpdateFailure(
+                    f"set_hvac: param update failure: {key}={value}"
+                )
 
         system = self.get_system(data[API_SYSTEM_ID])
         zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
@@ -324,7 +330,7 @@ class AirzoneLocalApi:
         for system in self.systems.values():
             if system.get_id() == system_id:
                 return system
-        raise InvalidSystem
+        raise InvalidSystem(f"System {system_id} not present")
 
     def get_zone(self, system_id: int, zone_id: int) -> Zone:
         """Return Airzone system zone."""
