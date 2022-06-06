@@ -10,7 +10,7 @@ class AirzoneStages(IntEnum):
 
     UNKNOWN = -1
 
-    EMPTY = 0
+    Off = 0
     Air = 1
     Radiant = 2
     Combined = 3
@@ -21,14 +21,19 @@ class AirzoneStages(IntEnum):
 
     def exists(self) -> bool:
         """Return if Airzone Stage exits."""
-        return self.value != self.EMPTY
+        return self.value != self.Off
 
     def to_list(self) -> list[AirzoneStages]:
         """Convert AirzoneStages value to list."""
         if self.value == self.Combined:
-            return [AirzoneStages.Air, AirzoneStages.Radiant, AirzoneStages.Combined]
+            return [
+                AirzoneStages.Off,
+                AirzoneStages.Air,
+                AirzoneStages.Radiant,
+                AirzoneStages.Combined,
+            ]
         if self.value in (self.Air, self.Radiant):
-            return [self]
+            return [AirzoneStages.Off, self]
         return []
 
 
