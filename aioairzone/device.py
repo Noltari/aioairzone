@@ -361,7 +361,7 @@ class Zone:
         self.on = bool(zone[API_ON])
         self.sleep: int | None = None
         self.speed: int | None = None
-        self.speeds: int | None = None
+        self.speeds: list[int] = []
         self.temp = float(zone[API_ROOM_TEMP])
         self.temp_max = float(zone[API_MAX_TEMP])
         self.temp_min = float(zone[API_MIN_TEMP])
@@ -424,7 +424,8 @@ class Zone:
         if API_SPEED in zone:
             self.speed = int(zone[API_SPEED])
         if API_SPEEDS in zone:
-            self.speeds = int(zone[API_SPEEDS])
+            speeds = int(zone[API_SPEEDS])
+            self.speeds = list(range(0, speeds + 1))
 
         if API_TEMP_STEP in zone:
             self.temp_step = float(zone[API_TEMP_STEP])
@@ -710,9 +711,11 @@ class Zone:
         """Return zone speed."""
         return self.speed
 
-    def get_speeds(self) -> int | None:
+    def get_speeds(self) -> list[int] | None:
         """Return zone speeds."""
-        return self.speeds
+        if len(self.speeds) > 0:
+            return self.speeds
+        return None
 
     def get_system_id(self) -> int | None:
         """Return system ID."""
