@@ -5,9 +5,10 @@ import json
 import logging
 from dataclasses import dataclass
 from enum import IntEnum
+from json import JSONDecodeError
 from typing import Any, cast
 
-from aiohttp import ClientSession
+from aiohttp import ClientConnectorError, ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
 from .const import (
@@ -122,18 +123,28 @@ class AirzoneLocalApi:
     ) -> dict[str, Any]:
         """Device HTTP request."""
         _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
-        resp: ClientResponse = await self.aiohttp_session.request(
-            method,
-            f"http://{self.options.host}:{self.options.port}/{path}",
-            data=json.dumps(data),
-            timeout=HTTP_CALL_TIMEOUT,
-        )
-        resp_json = await resp.json(content_type=None)
+
+        try:
+            resp: ClientResponse = await self.aiohttp_session.request(
+                method,
+                f"http://{self.options.host}:{self.options.port}/{path}",
+                data=json.dumps(data),
+                timeout=HTTP_CALL_TIMEOUT,
+            )
+        except ClientConnectorError as err:
+            raise InvalidHost from err
+
+        try:
+            resp_json = await resp.json(content_type=None)
+        except JSONDecodeError as err:
+            raise InvalidHost from err
+
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
             if API_ERRORS in resp_json:
                 self.handle_errors(resp_json[API_ERRORS])
             raise APIError(f"HTTP status: {resp.status}")
+
         return cast(dict[str, Any], resp_json)
 
     def update_systems(self, data: dict[str, Any]) -> None:
