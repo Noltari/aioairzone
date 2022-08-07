@@ -67,6 +67,19 @@ class OperationMode(IntEnum):
         return cls.UNKNOWN
 
 
+class SleepTimeout(IntEnum):
+    """Airzone sleep timeouts."""
+
+    SLEEP_OFF = 0
+    SLEEP_30 = 30
+    SLEEP_60 = 60
+    SLEEP_90 = 90
+
+    @classmethod
+    def _missing_(cls, value: Any) -> SleepTimeout:
+        return cls.SLEEP_OFF
+
+
 class SystemType(IntEnum):
     """Airzone System Types."""
 

@@ -8,6 +8,7 @@ from .common import (
     AirzoneStages,
     GrilleAngle,
     OperationMode,
+    SleepTimeout,
     SystemType,
     TemperatureUnit,
     ThermostatType,
@@ -359,7 +360,7 @@ class Zone:
         self.modes: list[OperationMode] = []
         self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
-        self.sleep: int | None = None
+        self.sleep: SleepTimeout | None = None
         self.speed: int | None = None
         self.speeds: list[int] = []
         self.temp = float(zone[API_ROOM_TEMP])
@@ -419,7 +420,7 @@ class Zone:
                     self.add_error(key, val)
 
         if API_SLEEP in zone:
-            self.sleep = int(zone[API_SLEEP])
+            self.sleep = SleepTimeout(zone[API_SLEEP])
 
         if API_SPEED in zone:
             self.speed = int(zone[API_SPEED])
@@ -703,7 +704,7 @@ class Zone:
         """Return zone problems."""
         return bool(self.errors)
 
-    def get_sleep(self) -> int | None:
+    def get_sleep(self) -> SleepTimeout | None:
         """Return zone sleep time in minutes."""
         return self.sleep
 
