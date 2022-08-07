@@ -774,8 +774,12 @@ class Zone:
         """Update zone parameter by key and value."""
         if key == API_COOL_SET_POINT:
             self.cool_temp_set = float(value)
+        elif key == API_COLD_ANGLE:
+            self.cold_angle = GrilleAngle(value)
         elif key == API_COLD_STAGE:
             self.cold_stage = AirzoneStages(value)
+        elif key == API_HEAT_ANGLE:
+            self.heat_angle = GrilleAngle(value)
         elif key == API_HEAT_SET_POINT:
             self.heat_temp_set = float(value)
         elif key == API_HEAT_STAGE:
@@ -788,3 +792,5 @@ class Zone:
             self.on = bool(value)
         elif key == API_SET_POINT:
             self.temp_set = float(value)
+        elif key == API_SLEEP:
+            self.sleep = SleepTimeout(value)
