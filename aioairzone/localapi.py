@@ -30,6 +30,7 @@ from .const import (
     API_WEBSERVER,
     API_ZONE_ID,
     API_ZONE_PARAMS,
+    AZD_NEW_ZONES,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
     AZD_WEBSERVER,
@@ -90,6 +91,9 @@ class AirzoneLocalApi:
     ):
         """Device init."""
         self._api_raw_data: dict[str, Any] = {}
+        self._cached_zones: list[str] = []
+        self._first_update: bool = True
+        self._new_zones: bool = False
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
@@ -193,6 +197,8 @@ class AirzoneLocalApi:
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
+        self._first_update = True
+
         await self.check_features(False)
 
         response = await self.get_hvac()
@@ -206,6 +212,23 @@ class AirzoneLocalApi:
             return self.webserver.get_mac()
 
         return None
+
+    def detect_zones(self) -> bool:
+        """Check if there are new zones in Airzone data."""
+        new_zones = False
+
+        if self.systems:
+            for system in self.systems.values():
+                for zone in system.zones.values():
+                    zone_id = zone.get_system_zone_id()
+                    if zone_id not in self._cached_zones:
+                        new_zones = True
+                    self._cached_zones.append(zone_id)
+
+        if self._first_update:
+            return False
+
+        return new_zones
 
     async def update(self) -> bool:
         """Gather Airzone data."""
@@ -224,6 +247,10 @@ class AirzoneLocalApi:
         self.systems = systems
 
         await self.update_features()
+
+        self._new_zones = self.detect_zones()
+
+        self._first_update = False
 
         return bool(systems)
 
@@ -311,6 +338,10 @@ class AirzoneLocalApi:
 
         return res
 
+    def new_zones(self) -> bool:
+        """Return if there are new zones in Airzone data."""
+        return self._new_zones
+
     def raw_data(self) -> dict[str, Any]:
         """Return raw Airzone API data."""
         return self._api_raw_data
@@ -318,6 +349,7 @@ class AirzoneLocalApi:
     def data(self) -> dict[str, Any]:
         """Return Airzone device data."""
         data: dict[str, Any] = {
+            AZD_NEW_ZONES: self.new_zones(),
             AZD_SYSTEMS_NUM: self.num_systems(),
             AZD_ZONES_NUM: self.num_zones(),
         }
