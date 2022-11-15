@@ -54,7 +54,7 @@ API_WIFI_QUALITY = "wifi_quality"
 API_WIFI_RSSI = "wifi_rssi"
 API_WS_AIDOO = "ws_aidoo"
 API_WS_AZ = "ws_az"
-API_WS_FIRMWARE = "firmware"
+API_WS_FIRMWARE = "ws_firmware"
 API_WS_TYPE = "ws_type"
 API_ZONE_ID = "zoneID"
 
