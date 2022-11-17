@@ -22,6 +22,7 @@ from .const import (
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_HVAC,
+    API_INTEGRATION,
     API_MAC,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
@@ -41,6 +42,7 @@ from .const import (
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
     RAW_HVAC,
+    RAW_INTEGRATION,
     RAW_SYSTEMS,
     RAW_VERSION,
     RAW_WEBSERVER,
@@ -285,6 +287,15 @@ class AirzoneLocalApi:
             params,
         )
         self._api_raw_data[RAW_HVAC] = res
+        return res
+
+    async def get_integration(self) -> dict[str, Any]:
+        """Return Airzone integration."""
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_INTEGRATION}",
+        )
+        self._api_raw_data[RAW_INTEGRATION] = res
         return res
 
     async def get_version(self) -> dict[str, Any]:
