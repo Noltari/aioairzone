@@ -47,6 +47,7 @@ API_THERMOS_RADIO = "thermos_radio"
 API_THERMOS_TYPE = "thermos_type"
 API_UNITS = "units"
 API_V1 = "api/v1"
+API_VERSION = "version"
 API_WEBSERVER = "webserver"
 API_WIFI = "wifi"
 API_WIFI_CHANNEL = "wifi_channel"
@@ -159,6 +160,7 @@ HTTP_CALL_TIMEOUT = 10
 
 RAW_HVAC = "hvac"
 RAW_SYSTEMS = "systems"
+RAW_VERSION = "version"
 RAW_WEBSERVER = "webserver"
 
 THERMOSTAT_RADIO = "Radio"

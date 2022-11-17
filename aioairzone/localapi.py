@@ -27,6 +27,7 @@ from .const import (
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
     API_V1,
+    API_VERSION,
     API_WEBSERVER,
     API_ZONE_ID,
     API_ZONE_PARAMS,
@@ -41,6 +42,7 @@ from .const import (
     HTTP_CALL_TIMEOUT,
     RAW_HVAC,
     RAW_SYSTEMS,
+    RAW_VERSION,
     RAW_WEBSERVER,
 )
 from .device import System, Zone
@@ -283,6 +285,15 @@ class AirzoneLocalApi:
             params,
         )
         self._api_raw_data[RAW_HVAC] = res
+        return res
+
+    async def get_version(self) -> dict[str, Any]:
+        """Return Airzone Local API version."""
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_VERSION}",
+        )
+        self._api_raw_data[RAW_VERSION] = res
         return res
 
     async def get_webserver(self) -> dict[str, Any]:
