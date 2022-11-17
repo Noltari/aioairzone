@@ -13,6 +13,7 @@ from aiohttp.client_reqrep import ClientResponse
 
 from .const import (
     API_DATA,
+    API_DEMO,
     API_ERROR_METHOD_NOT_SUPPORTED,
     API_ERROR_REQUEST_MALFORMED,
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
@@ -41,6 +42,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
+    RAW_DEMO,
     RAW_HVAC,
     RAW_INTEGRATION,
     RAW_SYSTEMS,
@@ -257,6 +259,15 @@ class AirzoneLocalApi:
         self._first_update = False
 
         return bool(systems)
+
+    async def get_demo(self) -> dict[str, Any]:
+        """Return Airzone demo."""
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_DEMO}",
+        )
+        self._api_raw_data[RAW_DEMO] = res
+        return res
 
     async def get_hvac_systems(
         self, params: dict[str, Any] | None = None

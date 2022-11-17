@@ -9,6 +9,7 @@ API_COOL_MAX_TEMP = "coolmaxtemp"
 API_COOL_MIN_TEMP = "coolmintemp"
 API_COOL_SET_POINT = "coolsetpoint"
 API_DATA = "data"
+API_DEMO = "demo"
 API_DOUBLE_SET_POINT = "double_sp"
 API_ERROR = "error"
 API_ERRORS = "errors"
@@ -159,6 +160,7 @@ ERROR_ZONE = "zone"
 
 HTTP_CALL_TIMEOUT = 10
 
+RAW_DEMO = "demo"
 RAW_HVAC = "hvac"
 RAW_INTEGRATION = "integration"
 RAW_SYSTEMS = "systems"

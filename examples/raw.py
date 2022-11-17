@@ -21,6 +21,7 @@ async def main():
                 print(f"Airzone WebServer: {airzone_mac}")
             print("***")
 
+            await airzone.get_demo()
             await airzone.get_integration()
             await airzone.get_version()
             await airzone.update()
