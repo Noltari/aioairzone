@@ -299,6 +299,7 @@ class Thermostat:
     """Airzone Thermostat."""
 
     def __init__(self, data: dict[str, Any]):
+        """Thermostat init."""
         self.firmware: str | None = None
         self.radio: bool | None = None
         self.type: ThermostatType | None = None
