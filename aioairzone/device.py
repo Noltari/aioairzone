@@ -338,7 +338,7 @@ class Zone:
 
     def __init__(self, system: System, zone: dict[str, Any]):
         """Zone init."""
-        self.air_demand = bool(zone[API_AIR_DEMAND])
+        self.air_demand: bool | None = None
         self.cold_angle: GrilleAngle | None = None
         self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
@@ -347,7 +347,7 @@ class Zone:
         self.cool_temp_set: float | None = None
         self.double_set_point: bool = False
         self.errors: list[str] = []
-        self.floor_demand = bool(zone[API_FLOOR_DEMAND])
+        self.floor_demand: bool | None = None
         self.heat_angle: GrilleAngle | None = None
         self.heat_temp_max: float | None = None
         self.heat_temp_min: float | None = None
@@ -357,9 +357,7 @@ class Zone:
         self.humidity: int | None = None
         self.id = int(zone[API_ZONE_ID])
         self.master = bool(API_MODES in zone)
-        self.mode = OperationMode(zone[API_MODE])
         self.modes: list[OperationMode] = []
-        self.name = str(zone[API_NAME])
         self.on = bool(zone[API_ON])
         self.sleep: SleepTimeout | None = None
         self.speed: int | None = None
@@ -372,6 +370,11 @@ class Zone:
         self.temp_unit = TemperatureUnit(zone[API_UNITS])
         self.thermostat = Thermostat(zone)
         self.system = system
+
+        if API_AIR_DEMAND in zone:
+            self.air_demand = bool(zone[API_AIR_DEMAND])
+        if API_FLOOR_DEMAND in zone:
+            self.floor_demand = bool(zone[API_FLOOR_DEMAND])
 
         if API_HUMIDITY in zone:
             self.humidity = int(zone[API_HUMIDITY])
@@ -420,6 +423,18 @@ class Zone:
                 for key, val in error.items():
                     self.add_error(key, val)
 
+        if API_MODE in zone:
+            self.mode = OperationMode(zone[API_MODE])
+        else:
+            self.master = True
+            self.mode = OperationMode.AUTO
+            self.modes.append(self.mode)
+
+        if API_NAME in zone:
+            self.name = str(zone[API_NAME])
+        else:
+            self.name = f"Airzone {zone[API_SYSTEM_ID]}:{zone[API_ZONE_ID]}"
+
         if API_SLEEP in zone:
             self.sleep = SleepTimeout(zone[API_SLEEP])
 
@@ -433,8 +448,9 @@ class Zone:
             self.temp_step = float(zone[API_TEMP_STEP])
 
         if self.master:
-            for mode in zone[API_MODES]:
-                self.modes.append(OperationMode(mode))
+            if API_MODES in zone:
+                for mode in zone[API_MODES]:
+                    self.modes.append(OperationMode(mode))
             self.system.set_mode(self.mode)
             self.system.set_modes(self.modes)
             if OperationMode.STOP not in self.modes:
@@ -568,7 +584,7 @@ class Zone:
 
     def get_air_demand(self) -> bool | None:
         """Return zone air demand."""
-        if self.is_stage_supported(AirzoneStages.Air):
+        if self.air_demand is not None and self.is_stage_supported(AirzoneStages.Air):
             return self.air_demand
         return None
 
@@ -612,7 +628,7 @@ class Zone:
 
     def get_demand(self) -> bool:
         """Return zone demand."""
-        return self.air_demand or self.floor_demand
+        return bool(self.air_demand) or bool(self.floor_demand)
 
     def get_double_set_point(self) -> bool:
         """Return zone double set point."""
@@ -624,7 +640,9 @@ class Zone:
 
     def get_floor_demand(self) -> bool | None:
         """Return zone floor demand."""
-        if self.is_stage_supported(AirzoneStages.Radiant):
+        if self.floor_demand is not None and self.is_stage_supported(
+            AirzoneStages.Radiant
+        ):
             return self.floor_demand
         return None
 
