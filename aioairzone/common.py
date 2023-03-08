@@ -50,6 +50,17 @@ class GrilleAngle(IntEnum):
         return cls.DEG_90
 
 
+class OperationAction(IntEnum):
+    """Airzone operation actions."""
+
+    COOLING = 1
+    DRYING = 2
+    FAN = 3
+    HEATING = 4
+    IDLE = 5
+    OFF = 6
+
+
 class OperationMode(IntEnum):
     """Airzone operation modes."""
 

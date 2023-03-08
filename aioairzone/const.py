@@ -95,6 +95,7 @@ API_ZONE_PARAMS = [
     API_SLEEP,
 ]
 
+AZD_ACTION = "action"
 AZD_AIR_DEMAND = "air-demand"
 AZD_BATTERY_LOW = "battery-low"
 AZD_CLAMP_METER = "clamp-meter"

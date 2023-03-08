@@ -7,6 +7,7 @@ from typing import Any
 from .common import (
     AirzoneStages,
     GrilleAngle,
+    OperationAction,
     OperationMode,
     SleepTimeout,
     SystemType,
@@ -56,6 +57,7 @@ from .const import (
     API_THERMOS_TYPE,
     API_UNITS,
     API_ZONE_ID,
+    AZD_ACTION,
     AZD_AIR_DEMAND,
     AZD_BATTERY_LOW,
     AZD_CLAMP_METER,
@@ -461,6 +463,7 @@ class Zone:
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
         data = {
+            AZD_ACTION: self.get_action(),
             AZD_DEMAND: self.get_demand(),
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
             AZD_ID: self.get_id(),
@@ -582,11 +585,73 @@ class Zone:
             if val not in self.errors:
                 self.errors.append(val)
 
+    def get_action(self) -> OperationAction:
+        """Return zone action."""
+
+        if self.get_on():
+            if self.get_demand():
+                mode = self.get_mode()
+                if mode == OperationMode.COOLING:
+                    action = OperationAction.COOLING
+                elif mode == OperationMode.HEATING:
+                    action = OperationAction.HEATING
+                elif mode == OperationMode.FAN:
+                    action = OperationAction.FAN
+                elif mode == OperationMode.DRY:
+                    action = OperationAction.DRYING
+                elif mode == OperationMode.AUTO:
+                    action = self.get_auto_mode()
+                else:
+                    action = OperationAction.OFF
+            else:
+                action = OperationAction.IDLE
+        else:
+            action = OperationAction.OFF
+
+        return action
+
     def get_air_demand(self) -> bool | None:
         """Return zone air demand."""
         if self.air_demand is not None and self.is_stage_supported(AirzoneStages.Air):
             return self.air_demand
         return None
+
+    def get_auto_mode(self) -> OperationAction:
+        """Return action from auto mode."""
+        temp_sp = self.get_temp_set()
+        temp_min = self.get_temp_min()
+        temp_max = self.get_temp_max()
+        cool_sp = self.get_cool_temp_set()
+        cool_max = self.get_cool_temp_max()
+        cool_min = self.get_cool_temp_min()
+        heat_sp = self.get_heat_temp_set()
+        heat_max = self.get_heat_temp_max()
+        heat_min = self.get_heat_temp_min()
+
+        if (
+            cool_max is not None
+            and cool_min is not None
+            and heat_max is not None
+            and heat_min is not None
+        ):
+            cool_match = cool_max == temp_max and cool_min == temp_min
+            heat_match = heat_max == temp_max and cool_min == temp_min
+
+            if cool_match and not heat_match:
+                return OperationAction.COOLING
+            if heat_match and not cool_match:
+                return OperationAction.HEATING
+
+        if cool_sp is not None and heat_sp is not None:
+            cool_match = cool_sp == temp_sp
+            heat_match = heat_sp == temp_sp
+
+            if cool_match and not heat_match:
+                return OperationAction.COOLING
+            if heat_match and not cool_match:
+                return OperationAction.HEATING
+
+        return OperationAction.IDLE
 
     def get_battery_low(self) -> bool | None:
         """Return battery status."""
