@@ -367,7 +367,7 @@ class AirzoneLocalApi:
                 if key not in data:
                     raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
                 raise ParamUpdateFailure(
-                    f"set_hvac: param update failure: {key}={value}"
+                    f"set_hvac: {key} update failure: {data.get(key)} vs {value}"
                 )
 
         system = self.get_system(data[API_SYSTEM_ID])
