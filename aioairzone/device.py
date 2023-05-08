@@ -878,3 +878,5 @@ class Zone:
             self.temp_set = float(value)
         elif key == API_SLEEP:
             self.sleep = SleepTimeout(value)
+        elif key == API_SPEED:
+            self.speed = int(value)
