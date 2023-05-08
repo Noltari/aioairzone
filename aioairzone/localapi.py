@@ -12,6 +12,7 @@ from aiohttp import ClientConnectorError, ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
 from .const import (
+    API_COOL_SET_POINT,
     API_DATA,
     API_DEMO,
     API_ERROR_METHOD_NOT_SUPPORTED,
@@ -22,9 +23,11 @@ from .const import (
     API_ERROR_ZONE_ID_NOT_PROVIDED,
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
+    API_HEAT_SET_POINT,
     API_HVAC,
     API_INTEGRATION,
     API_MAC,
+    API_SET_POINT,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
@@ -346,7 +349,13 @@ class AirzoneLocalApi:
 
         data: dict[str, Any] = res[API_DATA][0]
         for key, value in params.items():
-            if key not in data or data[key] != value:
+            update_fail = key not in data
+
+            if not update_fail:
+                if key not in [API_COOL_SET_POINT, API_HEAT_SET_POINT, API_SET_POINT]:
+                    update_fail = data[key] != value
+
+            if update_fail:
                 if key == API_SYSTEM_ID and value != 0:
                     raise InvalidSystem(
                         f"set_hvac: System mismatch: {data.get(key)} vs {value}"
