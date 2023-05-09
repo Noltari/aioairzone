@@ -657,7 +657,7 @@ class Zone:
             and heat_min is not None
         ):
             cool_match = cool_max == temp_max and cool_min == temp_min
-            heat_match = heat_max == temp_max and cool_min == temp_min
+            heat_match = heat_max == temp_max and heat_min == temp_min
 
             if cool_match and not heat_match:
                 return OperationAction.COOLING
