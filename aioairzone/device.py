@@ -16,6 +16,7 @@ from .common import (
 )
 from .const import (
     API_AIR_DEMAND,
+    API_ANTI_FREEZE,
     API_COLD_ANGLE,
     API_COLD_STAGE,
     API_COLD_STAGES,
@@ -62,6 +63,7 @@ from .const import (
     AZD_ABS_TEMP_MIN,
     AZD_ACTION,
     AZD_AIR_DEMAND,
+    AZD_ANTI_FREEZE,
     AZD_BATTERY_LOW,
     AZD_CLAMP_METER,
     AZD_COLD_ANGLE,
@@ -345,6 +347,7 @@ class Zone:
     def __init__(self, system: System, zone: dict[str, Any]):
         """Zone init."""
         self.air_demand: bool | None = None
+        self.anti_freeze: bool | None = None
         self.cold_angle: GrilleAngle | None = None
         self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
@@ -387,6 +390,9 @@ class Zone:
             self.air_demand = bool(zone[API_AIR_DEMAND])
         if API_FLOOR_DEMAND in zone:
             self.floor_demand = bool(zone[API_FLOOR_DEMAND])
+
+        if API_ANTI_FREEZE in zone:
+            self.anti_freeze = bool(zone[API_ANTI_FREEZE])
 
         if API_HUMIDITY in zone:
             self.humidity = int(zone[API_HUMIDITY])
@@ -499,6 +505,10 @@ class Zone:
         floor_demand = self.get_floor_demand()
         if floor_demand is not None:
             data[AZD_FLOOR_DEMAND] = floor_demand
+
+        anti_freeze = self.get_anti_freeze()
+        if anti_freeze is not None:
+            data[AZD_ANTI_FREEZE] = anti_freeze
 
         full_name = self.get_full_name()
         if full_name is not None:
@@ -649,6 +659,10 @@ class Zone:
         if self.air_demand is not None and self.is_stage_supported(AirzoneStages.Air):
             return self.air_demand
         return None
+
+    def get_anti_freeze(self) -> bool | None:
+        """Return zone anti freeze."""
+        return self.anti_freeze
 
     def get_auto_mode(self) -> OperationAction:
         """Return action from auto mode."""
@@ -908,7 +922,9 @@ class Zone:
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
-        if key == API_COOL_SET_POINT:
+        if key == API_ANTI_FREEZE:
+            self.anti_freeze = bool(value)
+        elif key == API_COOL_SET_POINT:
             self.cool_temp_set = float(value)
         elif key == API_COLD_ANGLE:
             self.cold_angle = GrilleAngle(value)
