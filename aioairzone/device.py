@@ -57,6 +57,8 @@ from .const import (
     API_THERMOS_TYPE,
     API_UNITS,
     API_ZONE_ID,
+    AZD_ABS_TEMP_MAX,
+    AZD_ABS_TEMP_MIN,
     AZD_ACTION,
     AZD_AIR_DEMAND,
     AZD_BATTERY_LOW,
@@ -463,6 +465,8 @@ class Zone:
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
         data = {
+            AZD_ABS_TEMP_MAX: self.get_abs_temp_max(),
+            AZD_ABS_TEMP_MIN: self.get_abs_temp_min(),
             AZD_ACTION: self.get_action(),
             AZD_DEMAND: self.get_demand(),
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
@@ -584,6 +588,24 @@ class Zone:
         elif _key == ERROR_ZONE:
             if val not in self.errors:
                 self.errors.append(val)
+
+    def get_abs_temp_max(self) -> float:
+        """Return absolute max temp."""
+        temps = [
+            self.get_cool_temp_max(),
+            self.get_heat_temp_max(),
+            self.get_temp_max(),
+        ]
+        return max(list(temp for temp in temps if temp is not None))
+
+    def get_abs_temp_min(self) -> float:
+        """Return absolute min temp."""
+        temps = [
+            self.get_cool_temp_min(),
+            self.get_heat_temp_min(),
+            self.get_temp_min(),
+        ]
+        return min(list(temp for temp in temps if temp is not None))
 
     def get_action(self) -> OperationAction:
         """Return zone action."""
