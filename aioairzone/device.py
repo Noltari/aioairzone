@@ -35,6 +35,7 @@ from .const import (
     API_HEAT_STAGES,
     API_HUMIDITY,
     API_MANUFACTURER,
+    API_MASTER_ZONE_ID,
     API_MAX_TEMP,
     API_MC_CONNECTED,
     API_MIN_TEMP,
@@ -86,6 +87,7 @@ from .const import (
     AZD_ID,
     AZD_MANUFACTURER,
     AZD_MASTER,
+    AZD_MASTER_ZONE,
     AZD_MODE,
     AZD_MODEL,
     AZD_MODES,
@@ -361,6 +363,7 @@ class Zone:
         self.humidity: int | None = None
         self.id = int(zone[API_ZONE_ID])
         self.master = bool(API_MODES in zone)
+        self.master_zone: int | None = None
         self.modes: list[OperationMode] = []
         self.on = bool(zone[API_ON])
         self.sleep: SleepTimeout | None = None
@@ -374,6 +377,11 @@ class Zone:
         self.temp_unit = TemperatureUnit(zone[API_UNITS])
         self.thermostat = Thermostat(zone)
         self.system = system
+
+        if API_MASTER_ZONE_ID in zone:
+            master_zone_id = int(zone[API_MASTER_ZONE_ID])
+            if master_zone_id != self.id:
+                self.master_zone = master_zone_id
 
         if API_AIR_DEMAND in zone:
             self.air_demand = bool(zone[API_AIR_DEMAND])
@@ -555,6 +563,10 @@ class Zone:
         errors = self.get_errors()
         if len(errors) > 0:
             data[AZD_ERRORS] = errors
+
+        master_zone = self.get_master_zone()
+        if master_zone is not None:
+            data[AZD_MASTER_ZONE] = master_zone
 
         modes = self.get_modes()
         if modes is not None:
@@ -783,6 +795,10 @@ class Zone:
         """Return zone master/slave."""
         return self.master
 
+    def get_master_zone(self) -> int | None:
+        """Return corresponding master zone."""
+        return self.master_zone
+
     def get_mode(self) -> OperationMode:
         """Return zone mode."""
         return self.mode
@@ -791,11 +807,25 @@ class Zone:
         """Return zone modes."""
         if self.master:
             return self.modes
-        modes = self.system.get_modes()
+
+        modes = None
+        master_zone_id = self.get_master_zone()
+        if master_zone_id is not None:
+            try:
+                master_zone = self.system.get_zone(master_zone_id)
+                modes = master_zone.get_modes()
+            except InvalidZone:
+                pass
+
+        if modes is None:
+            modes = self.system.get_modes()
+
         if modes is None:
             modes = [self.mode]
+
         if OperationMode.STOP not in modes:
             modes.append(OperationMode.STOP)
+
         return modes
 
     def get_name(self) -> str:
