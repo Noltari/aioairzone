@@ -1,7 +1,7 @@
 """Airzone library common code."""
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Any
 
 
@@ -35,6 +35,20 @@ class AirzoneStages(IntEnum):
         if self.value in (self.Air, self.Radiant):
             return [AirzoneStages.Off, self]
         return []
+
+
+class EcoAdapt(str, Enum):
+    """Airzone Eco-Adapt."""
+
+    OFF = "off"
+    MANUAL = "manual"
+    A = "a"
+    A_PLUS = "a_p"
+    A_PLUS_PLUS = "a_pp"
+
+    @classmethod
+    def _missing_(cls, value: Any) -> EcoAdapt:
+        return cls.OFF
 
 
 class GrilleAngle(IntEnum):

@@ -6,6 +6,7 @@ from typing import Any
 
 from .common import (
     AirzoneStages,
+    EcoAdapt,
     GrilleAngle,
     OperationAction,
     OperationMode,
@@ -25,6 +26,7 @@ from .const import (
     API_COOL_SET_POINT,
     API_DOUBLE_SET_POINT,
     API_DOUBLE_SET_POINT_PARAMS,
+    API_ECO_ADAPT,
     API_ERROR_LOW_BATTERY,
     API_ERRORS,
     API_FLOOR_DEMAND,
@@ -74,6 +76,7 @@ from .const import (
     AZD_COOL_TEMP_SET,
     AZD_DEMAND,
     AZD_DOUBLE_SET_POINT,
+    AZD_ECO_ADAPT,
     AZD_ENERGY,
     AZD_ERRORS,
     AZD_FIRMWARE,
@@ -126,6 +129,7 @@ class System:
     def __init__(self, airzone_system: list[dict[str, Any]]):
         """System init."""
         self.clamp_meter: bool | None = None
+        self.eco_adapt: EcoAdapt | None = None
         self.energy: int | None = None
         self.errors: list[str] = []
         self.id: int | None = None
@@ -163,6 +167,10 @@ class System:
                 energy = self.get_energy()
                 if energy is not None:
                     data[AZD_ENERGY] = energy
+
+        eco_adapt = self.get_eco_adapt()
+        if eco_adapt is not None:
+            data[AZD_ECO_ADAPT] = eco_adapt
 
         errors = self.get_errors()
         if len(errors) > 0:
@@ -202,6 +210,10 @@ class System:
     def get_clamp_meter(self) -> bool | None:
         """Return system clamp meter connection."""
         return self.clamp_meter
+
+    def get_eco_adapt(self) -> EcoAdapt | None:
+        """Return system Eco Adapt."""
+        return self.eco_adapt
 
     def get_energy(self) -> int | None:
         """Return system energy consumption."""
@@ -262,6 +274,10 @@ class System:
         """Return number of system zones."""
         return len(self.zones)
 
+    def set_eco_adapt(self, eco_adapt: EcoAdapt) -> None:
+        """Set system Eco Adapt."""
+        self.eco_adapt = eco_adapt
+
     def set_mode(self, mode: OperationMode) -> None:
         """Set system mode."""
         self.mode = mode
@@ -272,7 +288,9 @@ class System:
 
     def set_param(self, key: str, value: Any) -> None:
         """Update parameters by key and value."""
-        if key == API_MODE:
+        if key == API_ECO_ADAPT:
+            self.eco_adapt = EcoAdapt(value)
+        elif key == API_MODE:
             self.mode = OperationMode(value)
 
         for zone in self.zones.values():
@@ -355,6 +373,7 @@ class Zone:
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
         self.double_set_point: bool = False
+        self.eco_adapt: EcoAdapt | None = None
         self.errors: list[str] = []
         self.floor_demand: bool | None = None
         self.heat_angle: GrilleAngle | None = None
@@ -393,6 +412,9 @@ class Zone:
 
         if API_ANTI_FREEZE in zone:
             self.anti_freeze = bool(zone[API_ANTI_FREEZE])
+
+        if API_ECO_ADAPT in zone:
+            self.eco_adapt = EcoAdapt(zone[API_ECO_ADAPT])
 
         if API_HUMIDITY in zone:
             self.humidity = int(zone[API_HUMIDITY])
@@ -469,12 +491,17 @@ class Zone:
             if API_MODES in zone:
                 for mode in zone[API_MODES]:
                     self.modes.append(OperationMode(mode))
+            if self.eco_adapt:
+                self.system.set_eco_adapt(self.eco_adapt)
             self.system.set_mode(self.mode)
             self.system.set_modes(self.modes)
             if OperationMode.STOP not in self.modes:
                 self.modes.append(OperationMode.STOP)
-        elif self.system.get_mode() is None:
-            self.system.set_mode(self.mode)
+        else:
+            if self.eco_adapt and self.system.get_eco_adapt() is None:
+                self.system.set_eco_adapt(self.eco_adapt)
+            if self.system.get_mode() is None:
+                self.system.set_mode(self.mode)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
@@ -509,6 +536,10 @@ class Zone:
         anti_freeze = self.get_anti_freeze()
         if anti_freeze is not None:
             data[AZD_ANTI_FREEZE] = anti_freeze
+
+        eco_adapt = self.get_eco_adapt()
+        if eco_adapt is not None:
+            data[AZD_ECO_ADAPT] = eco_adapt
 
         full_name = self.get_full_name()
         if full_name is not None:
@@ -747,6 +778,10 @@ class Zone:
         """Return zone double set point."""
         return self.double_set_point
 
+    def get_eco_adapt(self) -> EcoAdapt | None:
+        """Return zone echo adapt."""
+        return self.eco_adapt
+
     def get_errors(self) -> list[str]:
         """Return zone errors."""
         return self.errors
@@ -930,6 +965,8 @@ class Zone:
             self.cold_angle = GrilleAngle(value)
         elif key == API_COLD_STAGE:
             self.cold_stage = AirzoneStages(value)
+        elif key == API_ECO_ADAPT:
+            self.eco_adapt = EcoAdapt(value)
         elif key == API_HEAT_ANGLE:
             self.heat_angle = GrilleAngle(value)
         elif key == API_HEAT_SET_POINT:
