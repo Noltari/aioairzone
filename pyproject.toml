@@ -24,6 +24,7 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/Noltari/aioairzone"
+"Bug Tracker" = "https://github.com/Noltari/aioairzone/issues"
 
 [tool.setuptools]
 platforms = ["any"]
