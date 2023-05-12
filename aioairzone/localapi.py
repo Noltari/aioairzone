@@ -39,6 +39,7 @@ from .const import (
     AZD_NEW_ZONES,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
+    AZD_VERSION,
     AZD_WEBSERVER,
     AZD_ZONES,
     AZD_ZONES_NUM,
@@ -108,6 +109,7 @@ class AirzoneLocalApi:
         self.api_features_checked = False
         self.options = options
         self.systems: dict[int, System] = {}
+        self.version: str | None = None
         self.webserver: WebServer | None = None
 
     @staticmethod
@@ -189,6 +191,13 @@ class AirzoneLocalApi:
                 if update:
                     self.update_systems(systems)
         except (SystemOutOfRange, ZoneNotProvided):
+            pass
+
+        try:
+            version = await self.get_version()
+            if API_VERSION in version:
+                self.version = version[API_VERSION]
+        except (InvalidHost, APIError):
             pass
 
         self.api_features_checked = True
@@ -407,6 +416,9 @@ class AirzoneLocalApi:
             if self.webserver:
                 data[AZD_WEBSERVER] = self.webserver.data()
             data[AZD_ZONES] = zones
+
+        if self.version is not None:
+            data[AZD_VERSION] = self.version
 
         return data
 
