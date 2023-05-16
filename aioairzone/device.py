@@ -294,9 +294,7 @@ class System:
 
     def set_param(self, key: str, value: Any) -> None:
         """Update parameters by key and value."""
-        if key == API_ECO_ADAPT:
-            self.eco_adapt = EcoAdapt(value)
-        elif key == API_MODE:
+        if key == API_MODE:
             self.mode = OperationMode(value)
 
         for zone in self.zones.values():
@@ -993,9 +991,7 @@ class Zone:
 
     def set_param(self, key: str, value: Any) -> None:
         """Update zone parameter by key and value."""
-        if key == API_ANTI_FREEZE:
-            self.anti_freeze = bool(value)
-        elif key == API_COOL_SET_POINT:
+        if key == API_COOL_SET_POINT:
             self.cool_temp_set = float(value)
         elif key == API_COLD_ANGLE:
             self.cold_angle = GrilleAngle(value)
