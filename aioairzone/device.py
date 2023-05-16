@@ -113,6 +113,8 @@ from .const import (
     AZD_THERMOSTAT_MODEL,
     AZD_THERMOSTAT_RADIO,
     AZD_ZONES_NUM,
+    DEFAULT_TEMP_STEP_CELSIUS,
+    DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_SYSTEM,
     ERROR_ZONE,
     THERMOSTAT_RADIO,
@@ -486,6 +488,11 @@ class Zone:
 
         if API_TEMP_STEP in zone:
             self.temp_step = float(zone[API_TEMP_STEP])
+        else:
+            if self.temp_unit == TemperatureUnit.FAHRENHEIT:
+                self.temp_step = DEFAULT_TEMP_STEP_FAHRENHEIT
+            else:
+                self.temp_step = DEFAULT_TEMP_STEP_CELSIUS
 
         if self.master:
             if API_MODES in zone:
