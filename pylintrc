@@ -23,6 +23,7 @@ disable=
   C0103,
   R0801,
   R0914
+max-module-lines = 2000
 
 [REPORTS]
 score=no

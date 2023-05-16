@@ -19,6 +19,7 @@ from .const import (
     API_AIR_DEMAND,
     API_ANTI_FREEZE,
     API_COLD_ANGLE,
+    API_COLD_DEMAND,
     API_COLD_STAGE,
     API_COLD_STAGES,
     API_COOL_MAX_TEMP,
@@ -31,6 +32,7 @@ from .const import (
     API_ERRORS,
     API_FLOOR_DEMAND,
     API_HEAT_ANGLE,
+    API_HEAT_DEMAND,
     API_HEAT_MAX_TEMP,
     API_HEAT_MIN_TEMP,
     API_HEAT_SET_POINT,
@@ -69,6 +71,7 @@ from .const import (
     AZD_BATTERY_LOW,
     AZD_CLAMP_METER,
     AZD_COLD_ANGLE,
+    AZD_COLD_DEMAND,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
     AZD_COOL_TEMP_MAX,
@@ -83,6 +86,7 @@ from .const import (
     AZD_FLOOR_DEMAND,
     AZD_FULL_NAME,
     AZD_HEAT_ANGLE,
+    AZD_HEAT_DEMAND,
     AZD_HEAT_STAGE,
     AZD_HEAT_STAGES,
     AZD_HEAT_TEMP_MAX,
@@ -369,6 +373,7 @@ class Zone:
         self.air_demand: bool | None = None
         self.anti_freeze: bool | None = None
         self.cold_angle: GrilleAngle | None = None
+        self.cold_demand: bool | None = None
         self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
         self.cool_temp_max: float | None = None
@@ -380,6 +385,7 @@ class Zone:
         self.errors: list[str] = []
         self.floor_demand: bool | None = None
         self.heat_angle: GrilleAngle | None = None
+        self.heat_demand: bool | None = None
         self.heat_temp_max: float | None = None
         self.heat_temp_min: float | None = None
         self.heat_temp_set: float | None = None
@@ -415,6 +421,11 @@ class Zone:
 
         if API_ANTI_FREEZE in zone:
             self.anti_freeze = bool(zone[API_ANTI_FREEZE])
+
+        if API_COLD_DEMAND in zone:
+            self.cold_demand = bool(zone[API_COLD_DEMAND])
+        if API_HEAT_DEMAND in zone:
+            self.heat_demand = bool(zone[API_HEAT_DEMAND])
 
         if API_DOUBLE_SET_POINT in zone:
             self.double_set_point = bool(zone[API_DOUBLE_SET_POINT])
@@ -582,6 +593,13 @@ class Zone:
         if heat_angle is not None:
             data[AZD_HEAT_ANGLE] = heat_angle
 
+        cold_demand = self.get_cold_demand()
+        if cold_demand is not None:
+            data[AZD_COLD_DEMAND] = cold_demand
+        heat_demand = self.get_heat_demand()
+        if heat_demand is not None:
+            data[AZD_HEAT_DEMAND] = heat_demand
+
         cold_stage = self.get_cold_stage()
         if cold_stage is not None:
             data[AZD_COLD_STAGE] = cold_stage
@@ -748,6 +766,10 @@ class Zone:
         """Return zone cold angle."""
         return self.cold_angle
 
+    def get_cold_demand(self) -> bool | None:
+        """Return zone cold demand."""
+        return self.cold_demand
+
     def get_cold_stage(self) -> AirzoneStages | None:
         """Return zone cold stage."""
         return self.cold_stage
@@ -815,6 +837,10 @@ class Zone:
     def get_heat_angle(self) -> GrilleAngle | None:
         """Return zone heat angle."""
         return self.heat_angle
+
+    def get_heat_demand(self) -> bool | None:
+        """Return zone heat demand."""
+        return self.heat_demand
 
     def get_heat_stage(self) -> AirzoneStages | None:
         """Return zone heat stage."""
