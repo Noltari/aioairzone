@@ -372,7 +372,8 @@ class Zone:
         self.cool_temp_max: float | None = None
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
-        self.double_set_point: bool = False
+        self.double_set_point: bool | None = None
+        self.double_set_point_params: bool = zone.keys() >= API_DOUBLE_SET_POINT_PARAMS
         self.eco_adapt: EcoAdapt | None = None
         self.errors: list[str] = []
         self.floor_demand: bool | None = None
@@ -413,6 +414,9 @@ class Zone:
         if API_ANTI_FREEZE in zone:
             self.anti_freeze = bool(zone[API_ANTI_FREEZE])
 
+        if API_DOUBLE_SET_POINT in zone:
+            self.double_set_point = bool(zone[API_DOUBLE_SET_POINT])
+
         if API_ECO_ADAPT in zone:
             self.eco_adapt = EcoAdapt(zone[API_ECO_ADAPT])
 
@@ -446,10 +450,6 @@ class Zone:
             self.cool_temp_min = float(zone[API_COOL_MIN_TEMP])
         if API_COOL_SET_POINT in zone:
             self.cool_temp_set = float(zone[API_COOL_SET_POINT])
-        if API_DOUBLE_SET_POINT in zone:
-            self.double_set_point = bool(zone[API_DOUBLE_SET_POINT])
-        else:
-            self.double_set_point = zone.keys() >= API_DOUBLE_SET_POINT_PARAMS
         if API_HEAT_MAX_TEMP in zone:
             self.heat_temp_max = float(zone[API_HEAT_MAX_TEMP])
         if API_HEAT_MIN_TEMP in zone:
@@ -549,25 +549,24 @@ class Zone:
         if humidity is not None:
             data[AZD_HUMIDITY] = humidity
 
-        if data[AZD_DOUBLE_SET_POINT]:
-            cool_temp_max = self.get_cool_temp_max()
-            if cool_temp_max:
-                data[AZD_COOL_TEMP_MAX] = cool_temp_max
-            cool_temp_min = self.get_cool_temp_min()
-            if cool_temp_min:
-                data[AZD_COOL_TEMP_MIN] = cool_temp_min
-            cool_temp_set = self.get_cool_temp_set()
-            if cool_temp_set:
-                data[AZD_COOL_TEMP_SET] = cool_temp_set
-            heat_temp_max = self.get_heat_temp_max()
-            if heat_temp_max:
-                data[AZD_HEAT_TEMP_MAX] = heat_temp_max
-            heat_temp_min = self.get_heat_temp_min()
-            if heat_temp_min:
-                data[AZD_HEAT_TEMP_MIN] = heat_temp_min
-            heat_temp_set = self.get_heat_temp_set()
-            if heat_temp_set:
-                data[AZD_HEAT_TEMP_SET] = heat_temp_set
+        cool_temp_max = self.get_cool_temp_max()
+        if cool_temp_max:
+            data[AZD_COOL_TEMP_MAX] = cool_temp_max
+        cool_temp_min = self.get_cool_temp_min()
+        if cool_temp_min:
+            data[AZD_COOL_TEMP_MIN] = cool_temp_min
+        cool_temp_set = self.get_cool_temp_set()
+        if cool_temp_set:
+            data[AZD_COOL_TEMP_SET] = cool_temp_set
+        heat_temp_max = self.get_heat_temp_max()
+        if heat_temp_max:
+            data[AZD_HEAT_TEMP_MAX] = heat_temp_max
+        heat_temp_min = self.get_heat_temp_min()
+        if heat_temp_min:
+            data[AZD_HEAT_TEMP_MIN] = heat_temp_min
+        heat_temp_set = self.get_heat_temp_set()
+        if heat_temp_set:
+            data[AZD_HEAT_TEMP_SET] = heat_temp_set
 
         cold_angle = self.get_cold_angle()
         if cold_angle is not None:
@@ -776,7 +775,11 @@ class Zone:
 
     def get_double_set_point(self) -> bool:
         """Return zone double set point."""
-        return self.double_set_point
+        if self.double_set_point_params:
+            if self.double_set_point is not None:
+                return self.double_set_point
+            return OperationMode.AUTO in self.get_modes()
+        return False
 
     def get_eco_adapt(self) -> EcoAdapt | None:
         """Return zone echo adapt."""
