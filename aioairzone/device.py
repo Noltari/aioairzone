@@ -380,7 +380,7 @@ class Zone:
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
         self.double_set_point: bool | None = None
-        self.double_set_point_params: bool = zone.keys() >= API_DOUBLE_SET_POINT_PARAMS
+        self.double_set_point_params: bool = list(zone) >= API_DOUBLE_SET_POINT_PARAMS
         self.eco_adapt: EcoAdapt | None = None
         self.errors: list[str] = []
         self.floor_demand: bool | None = None
