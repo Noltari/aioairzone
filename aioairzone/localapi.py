@@ -147,12 +147,12 @@ class AirzoneLocalApi:
                 timeout=HTTP_CALL_TIMEOUT,
             )
         except ClientConnectorError as err:
-            raise InvalidHost from err
+            raise InvalidHost(err) from err
 
         try:
             resp_json = await resp.json(content_type=None)
         except JSONDecodeError as err:
-            raise InvalidHost from err
+            raise InvalidHost(err) from err
 
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
