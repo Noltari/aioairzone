@@ -57,7 +57,7 @@ class System:
 
     def update_zone_data(self, zone_data: dict[str, Any]) -> None:
         """Update System data."""
-        self.set_available(True)
+        self.available = True
 
         errors: list[dict[str, str]] = zone_data.get(API_ERRORS, [])
         for error in errors:
@@ -248,6 +248,8 @@ class System:
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update system parameters by dict."""
+
+        self.available = True
 
         if API_MC_CONNECTED in data:
             self.clamp_meter = bool(data[API_MC_CONNECTED])

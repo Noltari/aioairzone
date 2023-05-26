@@ -152,7 +152,7 @@ class Zone:
 
     def update_data(self, zone_data: dict[str, Any]) -> None:
         """Update Zone data."""
-        self.set_available(True)
+        self.available = True
 
         self.double_set_point_params: bool = (
             list(zone_data) >= API_DOUBLE_SET_POINT_PARAMS
