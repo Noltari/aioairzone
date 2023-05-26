@@ -214,3 +214,8 @@ class WebServerType(IntEnum):
             self.AIDOO: "Aidoo WebServer",
         }
         return models[self.value]
+
+
+def get_system_zone_id(system_id: int, zone_id: int) -> str:
+    """Combine system and zone IDs."""
+    return f"{system_id}:{zone_id}"

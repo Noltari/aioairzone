@@ -11,6 +11,7 @@ from typing import Any, cast
 from aiohttp import ClientConnectorError, ClientSession
 from aiohttp.client_reqrep import ClientResponse
 
+from .common import OperationMode, get_system_zone_id
 from .const import (
     API_COOL_SET_POINT,
     API_DATA,
@@ -36,6 +37,7 @@ from .const import (
     API_WEBSERVER,
     API_ZONE_ID,
     API_ZONE_PARAMS,
+    AZD_NEW_SYSTEMS,
     AZD_NEW_ZONES,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
@@ -53,7 +55,6 @@ from .const import (
     RAW_VERSION,
     RAW_WEBSERVER,
 )
-from .device import System, Zone
 from .exceptions import (
     APIError,
     InvalidHost,
@@ -69,7 +70,9 @@ from .exceptions import (
     ZoneNotProvided,
     ZoneOutOfRange,
 )
+from .system import System
 from .webserver import WebServer
+from .zone import Zone
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -101,9 +104,9 @@ class AirzoneLocalApi:
     ):
         """Device init."""
         self._api_raw_data: dict[str, Any] = {}
-        self._cached_zones: list[str] = []
         self._first_update: bool = True
-        self._new_zones: bool = False
+        self._new_systems: list[str] = []
+        self._new_zones: list[str] = []
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
@@ -111,6 +114,7 @@ class AirzoneLocalApi:
         self.systems: dict[int, System] = {}
         self.version: str | None = None
         self.webserver: WebServer | None = None
+        self.zones: dict[str, Zone] = {}
 
     @staticmethod
     def handle_errors(errors: list[dict[str, str]]) -> None:
@@ -231,46 +235,104 @@ class AirzoneLocalApi:
 
         return None
 
-    def detect_zones(self) -> bool:
-        """Check if there are new zones in Airzone data."""
-        new_zones = False
-
-        if self.systems:
-            for system in self.systems.values():
-                for zone in system.zones.values():
-                    zone_id = zone.get_system_zone_id()
-                    if zone_id not in self._cached_zones:
-                        new_zones = True
-                    self._cached_zones.append(zone_id)
-
-        if self._first_update:
-            return False
-
-        return new_zones
-
-    async def update(self) -> bool:
+    async def update(self) -> None:
         """Gather Airzone data."""
-        systems: dict[int, System] = {}
+
+        for system in self.systems.values():
+            system.set_available(False)
+        for zone in self.zones.values():
+            zone.set_available(False)
 
         hvac = await self.get_hvac()
         if self.options.system_id == DEFAULT_SYSTEM_ID:
-            for hvac_system in hvac[API_SYSTEMS]:
-                system = System(hvac_system[API_DATA])
-                if system and (_id := system.get_id()):
-                    systems[_id] = system
+            for system_data in hvac[API_SYSTEMS]:
+                self.parse_system_zones(system_data)
         else:
-            system = System(hvac[API_DATA])
-            if system and (_id := system.get_id()):
-                systems[_id] = system
-        self.systems = systems
+            self.parse_system_zones(hvac)
 
         await self.update_features()
 
-        self._new_zones = self.detect_zones()
-
         self._first_update = False
 
-        return bool(systems)
+    def parse_system_zones(self, system_data: dict[str, Any]) -> None:
+        """Parse all zones from system data."""
+        self._new_systems = []
+        self._new_zones = []
+
+        system_zones: list[dict[str, Any]] = system_data.get(API_DATA, [])
+        for zone_data in system_zones:
+            system_id = int(zone_data.get(API_SYSTEM_ID, 0))
+            if system_id > 0:
+                if system_id not in self.systems:
+                    self.systems[system_id] = System(system_id, zone_data)
+                    self._new_systems += [str(system_id)]
+                else:
+                    self.systems[system_id].update_zone_data(zone_data)
+
+                zone_id = int(zone_data.get(API_ZONE_ID, 0))
+                if zone_id > 0:
+                    system_zone_id = get_system_zone_id(system_id, zone_id)
+
+                    if system_zone_id not in self.zones:
+                        self.zones[system_zone_id] = Zone(system_id, zone_id, zone_data)
+                        self._new_zones += [system_zone_id]
+                    else:
+                        self.zones[system_zone_id].update_data(zone_data)
+
+                    self.update_system_from_zone(
+                        self.systems[system_id], self.zones[system_zone_id]
+                    )
+
+        self.update_zones_from_master_zone()
+
+        if self._first_update:
+            self._new_systems = []
+            self._new_zones = []
+        else:
+            if len(self._new_systems) > 0:
+                _LOGGER.debug("New systems detected: %s", self._new_systems)
+            if len(self._new_zones) > 0:
+                _LOGGER.debug("New zones detected: %s", self._new_zones)
+
+    def update_system_from_zone(self, system: System, zone: Zone) -> None:
+        """Update system data from zone."""
+        if zone.get_master():
+            if (eco_adapt := zone.get_eco_adapt()) is not None:
+                system.set_eco_adapt(eco_adapt)
+
+            system.set_master_system_zone(zone.get_system_zone_id())
+            system.set_master_zone(zone.get_id())
+
+            if (mode := zone.get_mode()) is not None:
+                system.set_mode(mode)
+
+            system.set_modes(zone.get_modes())
+        else:
+            if system.get_eco_adapt() is None:
+                system.set_eco_adapt(zone.get_eco_adapt())
+            if system.get_mode() is None:
+                system.set_mode(zone.get_mode())
+            if len(system.get_modes()) == 0:
+                system.set_modes(zone.get_modes())
+
+    def update_zones_from_master_zone(self) -> None:
+        """Update slave zones data with their master zone."""
+        for zone in self.zones.values():
+            system_id = zone.get_system_id()
+
+            if system_id is not None and not zone.get_master():
+                modes: list[OperationMode] = []
+
+                master_id = zone.get_master_zone()
+                if master_id is None:
+                    system = self.get_system(system_id)
+                    modes = system.get_modes()
+                else:
+                    master_zone = self.get_zone(system_id, master_id)
+                    modes = master_zone.get_modes()
+
+                if len(modes) > 0:
+                    zone.set_modes(modes)
 
     async def get_demo(self) -> dict[str, Any]:
         """Return Airzone demo."""
@@ -384,13 +446,22 @@ class AirzoneLocalApi:
         for key, value in data.items():
             if key in API_SYSTEM_PARAMS:
                 system.set_param(key, value)
+
+                system_id = system.get_id()
+                for cur_zone in self.zones.values():
+                    if cur_zone.get_system_id() == system_id:
+                        cur_zone.set_param(key, value)
             elif key in API_ZONE_PARAMS:
                 zone.set_param(key, value)
 
         return res
 
-    def new_zones(self) -> bool:
-        """Return if there are new zones in Airzone data."""
+    def new_systems(self) -> list[str]:
+        """Return new systems detected in last update."""
+        return self._new_systems
+
+    def new_zones(self) -> list[str]:
+        """Return new zones detected in last update."""
         return self._new_zones
 
     def raw_data(self) -> dict[str, Any]:
@@ -399,22 +470,27 @@ class AirzoneLocalApi:
 
     def data(self) -> dict[str, Any]:
         """Return Airzone device data."""
-        data: dict[str, Any] = {
-            AZD_NEW_ZONES: self.new_zones(),
-            AZD_SYSTEMS_NUM: self.num_systems(),
-            AZD_ZONES_NUM: self.num_zones(),
-        }
+        data: dict[str, Any] = {}
 
-        if self.systems:
+        data[AZD_NEW_SYSTEMS] = self.new_systems()
+
+        data[AZD_SYSTEMS_NUM] = self.num_systems()
+        if len(self.systems):
             systems: dict[int, Any] = {}
-            zones: dict[str, Any] = {}
             for system_id, system in self.systems.items():
                 systems[system_id] = system.data()
-                for zone in system.zones.values():
-                    zones[zone.get_system_zone_id()] = zone.data()
             data[AZD_SYSTEMS] = systems
-            if self.webserver:
-                data[AZD_WEBSERVER] = self.webserver.data()
+
+        if self.webserver is not None:
+            data[AZD_WEBSERVER] = self.webserver.data()
+
+        data[AZD_NEW_ZONES] = self.new_zones()
+
+        data[AZD_ZONES_NUM] = self.num_zones()
+        if len(self.zones):
+            zones: dict[str, Any] = {}
+            for system_zone_id, zone in self.zones.items():
+                zones[system_zone_id] = zone.data()
             data[AZD_ZONES] = zones
 
         if self.version is not None:
@@ -424,22 +500,21 @@ class AirzoneLocalApi:
 
     def get_system(self, system_id: int) -> System:
         """Return Airzone system."""
-        for system in self.systems.values():
-            if system.get_id() == system_id:
-                return system
-        raise InvalidSystem(f"System {system_id} not present")
+        if system_id not in self.systems:
+            raise InvalidSystem(f"System {system_id} not present")
+        return self.systems[system_id]
 
     def get_zone(self, system_id: int, zone_id: int) -> Zone:
-        """Return Airzone system zone."""
-        return self.get_system(system_id).get_zone(zone_id)
+        """Return Airzone zone."""
+        system_zone_id = get_system_zone_id(system_id, zone_id)
+        if system_zone_id not in self.zones:
+            raise InvalidZone(f"Zone {system_zone_id} not present")
+        return self.zones[system_zone_id]
 
     def num_systems(self) -> int:
-        """Return number of airzone systems."""
+        """Return number of systems."""
         return len(self.systems)
 
     def num_zones(self) -> int:
-        """Return total number of zones."""
-        count = 0
-        for system in self.systems.values():
-            count += system.num_zones()
-        return count
+        """Return number of zones."""
+        return len(self.zones)
