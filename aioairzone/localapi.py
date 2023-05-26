@@ -13,7 +13,6 @@ from aiohttp.client_reqrep import ClientResponse
 
 from .common import OperationMode, get_system_zone_id
 from .const import (
-    API_COOL_SET_POINT,
     API_DATA,
     API_DEMO,
     API_ERROR_METHOD_NOT_SUPPORTED,
@@ -24,11 +23,9 @@ from .const import (
     API_ERROR_ZONE_ID_NOT_PROVIDED,
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
-    API_HEAT_SET_POINT,
     API_HVAC,
     API_INTEGRATION,
     API_MAC,
-    API_SET_POINT,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
@@ -62,7 +59,6 @@ from .exceptions import (
     InvalidParam,
     InvalidSystem,
     InvalidZone,
-    ParamUpdateFailure,
     RequestMalformed,
     SystemNotAvailable,
     SystemOutOfRange,
@@ -420,26 +416,22 @@ class AirzoneLocalApi:
 
         data: dict[str, Any] = res[API_DATA][0]
         for key, value in params.items():
-            update_fail = key not in data
-
-            if not update_fail:
-                if key not in [API_COOL_SET_POINT, API_HEAT_SET_POINT, API_SET_POINT]:
-                    update_fail = data[key] != value
-
-            if update_fail:
-                if key == API_SYSTEM_ID and value != 0:
+            if (
+                key in [API_SYSTEM_ID, API_ZONE_ID]
+                and value != 0
+                and data.get(key) != value
+            ):
+                if key == API_SYSTEM_ID:
                     raise InvalidSystem(
                         f"set_hvac: System mismatch: {data.get(key)} vs {value}"
                     )
-                if key == API_ZONE_ID and value != 0:
+                if key == API_ZONE_ID:
                     raise InvalidZone(
                         f"set_hvac: Zone mismatch: {data.get(key)} vs {value}"
                     )
-                if key not in data:
-                    raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
-                raise ParamUpdateFailure(
-                    f"set_hvac: {key} update failure: {data.get(key)} vs {value}"
-                )
+
+            if key not in data:
+                raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
 
         system = self.get_system(data[API_SYSTEM_ID])
         zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
