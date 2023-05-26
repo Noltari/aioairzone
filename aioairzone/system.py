@@ -30,6 +30,7 @@ from .const import (
     AZD_PROBLEMS,
     ERROR_SYSTEM,
 )
+from .zone import Zone
 
 
 class System:
@@ -50,6 +51,7 @@ class System:
         self.mode: OperationMode | None = None
         self.modes: list[OperationMode] = []
         self.type: SystemType | None = None
+        self.zones: dict[int, Zone] = {}
 
         self.update_zone_data(zone_data)
 
@@ -131,6 +133,12 @@ class System:
         else:
             if error not in self.errors:
                 self.errors += [error]
+
+    def add_zone(self, zone: Zone) -> None:
+        """Add zone to system."""
+        zone_id = zone.get_id()
+        if zone_id not in self.zones:
+            self.zones[zone_id] = zone
 
     def get_available(self) -> bool:
         """Return availability."""
@@ -234,6 +242,9 @@ class System:
             self.eco_adapt = EcoAdapt(value)
         elif key == API_MODE:
             self.mode = OperationMode(value)
+
+        for zone in self.zones.values():
+            zone.set_param(key, value)
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update system parameters by dict."""

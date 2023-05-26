@@ -270,7 +270,9 @@ class AirzoneLocalApi:
                     system_zone_id = get_system_zone_id(system_id, zone_id)
 
                     if system_zone_id not in self.zones:
-                        self.zones[system_zone_id] = Zone(system_id, zone_id, zone_data)
+                        _zone = Zone(system_id, zone_id, zone_data)
+                        self.zones[system_zone_id] = _zone
+                        self.systems[system_id].add_zone(_zone)
                         self._new_zones += [system_zone_id]
                     else:
                         self.zones[system_zone_id].update_data(zone_data)
@@ -438,11 +440,6 @@ class AirzoneLocalApi:
         for key, value in data.items():
             if key in API_SYSTEM_PARAMS:
                 system.set_param(key, value)
-
-                system_id = system.get_id()
-                for cur_zone in self.zones.values():
-                    if cur_zone.get_system_id() == system_id:
-                        cur_zone.set_param(key, value)
             elif key in API_ZONE_PARAMS:
                 zone.set_param(key, value)
 
