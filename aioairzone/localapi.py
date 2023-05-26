@@ -467,7 +467,7 @@ class AirzoneLocalApi:
         data[AZD_NEW_SYSTEMS] = self.new_systems()
 
         data[AZD_SYSTEMS_NUM] = self.num_systems()
-        if len(self.systems):
+        if len(self.systems) > 0:
             systems: dict[int, Any] = {}
             for system_id, system in self.systems.items():
                 systems[system_id] = system.data()
@@ -479,7 +479,7 @@ class AirzoneLocalApi:
         data[AZD_NEW_ZONES] = self.new_zones()
 
         data[AZD_ZONES_NUM] = self.num_zones()
-        if len(self.zones):
+        if len(self.zones) > 0:
             zones: dict[str, Any] = {}
             for system_zone_id, zone in self.zones.items():
                 zones[system_zone_id] = zone.data()
