@@ -26,6 +26,7 @@ from .const import (
     API_HVAC,
     API_INTEGRATION,
     API_MAC,
+    API_NOT_CHECKED_PARAMS,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
@@ -432,7 +433,7 @@ class AirzoneLocalApi:
                         f"set_hvac: Zone mismatch: {data.get(key)} vs {value}"
                     )
 
-            if key not in data:
+            if key not in API_NOT_CHECKED_PARAMS and key not in data:
                 raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
 
         system = self.get_system(data[API_SYSTEM_ID])
