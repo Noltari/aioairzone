@@ -85,7 +85,7 @@ API_DOUBLE_SET_POINT_PARAMS: Final[list[str]] = [
     API_HEAT_MIN_TEMP,
     API_HEAT_SET_POINT,
 ]
-API_NOT_CHECKED_PARAMS: Final[list[str]] = [
+API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
     API_MODE,
 ]
 API_SYSTEM_PARAMS: Final[list[str]] = [
