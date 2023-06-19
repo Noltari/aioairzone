@@ -198,7 +198,7 @@ class AirzoneLocalApi:
             version = await self.get_version()
             if API_VERSION in version:
                 self.version = version[API_VERSION]
-        except (InvalidHost, APIError):
+        except InvalidMethod:
             pass
 
         self.api_features_checked = True
