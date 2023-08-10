@@ -144,7 +144,7 @@ class Zone:
         self.speeds: list[int] = []
         self.system_id: int = system_id
         self.system_zone_id: str = get_system_zone_id(system_id, zone_id)
-        self.temp_set: float
+        self.temp_set: float | None = None
 
         self.name: str = f"Airzone {self.get_system_zone_id()}"
 
@@ -162,7 +162,6 @@ class Zone:
         self.temp = float(zone_data[API_ROOM_TEMP])
         self.temp_max = float(zone_data[API_MAX_TEMP])
         self.temp_min = float(zone_data[API_MIN_TEMP])
-        self.temp_set = float(zone_data[API_SET_POINT])
         self.temp_step: float | None = None
         self.temp_unit = TemperatureUnit(zone_data[API_UNITS])
         self.thermostat = Thermostat(zone_data)
@@ -259,6 +258,8 @@ class Zone:
             speeds = int(zone_data[API_SPEEDS])
             self.speeds = list(range(0, speeds + 1))
 
+        if API_SET_POINT in zone_data:
+            self.temp_set = float(zone_data[API_SET_POINT])
         if API_TEMP_STEP in zone_data:
             self.temp_step = float(zone_data[API_TEMP_STEP])
         else:
@@ -286,7 +287,6 @@ class Zone:
             AZD_TEMP: self.get_temp(),
             AZD_TEMP_MAX: self.get_temp_max(),
             AZD_TEMP_MIN: self.get_temp_min(),
-            AZD_TEMP_SET: self.get_temp_set(),
             AZD_TEMP_UNIT: self.get_temp_unit(),
         }
 
@@ -384,6 +384,9 @@ class Zone:
         if modes is not None:
             data[AZD_MODES] = modes
 
+        temp_set = self.get_temp_set()
+        if temp_set is not None:
+            data[AZD_TEMP_SET] = temp_set
         temp_step = self.get_temp_step()
         if temp_step is not None:
             data[AZD_TEMP_STEP] = temp_step
@@ -694,9 +697,11 @@ class Zone:
         """Return zone minimum temperature."""
         return round(self.temp_min, 1)
 
-    def get_temp_set(self) -> float:
+    def get_temp_set(self) -> float | None:
         """Return zone set temperature."""
-        return round(self.temp_set, 1)
+        if self.temp_set is not None:
+            return round(self.temp_set, 1)
+        return None
 
     def get_temp_step(self) -> float | None:
         """Return zone step temperature."""
