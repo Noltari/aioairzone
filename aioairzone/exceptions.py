@@ -10,6 +10,10 @@ class APIError(AirzoneError):
     """Exception raised when API fails."""
 
 
+class HotWaterNotAvailable(AirzoneError):
+    """Exception raised when Hot Water is not available."""
+
+
 class InvalidHost(AirzoneError):
     """Exception raised when invalid host is requested."""
 

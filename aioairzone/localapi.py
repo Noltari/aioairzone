@@ -13,8 +13,15 @@ from aiohttp.client_reqrep import ClientResponse
 
 from .common import OperationMode, get_system_zone_id
 from .const import (
+    API_ACS_MAX_TEMP,
+    API_ACS_MIN_TEMP,
+    API_ACS_ON,
+    API_ACS_SET_POINT,
+    API_ACS_TEMP,
     API_DATA,
     API_DEMO,
+    API_DHW_PARAMS,
+    API_ERROR_HOT_WATER_NOT_CONNECTED,
     API_ERROR_METHOD_NOT_SUPPORTED,
     API_ERROR_REQUEST_MALFORMED,
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
@@ -35,6 +42,7 @@ from .const import (
     API_WEBSERVER,
     API_ZONE_ID,
     API_ZONE_PARAMS,
+    AZD_HOT_WATER,
     AZD_NEW_SYSTEMS,
     AZD_NEW_ZONES,
     AZD_SYSTEMS,
@@ -47,6 +55,7 @@ from .const import (
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
     RAW_DEMO,
+    RAW_DHW,
     RAW_HVAC,
     RAW_INTEGRATION,
     RAW_SYSTEMS,
@@ -55,6 +64,7 @@ from .const import (
 )
 from .exceptions import (
     APIError,
+    HotWaterNotAvailable,
     InvalidHost,
     InvalidMethod,
     InvalidParam,
@@ -67,6 +77,7 @@ from .exceptions import (
     ZoneNotProvided,
     ZoneOutOfRange,
 )
+from .hotwater import HotWater
 from .system import System
 from .webserver import WebServer
 from .zone import Zone
@@ -80,6 +91,7 @@ class ApiFeature(IntEnum):
     HVAC = 0
     SYSTEMS = 1
     WEBSERVER = 2
+    HOT_WATER = 4
 
 
 @dataclass
@@ -107,6 +119,7 @@ class AirzoneLocalApi:
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
+        self.hotwater: HotWater | None = None
         self.options = options
         self.systems: dict[int, System] = {}
         self.version: str | None = None
@@ -118,6 +131,8 @@ class AirzoneLocalApi:
         """Handle API errors."""
         for error in errors:
             for key, val in error.items():
+                if val == API_ERROR_HOT_WATER_NOT_CONNECTED:
+                    raise HotWaterNotAvailable(f"{key}: {val}")
                 if val == API_ERROR_METHOD_NOT_SUPPORTED:
                     raise InvalidMethod(f"{key}: {val}")
                 if val == API_ERROR_REQUEST_MALFORMED:
@@ -163,6 +178,14 @@ class AirzoneLocalApi:
 
         return cast(dict[str, Any], resp_json)
 
+    def update_dhw(self, data: dict[str, Any]) -> None:
+        """Gather Domestic Hot Water data."""
+        dhw = data.get(API_DATA, {})
+        if self.hotwater is not None:
+            self.hotwater.update_data(dhw)
+        else:
+            self.hotwater = HotWater(dhw)
+
     def update_systems(self, data: dict[str, Any]) -> None:
         """Gather Systems data."""
         for api_system in data[API_SYSTEMS]:
@@ -173,6 +196,19 @@ class AirzoneLocalApi:
     def update_webserver(self, data: dict[str, Any]) -> None:
         """Gather WebServer data."""
         self.webserver = WebServer(data)
+
+    def check_dhw(self, dhw: dict[str, Any]) -> bool:
+        """Check Airzone Domestic Hot Water validity."""
+        return all(
+            [
+                dhw.get(API_ACS_MAX_TEMP, 0) != 0,
+                dhw.get(API_ACS_MIN_TEMP, 0) != 0,
+                API_ACS_ON in dhw,
+                dhw.get(API_ACS_SET_POINT, 0) != 0,
+                dhw.get(API_ACS_TEMP, 0) != 0,
+                dhw.get(API_SYSTEM_ID, 0) == 0,
+            ]
+        )
 
     async def check_features(self, update: bool) -> None:
         """Check Airzone API features."""
@@ -195,6 +231,15 @@ class AirzoneLocalApi:
             pass
 
         try:
+            dhw = await self.get_dhw()
+            if self.check_dhw(dhw.get(API_DATA, {})):
+                self.api_features |= ApiFeature.HOT_WATER
+                if update:
+                    self.update_dhw(dhw)
+        except HotWaterNotAvailable:
+            pass
+
+        try:
             version = await self.get_version()
             if API_VERSION in version:
                 self.version = version[API_VERSION]
@@ -208,6 +253,9 @@ class AirzoneLocalApi:
         if not self.api_features_checked:
             await self.check_features(True)
         else:
+            if self.api_features & ApiFeature.HOT_WATER:
+                self.update_dhw(await self.get_dhw())
+
             if self.api_features & ApiFeature.SYSTEMS:
                 self.update_systems(await self.get_hvac_systems())
 
@@ -342,6 +390,20 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_DEMO] = res
         return res
 
+    async def get_dhw(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Return Airzone DHW (Domestic Hot Water)."""
+        if not params:
+            params = {
+                API_SYSTEM_ID: 0,
+            }
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_HVAC}",
+            params,
+        )
+        self._api_raw_data[RAW_DHW] = res
+        return res
+
     async def get_hvac_systems(
         self, params: dict[str, Any] | None = None
     ) -> dict[str, Any]:
@@ -408,6 +470,24 @@ class AirzoneLocalApi:
             params,
         )
 
+    async def set_dhw_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Set Airzone Hot Water parameters and handle response."""
+        res = await self.put_hvac(params)
+
+        if API_DATA not in res:
+            if API_ERRORS in res:
+                self.handle_errors(res[API_ERRORS])
+            raise APIError(f"set_dhw: {API_DATA} not in API response")
+
+        if self.hotwater is not None:
+            data: dict[str, Any] = res.get(API_DATA, {})
+
+            for key, value in data.items():
+                if key in API_DHW_PARAMS:
+                    self.hotwater.set_param(key, value)
+
+        return res
+
     async def set_hvac_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Set Airzone HVAC parameters and handle response."""
         res = await self.put_hvac(params)
@@ -468,6 +548,9 @@ class AirzoneLocalApi:
     def data(self) -> dict[str, Any]:
         """Return Airzone device data."""
         data: dict[str, Any] = {}
+
+        if self.hotwater is not None:
+            data[AZD_HOT_WATER] = self.hotwater.data()
 
         data[AZD_NEW_SYSTEMS] = self.new_systems()
 

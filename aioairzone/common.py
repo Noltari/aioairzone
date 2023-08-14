@@ -92,6 +92,20 @@ class OperationMode(IntEnum):
         return cls.UNKNOWN
 
 
+class HotWaterOperation(IntEnum):
+    """Airzone Hot Water operations."""
+
+    UNKNOWN = -1
+
+    Off = 0
+    On = 1
+    Powerful = 2
+
+    @classmethod
+    def _missing_(cls, value: Any) -> HotWaterOperation:
+        return cls.UNKNOWN
+
+
 class SleepTimeout(IntEnum):
     """Airzone sleep timeouts."""
 

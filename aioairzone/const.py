@@ -2,7 +2,12 @@
 
 from typing import Final
 
-API_ACS_POINT: Final[str] = "acs_temp"
+API_ACS_MAX_TEMP: Final[str] = "acs_maxtemp"
+API_ACS_MIN_TEMP: Final[str] = "acs_mintemp"
+API_ACS_ON: Final[str] = "acs_power"
+API_ACS_POWER_MODE: Final[str] = "acs_powerful"
+API_ACS_SET_POINT: Final[str] = "acs_setpoint"
+API_ACS_TEMP: Final[str] = "acs_temp"
 API_AIR_DEMAND: Final[str] = "air_demand"
 API_ANTI_FREEZE: Final[str] = "antifreeze"
 API_COLD_ANGLE: Final[str] = "coldangle"
@@ -68,6 +73,7 @@ API_WS_FIRMWARE: Final[str] = "ws_firmware"
 API_WS_TYPE: Final[str] = "ws_type"
 API_ZONE_ID: Final[str] = "zoneID"
 
+API_ERROR_HOT_WATER_NOT_CONNECTED: Final[str] = "acs not connected"
 API_ERROR_LOW_BATTERY: Final[str] = "Low battery"
 API_ERROR_METHOD_NOT_SUPPORTED: Final[str] = "Method not provided or not supported"
 API_ERROR_REQUEST_MALFORMED: Final[str] = "request malformed"
@@ -77,6 +83,11 @@ API_ERROR_ZONE_ID_NOT_AVAILABLE: Final[str] = "zoneid not avaiable"
 API_ERROR_ZONE_ID_NOT_PROVIDED: Final[str] = "zoneid not provided"
 API_ERROR_ZONE_ID_OUT_RANGE: Final[str] = "zoneid out of range"
 
+API_DHW_PARAMS: Final[list[str]] = [
+    API_ACS_ON,
+    API_ACS_POWER_MODE,
+    API_ACS_SET_POINT,
+]
 API_DOUBLE_SET_POINT_PARAMS: Final[list[str]] = [
     API_COOL_MAX_TEMP,
     API_COOL_MIN_TEMP,
@@ -135,6 +146,7 @@ AZD_HEAT_TEMP_MIN: Final[str] = "heat-temp-min"
 AZD_HEAT_TEMP_SET: Final[str] = "heat-temp-set"
 AZD_HEAT_STAGE: Final[str] = "heat-stage"
 AZD_HEAT_STAGES: Final[str] = "heat-stages"
+AZD_HOT_WATER: Final[str] = "hot-water"
 AZD_HUMIDITY: Final[str] = "humidity"
 AZD_ID: Final[str] = "id"
 AZD_INTERFACE: Final[str] = "interface"
@@ -149,7 +161,10 @@ AZD_MODES: Final[str] = "modes"
 AZD_NAME: Final[str] = "name"
 AZD_NEW_SYSTEMS: Final[str] = "new-systems"
 AZD_NEW_ZONES: Final[str] = "new-zones"
+AZD_OPERATION: Final[str] = "operation"
+AZD_OPERATIONS: Final[str] = "operations"
 AZD_ON: Final[str] = "on"
+AZD_POWER_MODE: Final[str] = "power-mode"
 AZD_PROBLEMS: Final[str] = "problems"
 AZD_SLEEP: Final[str] = "sleep"
 AZD_SPEED: Final[str] = "speed"
@@ -185,6 +200,7 @@ ERROR_ZONE: Final[str] = "zone"
 HTTP_CALL_TIMEOUT: Final[int] = 10
 
 RAW_DEMO: Final[str] = "demo"
+RAW_DHW: Final[str] = "dhw"
 RAW_HVAC: Final[str] = "hvac"
 RAW_INTEGRATION: Final[str] = "integration"
 RAW_SYSTEMS: Final[str] = "systems"
