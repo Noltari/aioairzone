@@ -219,13 +219,22 @@ class Zone:
         if API_COOL_MIN_TEMP in zone_data:
             self.cool_temp_min = float(zone_data[API_COOL_MIN_TEMP])
         if API_COOL_SET_POINT in zone_data:
-            self.cool_temp_set = float(zone_data[API_COOL_SET_POINT])
+            cool_temp_set = self.validate_temp_set(
+                float(zone_data[API_COOL_SET_POINT]), self.cool_temp_max
+            )
+            if cool_temp_set is not None:
+                self.cool_temp_set = cool_temp_set
+
         if API_HEAT_MAX_TEMP in zone_data:
             self.heat_temp_max = float(zone_data[API_HEAT_MAX_TEMP])
         if API_HEAT_MIN_TEMP in zone_data:
             self.heat_temp_min = float(zone_data[API_HEAT_MIN_TEMP])
         if API_HEAT_SET_POINT in zone_data:
-            self.heat_temp_set = float(zone_data[API_HEAT_SET_POINT])
+            heat_temp_set = self.validate_temp_set(
+                float(zone_data[API_HEAT_SET_POINT]), self.heat_temp_max
+            )
+            if heat_temp_set is not None:
+                self.heat_temp_set = heat_temp_set
 
         if API_ERRORS in zone_data:
             errors: list[dict[str, str]] = zone_data[API_ERRORS]
@@ -259,7 +268,11 @@ class Zone:
             self.speeds = list(range(0, speeds + 1))
 
         if API_SET_POINT in zone_data:
-            self.temp_set = float(zone_data[API_SET_POINT])
+            temp_set = self.validate_temp_set(
+                float(zone_data[API_SET_POINT]), self.temp_max
+            )
+            if temp_set is not None:
+                self.temp_set = temp_set
         if API_TEMP_STEP in zone_data:
             self.temp_step = float(zone_data[API_TEMP_STEP])
         else:
@@ -769,3 +782,11 @@ class Zone:
             self.sleep = SleepTimeout(value)
         elif key == API_SPEED:
             self.speed = int(value)
+
+    def validate_temp_set(self, temp_set: float, max_val: float | None) -> float | None:
+        """Validate Zone temp set against its maximum value."""
+        if max_val is not None:
+            if temp_set <= max_val:
+                return temp_set
+            return None
+        return temp_set
