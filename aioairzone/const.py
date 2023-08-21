@@ -100,10 +100,12 @@ API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
     API_MODE,
 ]
 API_SYSTEM_PARAMS: Final[list[str]] = [
+    API_ECO_ADAPT,
     API_MODE,
     API_SPEED,
 ]
 API_ZONE_PARAMS: Final[list[str]] = [
+    API_ANTI_FREEZE,
     API_COOL_SET_POINT,
     API_COLD_ANGLE,
     API_COLD_STAGE,
