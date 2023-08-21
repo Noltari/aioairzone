@@ -1,5 +1,4 @@
 black
-isort
 mypy
 pylint
 ruff
