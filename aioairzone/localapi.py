@@ -1,11 +1,11 @@
 """Airzone Local API."""
 from __future__ import annotations
 
-import json
-import logging
 from dataclasses import dataclass
 from enum import IntEnum
+import json
 from json import JSONDecodeError
+import logging
 from typing import Any, cast
 
 from aiohttp import ClientConnectorError, ClientSession
