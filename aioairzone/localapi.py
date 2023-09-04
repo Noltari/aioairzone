@@ -236,7 +236,7 @@ class AirzoneLocalApi:
                 self.api_features |= ApiFeature.HOT_WATER
                 if update:
                     self.update_dhw(dhw)
-        except HotWaterNotAvailable:
+        except (HotWaterNotAvailable, ZoneNotProvided):
             pass
 
         try:
