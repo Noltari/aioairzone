@@ -1,6 +1,7 @@
 """Airzone Local API."""
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 from enum import IntEnum
 import json
@@ -210,26 +211,8 @@ class AirzoneLocalApi:
             ]
         )
 
-    async def check_features(self, update: bool) -> None:
-        """Check Airzone API features."""
-        try:
-            self.webserver = None
-            webserver = await self.get_webserver()
-            if API_MAC in webserver:
-                self.api_features |= ApiFeature.WEBSERVER
-                self.update_webserver(webserver)
-        except InvalidMethod:
-            pass
-
-        try:
-            systems = await self.get_hvac_systems()
-            if API_SYSTEMS in systems:
-                self.api_features |= ApiFeature.SYSTEMS
-                if update:
-                    self.update_systems(systems)
-        except (SystemOutOfRange, ZoneNotProvided):
-            pass
-
+    async def check_feature_dhw(self, update: bool) -> None:
+        """Check DHW feature."""
         try:
             dhw = await self.get_dhw()
             if self.check_dhw(dhw.get(API_DATA, {})):
@@ -239,6 +222,19 @@ class AirzoneLocalApi:
         except (HotWaterNotAvailable, ZoneNotProvided):
             pass
 
+    async def check_feature_systems(self, update: bool) -> None:
+        """Check Systems feature."""
+        try:
+            systems = await self.get_hvac_systems()
+            if API_SYSTEMS in systems:
+                self.api_features |= ApiFeature.SYSTEMS
+                if update:
+                    self.update_systems(systems)
+        except (SystemOutOfRange, ZoneNotProvided):
+            pass
+
+    async def check_feature_version(self) -> None:
+        """Check Version feature."""
         try:
             version = await self.get_version()
             if API_VERSION in version:
@@ -246,21 +242,59 @@ class AirzoneLocalApi:
         except InvalidMethod:
             pass
 
+    async def check_feature_webserver(self) -> None:
+        """Check WebServer feature."""
+        try:
+            self.webserver = None
+            webserver = await self.get_webserver()
+            if API_MAC in webserver:
+                self.api_features |= ApiFeature.WEBSERVER
+                self.update_webserver(webserver)
+        except InvalidMethod:
+            pass
+
+    async def check_features(self, update: bool) -> None:
+        """Check Airzone API features."""
+        tasks = [
+            self.check_feature_webserver(),
+            self.check_feature_systems(update),
+            self.check_feature_dhw(update),
+            self.check_feature_version(),
+        ]
+
+        await asyncio.gather(*tasks)
+
         self.api_features_checked = True
 
+    async def update_feature_dhw(self) -> None:
+        """Update DHW feature."""
+        self.update_dhw(await self.get_dhw())
+
+    async def update_feature_systems(self) -> None:
+        """Update Systems feature."""
+        self.update_systems(await self.get_hvac_systems())
+
+    async def update_feature_webserver(self) -> None:
+        """Update WebServer feature."""
+        self.update_webserver(await self.get_webserver())
+
     async def update_features(self) -> None:
-        """Gather Airzone features data."""
+        """Update Airzone features data."""
         if not self.api_features_checked:
             await self.check_features(True)
         else:
+            tasks = []
+
             if self.api_features & ApiFeature.HOT_WATER:
-                self.update_dhw(await self.get_dhw())
+                tasks += [self.update_feature_dhw()]
 
             if self.api_features & ApiFeature.SYSTEMS:
-                self.update_systems(await self.get_hvac_systems())
+                tasks += [self.update_feature_systems()]
 
             if self.api_features & ApiFeature.WEBSERVER:
-                self.update_webserver(await self.get_webserver())
+                tasks += [self.update_feature_webserver()]
+
+            await asyncio.gather(*tasks)
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
