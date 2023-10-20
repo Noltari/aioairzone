@@ -16,6 +16,7 @@ from .common import (
 from .const import (
     API_AIR_DEMAND,
     API_ANTI_FREEZE,
+    API_BUG_MAX_TEMP_FAH,
     API_COLD_ANGLE,
     API_COLD_DEMAND,
     API_COLD_STAGE,
@@ -426,6 +427,15 @@ class Zone:
         if _key == ERROR_ZONE and val not in self.errors:
             self.errors += [val]
 
+    def fix_max_temp(self, max_temp: float) -> float:
+        """Fix possibly bugged max temperatures."""
+        if (
+            self.get_temp_unit() == TemperatureUnit.FAHRENHEIT
+            and max_temp >= API_BUG_MAX_TEMP_FAH
+        ):
+            max_temp = max_temp / 10
+        return round(max_temp, 1)
+
     def get_abs_temp_max(self) -> float:
         """Return absolute max temp."""
         temps = [
@@ -547,7 +557,7 @@ class Zone:
     def get_cool_temp_max(self) -> float | None:
         """Return zone maximum cool temperature."""
         if self.cool_temp_max:
-            return round(self.cool_temp_max, 1)
+            return self.fix_max_temp(self.cool_temp_max)
         return None
 
     def get_cool_temp_min(self) -> float | None:
@@ -619,7 +629,7 @@ class Zone:
     def get_heat_temp_max(self) -> float | None:
         """Return zone maximum heat temperature."""
         if self.heat_temp_max:
-            return round(self.heat_temp_max, 1)
+            return self.fix_max_temp(self.heat_temp_max)
         return None
 
     def get_heat_temp_min(self) -> float | None:
@@ -704,7 +714,7 @@ class Zone:
 
     def get_temp_max(self) -> float:
         """Return zone maximum temperature."""
-        return round(self.temp_max, 1)
+        return self.fix_max_temp(self.temp_max)
 
     def get_temp_min(self) -> float:
         """Return zone minimum temperature."""
