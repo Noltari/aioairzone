@@ -81,6 +81,7 @@ combine-as-imports = true
 split-on-trailing-comma = false
 
 [tool.setuptools]
+packages = ["aioairzone"]
 platforms = ["any"]
 zip-safe = false
 include-package-data = true

@@ -37,6 +37,10 @@ jobs:
         run: |
           black --check --diff examples
 
+      - name: Run Black on sim
+        run: |
+          black --check --diff sim
+
   pylint:
     name: Check Pylint (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
@@ -76,6 +80,10 @@ jobs:
       - name: Run Pylint on examples
         run: |
           pylint examples
+
+      - name: Run Pylint on sim
+        run: |
+          pylint sim
 
   mypy:
     name: Check Mypy (Python ${{ matrix.python-version }})
@@ -117,6 +125,10 @@ jobs:
         run: |
           mypy examples
 
+      - name: Run Mypy on sim
+        run: |
+          mypy --strict sim
+
   ruff:
     name: Check ruff
     runs-on: ubuntu-latest
@@ -145,3 +157,7 @@ jobs:
       - name: Run ruff on examples
         run: |
           ruff check examples
+
+      - name: Run ruff on sim
+        run: |
+          ruff check sim
