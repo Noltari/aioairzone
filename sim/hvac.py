@@ -30,6 +30,7 @@ from aioairzone.const import (
     API_COOL_MIN_TEMP,
     API_COOL_SET_POINT,
     API_DATA,
+    API_DOUBLE_SET_POINT,
     API_ERROR_HOT_WATER_NOT_CONNECTED,
     API_ERROR_REQUEST_MALFORMED,
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
@@ -265,6 +266,8 @@ class AirzoneZone:
         }
         if len(self.name) > 0:
             _data[API_NAME] = self.name
+        if OperationMode.AUTO in _data[API_MODES]:
+            _data[API_DOUBLE_SET_POINT] = True
         return _data
 
     def matches(self, system_id: int, zone_id: int) -> bool:
