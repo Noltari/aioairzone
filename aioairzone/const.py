@@ -90,14 +90,14 @@ API_DHW_PARAMS: Final[list[str]] = [
     API_ACS_POWER_MODE,
     API_ACS_SET_POINT,
 ]
-API_DOUBLE_SET_POINT_PARAMS: Final[list[str]] = [
+API_DOUBLE_SET_POINT_PARAMS: Final[set[str]] = {
     API_COOL_MAX_TEMP,
     API_COOL_MIN_TEMP,
     API_COOL_SET_POINT,
     API_HEAT_MAX_TEMP,
     API_HEAT_MIN_TEMP,
     API_HEAT_SET_POINT,
-]
+}
 API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
     API_MODE,
 ]

@@ -158,7 +158,7 @@ class Zone:
         self.available = True
 
         self.double_set_point_params: bool = (
-            list(zone_data) >= API_DOUBLE_SET_POINT_PARAMS
+            zone_data.keys() >= API_DOUBLE_SET_POINT_PARAMS
         )
         self.master = bool(API_MODES in zone_data)
         self.on = bool(zone_data[API_ON])
