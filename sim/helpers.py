@@ -46,7 +46,7 @@ def api_filter_dict(data: Any, keep: list[str]) -> Any:
 
 def api_json_dumps(obj: Any) -> Any:
     """Local API JSON dumps."""
-    return json.dumps(obj, indent=4, sort_keys=True)
+    return json.dumps(obj, indent=4, sort_keys=False)
 
 
 def api_json_error(error: str) -> Response:
