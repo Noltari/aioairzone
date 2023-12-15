@@ -101,6 +101,8 @@ from .const import (
     AZD_THERMOSTAT_FW,
     AZD_THERMOSTAT_MODEL,
     AZD_THERMOSTAT_RADIO,
+    DEFAULT_TEMP_MAX_CELSIUS,
+    DEFAULT_TEMP_MAX_FAHRENHEIT,
     DEFAULT_TEMP_STEP_CELSIUS,
     DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_ZONE,
@@ -434,6 +436,11 @@ class Zone:
             and max_temp >= API_BUG_MAX_TEMP_FAH
         ):
             max_temp = max_temp / 10
+        if max_temp == 0.0:
+            if self.get_temp_unit() == TemperatureUnit.FAHRENHEIT:
+                max_temp = DEFAULT_TEMP_MAX_FAHRENHEIT
+            else:
+                max_temp = DEFAULT_TEMP_MAX_CELSIUS
         return round(max_temp, 1)
 
     def get_abs_temp_max(self) -> float:
@@ -556,13 +563,13 @@ class Zone:
 
     def get_cool_temp_max(self) -> float | None:
         """Return zone maximum cool temperature."""
-        if self.cool_temp_max:
+        if self.cool_temp_max is not None:
             return self.fix_max_temp(self.cool_temp_max)
         return None
 
     def get_cool_temp_min(self) -> float | None:
         """Return zone minimum cool temperature."""
-        if self.cool_temp_min:
+        if self.cool_temp_min is not None:
             return round(self.cool_temp_min, 1)
         return None
 
@@ -628,13 +635,13 @@ class Zone:
 
     def get_heat_temp_max(self) -> float | None:
         """Return zone maximum heat temperature."""
-        if self.heat_temp_max:
+        if self.heat_temp_max is not None:
             return self.fix_max_temp(self.heat_temp_max)
         return None
 
     def get_heat_temp_min(self) -> float | None:
         """Return zone minimum heat temperature."""
-        if self.heat_temp_min:
+        if self.heat_temp_min is not None:
             return round(self.heat_temp_min, 1)
         return None
 
@@ -795,7 +802,7 @@ class Zone:
 
     def validate_temp_set(self, temp_set: float, max_val: float | None) -> float | None:
         """Validate Zone temp set against its maximum value."""
-        if max_val is not None:
+        if max_val is not None and max_val != 0.0:
             if temp_set <= max_val:
                 return temp_set
             return None
