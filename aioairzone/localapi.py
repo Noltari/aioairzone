@@ -195,7 +195,10 @@ class AirzoneLocalApi:
 
     def update_systems(self, data: dict[str, Any]) -> None:
         """Gather Systems data."""
-        for api_system in data[API_SYSTEMS]:
+        api_systems = data.get(API_SYSTEMS)
+        if api_systems is None:
+            raise APIError(f"update_systems: {API_SYSTEMS} not in API response")
+        for api_system in api_systems:
             system = self.get_system(api_system[API_SYSTEM_ID])
             if system:
                 system.update_data(api_system)
@@ -297,7 +300,10 @@ class AirzoneLocalApi:
 
         hvac = await self.get_hvac()
         if self.options.system_id == DEFAULT_SYSTEM_ID:
-            for system_data in hvac[API_SYSTEMS]:
+            hvac_systems = hvac.get(API_SYSTEMS)
+            if hvac_systems is None:
+                raise APIError(f"update: {API_SYSTEMS} not in API response")
+            for system_data in hvac_systems:
                 self.parse_system_zones(system_data)
         else:
             self.parse_system_zones(hvac)
