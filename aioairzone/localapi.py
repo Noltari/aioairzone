@@ -193,8 +193,10 @@ class AirzoneLocalApi:
         else:
             self.hotwater = HotWater(dhw)
 
-    def update_systems(self, data: dict[str, Any]) -> None:
+    def update_systems(self, data: dict[str, Any] | None) -> None:
         """Gather Systems data."""
+        if data is None:
+            raise APIError("update_systems: empty Systems API response")
         api_systems = data.get(API_SYSTEMS)
         if api_systems is None:
             raise APIError(f"update_systems: {API_SYSTEMS} not in API response")
@@ -299,6 +301,8 @@ class AirzoneLocalApi:
             zone.set_available(False)
 
         hvac = await self.get_hvac()
+        if hvac is None:
+            raise APIError("update: empty HVAC API response")
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             hvac_systems = hvac.get(API_SYSTEMS)
             if hvac_systems is None:
