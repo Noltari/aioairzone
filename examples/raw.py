@@ -1,4 +1,5 @@
 """Airzone raw API data example."""
+
 import asyncio
 import json
 import timeit

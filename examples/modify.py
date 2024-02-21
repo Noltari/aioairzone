@@ -1,4 +1,5 @@
 """Airzone modify parameters example."""
+
 import asyncio
 import json
 import time

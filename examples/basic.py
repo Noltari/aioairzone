@@ -1,4 +1,5 @@
 """Airzone basic example."""
+
 import asyncio
 import json
 import timeit
