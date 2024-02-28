@@ -59,7 +59,7 @@ score = false
 [tool.pylint.FORMAT]
 expected-line-ending-format = "LF"
 
-[tool.ruff]
+[tool.ruff.lint]
 select = [
     "D",  # docstrings
     "E",  # pycodestyle
@@ -75,7 +75,7 @@ ignore = [
     "D401",  # First line should be in imperative mood
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 force-sort-within-sections = true
 combine-as-imports = true
 split-on-trailing-comma = false
