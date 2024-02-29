@@ -196,7 +196,11 @@ class AirzoneLocalApi:
     def update_systems(self, data: dict[str, Any] | None) -> None:
         """Gather Systems data."""
         if data is None:
-            raise APIError("update_systems: empty Systems API response")
+            if self._first_update:
+                raise APIError("update_systems: empty Systems API response")
+            # Mitigate incomplete API responses
+            _LOGGER.warning("update_systems: empty Systems API response")
+            return
         api_systems = data.get(API_SYSTEMS)
         if api_systems is None:
             raise APIError(f"update_systems: {API_SYSTEMS} not in API response")
@@ -295,14 +299,19 @@ class AirzoneLocalApi:
     async def update(self) -> None:
         """Gather Airzone data."""
 
+        hvac = await self.get_hvac()
+        if hvac is None:
+            if self._first_update:
+                raise APIError("update: empty HVAC API response")
+            # Mitigate incomplete API responses
+            _LOGGER.warning("update: empty HVAC API response")
+            return
+
         for system in self.systems.values():
             system.set_available(False)
         for zone in self.zones.values():
             zone.set_available(False)
 
-        hvac = await self.get_hvac()
-        if hvac is None:
-            raise APIError("update: empty HVAC API response")
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             hvac_systems = hvac.get(API_SYSTEMS)
             if hvac_systems is None:
