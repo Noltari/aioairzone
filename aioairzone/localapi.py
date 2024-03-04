@@ -436,7 +436,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_DEMO}",
         )
-        self._api_raw_data[RAW_DEMO] = res
+        self.set_api_raw_data(RAW_DEMO, res)
         return res
 
     async def get_dhw(
@@ -452,7 +452,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self._api_raw_data[RAW_DHW] = res
+        self.set_api_raw_data(RAW_DHW, res)
         return res
 
     async def get_hvac_systems(
@@ -468,7 +468,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self._api_raw_data[RAW_SYSTEMS] = res
+        self.set_api_raw_data(RAW_SYSTEMS, res)
         return res
 
     async def get_hvac(
@@ -485,7 +485,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self._api_raw_data[RAW_HVAC] = res
+        self.set_api_raw_data(RAW_HVAC, res)
         return res
 
     async def get_integration(self) -> dict[str, Any] | None:
@@ -494,7 +494,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_INTEGRATION}",
         )
-        self._api_raw_data[RAW_INTEGRATION] = res
+        self.set_api_raw_data(RAW_INTEGRATION, res)
         return res
 
     async def get_version(self) -> dict[str, Any] | None:
@@ -503,7 +503,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_VERSION}",
         )
-        self._api_raw_data[RAW_VERSION] = res
+        self.set_api_raw_data(RAW_VERSION, res)
         return res
 
     async def get_webserver(self) -> dict[str, Any] | None:
@@ -512,7 +512,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_WEBSERVER}",
         )
-        self._api_raw_data[RAW_WEBSERVER] = res
+        self.set_api_raw_data(RAW_WEBSERVER, res)
         return res
 
     async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any]:
@@ -522,6 +522,11 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
+
+    def set_api_raw_data(self, key: str, data: dict[str, Any] | None) -> None:
+        """Save API raw data if not empty."""
+        if data is not None:
+            self._api_raw_data[key] = data
 
     async def set_dhw_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Set Airzone Hot Water parameters and handle response."""
