@@ -248,6 +248,8 @@ class AirzoneLocalApi:
 
         try:
             dhw = await self.get_dhw()
+            if dhw is None:
+                raise APIError("check_features: empty DHW API response")
             if self.check_dhw(dhw.get(API_DATA, {})):
                 self.api_features |= ApiFeature.HOT_WATER
                 if update:
@@ -270,7 +272,11 @@ class AirzoneLocalApi:
             await self.check_features(True)
         else:
             if self.api_features & ApiFeature.HOT_WATER:
-                self.update_dhw(await self.get_dhw())
+                dhw = await self.get_dhw()
+                if dhw is not None:
+                    self.update_dhw(dhw)
+                else:
+                    _LOGGER.error("update_features: empty DHW API response")
 
             if self.api_features & ApiFeature.SYSTEMS:
                 self.update_systems(await self.get_hvac_systems())
@@ -416,7 +422,9 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_DEMO] = res
         return res
 
-    async def get_dhw(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def get_dhw(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Return Airzone DHW (Domestic Hot Water)."""
         if not params:
             params = {
