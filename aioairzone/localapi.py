@@ -267,6 +267,8 @@ class AirzoneLocalApi:
 
         try:
             version = await self.get_version()
+            if version is None:
+                raise APIError("check_features: empty Version API response")
             if API_VERSION in version:
                 self.version = version[API_VERSION]
         except InvalidMethod:
@@ -428,7 +430,7 @@ class AirzoneLocalApi:
                 if len(modes) > 0:
                     zone.set_modes(modes)
 
-    async def get_demo(self) -> dict[str, Any]:
+    async def get_demo(self) -> dict[str, Any] | None:
         """Return Airzone demo."""
         res = await self.http_request(
             "POST",
@@ -486,7 +488,7 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_HVAC] = res
         return res
 
-    async def get_integration(self) -> dict[str, Any]:
+    async def get_integration(self) -> dict[str, Any] | None:
         """Return Airzone integration."""
         res = await self.http_request(
             "POST",
@@ -495,7 +497,7 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_INTEGRATION] = res
         return res
 
-    async def get_version(self) -> dict[str, Any]:
+    async def get_version(self) -> dict[str, Any] | None:
         """Return Airzone Local API version."""
         res = await self.http_request(
             "POST",
