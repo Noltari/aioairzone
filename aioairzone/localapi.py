@@ -127,6 +127,13 @@ class AirzoneLocalApi:
         self.webserver: WebServer | None = None
         self.zones: dict[str, Zone] = {}
 
+    def handle_empty_response(self, function: str, request: str) -> None:
+        """Handle Airzone API empty response."""
+        error_str = f"{function}: empty {request} API response"
+        if self._first_update:
+            raise APIError(error_str)
+        _LOGGER.error(error_str)
+
     @staticmethod
     def handle_errors(errors: list[dict[str, str]]) -> None:
         """Handle API errors."""
@@ -196,10 +203,7 @@ class AirzoneLocalApi:
     def update_systems(self, data: dict[str, Any] | None) -> None:
         """Gather Systems data."""
         if data is None:
-            if self._first_update:
-                raise APIError("update_systems: empty Systems API response")
-            # Mitigate incomplete API responses
-            _LOGGER.warning("update_systems: empty Systems API response")
+            self.handle_empty_response("update_systems", "Systems")
             return
         api_systems = data.get(API_SYSTEMS)
         if api_systems is None:
@@ -280,21 +284,21 @@ class AirzoneLocalApi:
                 if dhw is not None:
                     self.update_dhw(dhw)
                 else:
-                    _LOGGER.error("update_features: empty DHW API response")
+                    self.handle_empty_response("update_features", "DHW")
 
             if self.api_features & ApiFeature.SYSTEMS:
                 systems = await self.get_hvac_systems()
                 if systems is not None:
                     self.update_systems(systems)
                 else:
-                    _LOGGER.error("update_features: empty Systems API response")
+                    self.handle_empty_response("update_features", "Systems")
 
             if self.api_features & ApiFeature.WEBSERVER:
                 webserver = await self.get_webserver()
                 if webserver is not None:
                     self.update_webserver(webserver)
                 else:
-                    _LOGGER.error("update_features: empty WebServer API response")
+                    self.handle_empty_response("update_features", "WebServer")
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
@@ -303,6 +307,8 @@ class AirzoneLocalApi:
         await self.check_features(False)
 
         response = await self.get_hvac()
+        if response is None:
+            raise APIError("validate: empty HVAC API response")
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             if API_SYSTEMS not in response:
                 raise InvalidHost(f"validate: {API_SYSTEMS} not in API response")
@@ -319,10 +325,7 @@ class AirzoneLocalApi:
 
         hvac = await self.get_hvac()
         if hvac is None:
-            if self._first_update:
-                raise APIError("update: empty HVAC API response")
-            # Mitigate incomplete API responses
-            _LOGGER.warning("update: empty HVAC API response")
+            self.handle_empty_response("update", "HVAC")
             return
 
         for system in self.systems.values():
@@ -466,7 +469,9 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_SYSTEMS] = res
         return res
 
-    async def get_hvac(self, params: dict[str, Any] | None = None) -> dict[str, Any]:
+    async def get_hvac(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Return Airzone HVAC zones."""
         if not params:
             params = {
