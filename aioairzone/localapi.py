@@ -239,6 +239,8 @@ class AirzoneLocalApi:
 
         try:
             systems = await self.get_hvac_systems()
+            if systems is None:
+                raise APIError("check_features: empty Systems API response")
             if API_SYSTEMS in systems:
                 self.api_features |= ApiFeature.SYSTEMS
                 if update:
@@ -279,7 +281,11 @@ class AirzoneLocalApi:
                     _LOGGER.error("update_features: empty DHW API response")
 
             if self.api_features & ApiFeature.SYSTEMS:
-                self.update_systems(await self.get_hvac_systems())
+                systems = await self.get_hvac_systems()
+                if systems is not None:
+                    self.update_systems(systems)
+                else:
+                    _LOGGER.error("update_features: empty Systems API response")
 
             if self.api_features & ApiFeature.WEBSERVER:
                 self.update_webserver(await self.get_webserver())
@@ -440,7 +446,7 @@ class AirzoneLocalApi:
 
     async def get_hvac_systems(
         self, params: dict[str, Any] | None = None
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         """Return Airzone HVAC systems."""
         if not params:
             params = {
