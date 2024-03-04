@@ -231,6 +231,8 @@ class AirzoneLocalApi:
         try:
             self.webserver = None
             webserver = await self.get_webserver()
+            if webserver is None:
+                raise APIError("check_features: empty WebServer API response")
             if API_MAC in webserver:
                 self.api_features |= ApiFeature.WEBSERVER
                 self.update_webserver(webserver)
@@ -288,7 +290,11 @@ class AirzoneLocalApi:
                     _LOGGER.error("update_features: empty Systems API response")
 
             if self.api_features & ApiFeature.WEBSERVER:
-                self.update_webserver(await self.get_webserver())
+                webserver = await self.get_webserver()
+                if webserver is not None:
+                    self.update_webserver(webserver)
+                else:
+                    _LOGGER.error("update_features: empty WebServer API response")
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
@@ -493,7 +499,7 @@ class AirzoneLocalApi:
         self._api_raw_data[RAW_VERSION] = res
         return res
 
-    async def get_webserver(self) -> dict[str, Any]:
+    async def get_webserver(self) -> dict[str, Any] | None:
         """Return Airzone WebServer."""
         res = await self.http_request(
             "POST",
