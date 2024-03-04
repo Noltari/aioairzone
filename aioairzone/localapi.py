@@ -159,7 +159,7 @@ class AirzoneLocalApi:
 
     async def http_request(
         self, method: str, path: str, data: Any | None = None
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         """Device HTTP request."""
         _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
 
@@ -515,7 +515,7 @@ class AirzoneLocalApi:
         self.set_api_raw_data(RAW_WEBSERVER, res)
         return res
 
-    async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any]:
+    async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any] | None:
         """Perform a PUT request to update HVAC parameters."""
         return await self.http_request(
             "PUT",
@@ -531,6 +531,9 @@ class AirzoneLocalApi:
     async def set_dhw_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Set Airzone Hot Water parameters and handle response."""
         res = await self.put_hvac(params)
+
+        if res is None:
+            raise APIError("set_dhw: empty HVAC API response")
 
         if API_DATA not in res:
             if API_ERRORS in res:
@@ -549,6 +552,9 @@ class AirzoneLocalApi:
     async def set_hvac_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Set Airzone HVAC parameters and handle response."""
         res = await self.put_hvac(params)
+
+        if res is None:
+            raise APIError("set_hvac: empty HVAC API response")
 
         if API_DATA not in res:
             if API_ERRORS in res:
