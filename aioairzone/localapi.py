@@ -186,8 +186,12 @@ class AirzoneLocalApi:
 
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
-            if API_ERRORS in resp_json:
-                self.handle_errors(resp_json[API_ERRORS])
+            if resp_json is not None:
+                resp_err = resp_json.get(API_ERRORS)
+            else:
+                resp_err = None
+            if resp_err is not None:
+                self.handle_errors(resp_err)
             raise APIError(f"HTTP status: {resp.status}")
 
         return cast(dict[str, Any], resp_json)
