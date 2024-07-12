@@ -238,34 +238,12 @@ class AirzoneLocalApi:
             ]
         )
 
-    async def check_features(self, update: bool) -> None:
-        """Check Airzone API features."""
-        try:
-            self.webserver = None
-            webserver = await self.get_webserver()
-            if webserver is None:
-                raise APIError("check_features: empty WebServer API response")
-            if API_MAC in webserver:
-                self.api_features |= ApiFeature.WEBSERVER
-                self.update_webserver(webserver)
-        except InvalidMethod:
-            pass
-
-        try:
-            systems = await self.get_hvac_systems()
-            if systems is None:
-                raise APIError("check_features: empty Systems API response")
-            if API_SYSTEMS in systems:
-                self.api_features |= ApiFeature.SYSTEMS
-                if update:
-                    self.update_systems(systems)
-        except (SystemOutOfRange, ZoneNotProvided):
-            pass
-
+    async def check_feature_dhw(self, update: bool) -> None:
+        """Check DHW feature."""
         try:
             dhw = await self.get_dhw()
             if dhw is None:
-                raise APIError("check_features: empty DHW API response")
+                raise APIError("check_feature_dhw: empty API response")
             if self.check_dhw(dhw.get(API_DATA, {})):
                 self.api_features |= ApiFeature.HOT_WATER
                 if update:
@@ -273,14 +251,49 @@ class AirzoneLocalApi:
         except (HotWaterNotAvailable, ZoneNotProvided):
             pass
 
+    async def check_feature_systems(self, update: bool) -> None:
+        """Check Systems feature."""
+        try:
+            systems = await self.get_hvac_systems()
+            if systems is None:
+                raise APIError("check_feature_systems: empty API response")
+            if API_SYSTEMS in systems:
+                self.api_features |= ApiFeature.SYSTEMS
+                if update:
+                    self.update_systems(systems)
+        except (SystemOutOfRange, ZoneNotProvided):
+            pass
+
+    async def check_feature_version(self) -> None:
+        """Check Version feature."""
         try:
             version = await self.get_version()
             if version is None:
-                raise APIError("check_features: empty Version API response")
+                raise APIError("check_feature_version: empty API response")
             if API_VERSION in version:
                 self.version = version[API_VERSION]
         except InvalidMethod:
             pass
+
+    async def check_feature_webserver(self) -> None:
+        """Check WebServer feature."""
+        try:
+            self.webserver = None
+            webserver = await self.get_webserver()
+            if webserver is None:
+                raise APIError("check_feature_webserver: empty API response")
+            if API_MAC in webserver:
+                self.api_features |= ApiFeature.WEBSERVER
+                self.update_webserver(webserver)
+        except InvalidMethod:
+            pass
+
+    async def check_features(self, update: bool) -> None:
+        """Check Airzone API features."""
+        await self.check_feature_webserver()
+        await self.check_feature_systems(update)
+        await self.check_feature_dhw(update)
+        await self.check_feature_version()
 
         self.api_features_checked = True
 
