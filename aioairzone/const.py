@@ -205,6 +205,7 @@ ERROR_SYSTEM: Final[str] = "system"
 ERROR_ZONE: Final[str] = "zone"
 
 HTTP_CALL_TIMEOUT: Final[int] = 10
+HTTP_MAX_REQUESTS: Final[int] = 1
 
 RAW_DEMO: Final[str] = "demo"
 RAW_DHW: Final[str] = "dhw"

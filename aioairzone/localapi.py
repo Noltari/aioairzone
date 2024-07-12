@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from asyncio import Semaphore
 from dataclasses import dataclass
 from enum import IntEnum
 import json
@@ -56,6 +57,7 @@ from .const import (
     DEFAULT_PORT,
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
+    HTTP_MAX_REQUESTS,
     RAW_DEMO,
     RAW_DHW,
     RAW_HVAC,
@@ -116,6 +118,7 @@ class AirzoneLocalApi:
     ):
         """Device init."""
         self._api_raw_data: dict[str, Any] = {}
+        self._api_semaphore: Semaphore = Semaphore(HTTP_MAX_REQUESTS)
         self._first_update: bool = True
         self._new_systems: list[str] = []
         self._new_zones: list[str] = []
@@ -167,6 +170,7 @@ class AirzoneLocalApi:
         """Device HTTP request."""
         _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
 
+        await self._api_semaphore.acquire()
         try:
             resp: ClientResponse = await self.aiohttp_session.request(
                 method,
@@ -176,6 +180,8 @@ class AirzoneLocalApi:
             )
         except ClientConnectorError as err:
             raise InvalidHost(err) from err
+        finally:
+            self._api_semaphore.release()
 
         try:
             resp_json = await resp.json(content_type=None)
