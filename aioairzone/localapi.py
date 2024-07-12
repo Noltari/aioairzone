@@ -297,31 +297,43 @@ class AirzoneLocalApi:
 
         self.api_features_checked = True
 
+    async def update_feature_dhw(self) -> None:
+        """Update DHW feature."""
+        dhw = await self.get_dhw()
+        if dhw is not None:
+            self.update_dhw(dhw)
+        else:
+            self.handle_empty_response("update_features", "DHW")
+
+    async def update_feature_systems(self) -> None:
+        """Update Systems feature."""
+        systems = await self.get_hvac_systems()
+        if systems is not None:
+            self.update_systems(systems)
+        else:
+            self.handle_empty_response("update_features", "Systems")
+
+    async def update_feature_webserver(self) -> None:
+        """Update WebServer feature."""
+        webserver = await self.get_webserver()
+        if webserver is not None:
+            self.update_webserver(webserver)
+        else:
+            self.handle_empty_response("update_features", "WebServer")
+
     async def update_features(self) -> None:
-        """Gather Airzone features data."""
+        """Update Airzone features data."""
         if not self.api_features_checked:
             await self.check_features(True)
         else:
             if self.api_features & ApiFeature.HOT_WATER:
-                dhw = await self.get_dhw()
-                if dhw is not None:
-                    self.update_dhw(dhw)
-                else:
-                    self.handle_empty_response("update_features", "DHW")
+                await self.update_feature_dhw()
 
             if self.api_features & ApiFeature.SYSTEMS:
-                systems = await self.get_hvac_systems()
-                if systems is not None:
-                    self.update_systems(systems)
-                else:
-                    self.handle_empty_response("update_features", "Systems")
+                await self.update_feature_systems()
 
             if self.api_features & ApiFeature.WEBSERVER:
-                webserver = await self.get_webserver()
-                if webserver is not None:
-                    self.update_webserver(webserver)
-                else:
-                    self.handle_empty_response("update_features", "WebServer")
+                await self.update_feature_webserver()
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
