@@ -23,6 +23,7 @@ from .const import (
     API_DEMO,
     API_DHW_PARAMS,
     API_ERROR_HOT_WATER_NOT_CONNECTED,
+    API_ERROR_IAQ_SENSOR_ID_NOT_AVAILABLE,
     API_ERROR_METHOD_NOT_SUPPORTED,
     API_ERROR_REQUEST_MALFORMED,
     API_ERROR_SYSTEM_ID_NOT_AVAILABLE,
@@ -66,6 +67,7 @@ from .const import (
 from .exceptions import (
     APIError,
     HotWaterNotAvailable,
+    IaqSensorNotAvailable,
     InvalidHost,
     InvalidMethod,
     InvalidParam,
@@ -141,6 +143,8 @@ class AirzoneLocalApi:
             for key, val in error.items():
                 if val == API_ERROR_HOT_WATER_NOT_CONNECTED:
                     raise HotWaterNotAvailable(f"{key}: {val}")
+                if val == API_ERROR_IAQ_SENSOR_ID_NOT_AVAILABLE:
+                    raise IaqSensorNotAvailable(f"{key}: {val}")
                 if val == API_ERROR_METHOD_NOT_SUPPORTED:
                     raise InvalidMethod(f"{key}: {val}")
                 if val == API_ERROR_REQUEST_MALFORMED:

@@ -75,6 +75,7 @@ API_WS_TYPE: Final[str] = "ws_type"
 API_ZONE_ID: Final[str] = "zoneID"
 
 API_ERROR_HOT_WATER_NOT_CONNECTED: Final[str] = "acs not connected"
+API_ERROR_IAQ_SENSOR_ID_NOT_AVAILABLE: Final[str] = "iaqsensorid not available"
 API_ERROR_LOW_BATTERY: Final[str] = "Low battery"
 API_ERROR_METHOD_NOT_SUPPORTED: Final[str] = "Method not provided or not supported"
 API_ERROR_REQUEST_MALFORMED: Final[str] = "request malformed"

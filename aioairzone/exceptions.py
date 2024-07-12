@@ -15,6 +15,10 @@ class HotWaterNotAvailable(AirzoneError):
     """Exception raised when Hot Water is not available."""
 
 
+class IaqSensorNotAvailable(AirzoneError):
+    """Exception raised when IAQ sensor is not available."""
+
+
 class InvalidHost(AirzoneError):
     """Exception raised when invalid host is requested."""
 
