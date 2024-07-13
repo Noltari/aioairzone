@@ -46,8 +46,6 @@ from .const import (
     API_ZONE_ID,
     API_ZONE_PARAMS,
     AZD_HOT_WATER,
-    AZD_NEW_SYSTEMS,
-    AZD_NEW_ZONES,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
     AZD_VERSION,
@@ -120,8 +118,6 @@ class AirzoneLocalApi:
         self._api_raw_data: dict[str, Any] = {}
         self._api_semaphore: Semaphore = Semaphore(HTTP_MAX_REQUESTS)
         self._first_update: bool = True
-        self._new_systems: list[str] = []
-        self._new_zones: list[str] = []
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
@@ -389,8 +385,6 @@ class AirzoneLocalApi:
 
     def parse_system_zones(self, system_data: dict[str, Any]) -> None:
         """Parse all zones from system data."""
-        self._new_systems = []
-        self._new_zones = []
 
         system_zones: list[dict[str, Any]] = system_data.get(API_DATA, [])
         for zone_data in system_zones:
@@ -398,7 +392,6 @@ class AirzoneLocalApi:
             if system_id > 0:
                 if system_id not in self.systems:
                     self.systems[system_id] = System(system_id, zone_data)
-                    self._new_systems += [str(system_id)]
                 else:
                     self.systems[system_id].update_zone_data(zone_data)
 
@@ -410,7 +403,6 @@ class AirzoneLocalApi:
                         _zone = Zone(system_id, zone_id, zone_data)
                         self.zones[system_zone_id] = _zone
                         self.systems[system_id].add_zone(_zone)
-                        self._new_zones += [system_zone_id]
                     else:
                         self.zones[system_zone_id].update_data(zone_data)
 
@@ -419,15 +411,6 @@ class AirzoneLocalApi:
                     )
 
         self.update_zones_from_master_zone()
-
-        if self._first_update:
-            self._new_systems = []
-            self._new_zones = []
-        else:
-            if len(self._new_systems) > 0:
-                _LOGGER.debug("New systems detected: %s", self._new_systems)
-            if len(self._new_zones) > 0:
-                _LOGGER.debug("New zones detected: %s", self._new_zones)
 
     def update_system_from_zone(self, system: System, zone: Zone) -> None:
         """Update system data from zone."""
@@ -636,14 +619,6 @@ class AirzoneLocalApi:
 
         return res
 
-    def new_systems(self) -> list[str]:
-        """Return new systems detected in last update."""
-        return self._new_systems
-
-    def new_zones(self) -> list[str]:
-        """Return new zones detected in last update."""
-        return self._new_zones
-
     def raw_data(self) -> dict[str, Any]:
         """Return raw Airzone API data."""
         return self._api_raw_data
@@ -655,8 +630,6 @@ class AirzoneLocalApi:
         if self.hotwater is not None:
             data[AZD_HOT_WATER] = self.hotwater.data()
 
-        data[AZD_NEW_SYSTEMS] = self.new_systems()
-
         data[AZD_SYSTEMS_NUM] = self.num_systems()
         if len(self.systems) > 0:
             systems: dict[int, Any] = {}
@@ -666,8 +639,6 @@ class AirzoneLocalApi:
 
         if self.webserver is not None:
             data[AZD_WEBSERVER] = self.webserver.data()
-
-        data[AZD_NEW_ZONES] = self.new_zones()
 
         data[AZD_ZONES_NUM] = self.num_zones()
         if len(self.zones) > 0:
