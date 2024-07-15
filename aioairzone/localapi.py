@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from asyncio import Semaphore
+import asyncio
+from asyncio import Lock, Semaphore
 from dataclasses import dataclass
 from enum import IntEnum
 import json
@@ -115,12 +116,22 @@ class AirzoneLocalApi:
         options: ConnectionOptions,
     ):
         """Device init."""
-        self._api_raw_data: dict[str, Any] = {}
+        self._api_raw_data: dict[str, Any] = {
+            RAW_DEMO: {},
+            RAW_DHW: {},
+            RAW_HVAC: {},
+            RAW_INTEGRATION: {},
+            RAW_SYSTEMS: {},
+            RAW_VERSION: {},
+            RAW_WEBSERVER: {},
+        }
+        self._api_raw_data_lock = Lock()
         self._api_semaphore: Semaphore = Semaphore(HTTP_MAX_REQUESTS)
         self._first_update: bool = True
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
+        self.api_features_lock = Lock()
         self.hotwater: HotWater | None = None
         self.options = options
         self.systems: dict[int, System] = {}
@@ -248,7 +259,7 @@ class AirzoneLocalApi:
             if dhw is None:
                 raise APIError("check_feature_dhw: empty API response")
             if self.check_dhw(dhw.get(API_DATA, {})):
-                self.api_features |= ApiFeature.HOT_WATER
+                await self.set_api_feature(ApiFeature.HOT_WATER)
                 if update:
                     self.update_dhw(dhw)
         except (HotWaterNotAvailable, ZoneNotProvided):
@@ -261,7 +272,7 @@ class AirzoneLocalApi:
             if systems is None:
                 raise APIError("check_feature_systems: empty API response")
             if API_SYSTEMS in systems:
-                self.api_features |= ApiFeature.SYSTEMS
+                await self.set_api_feature(ApiFeature.SYSTEMS)
                 if update:
                     self.update_systems(systems)
         except (SystemOutOfRange, ZoneNotProvided):
@@ -286,17 +297,20 @@ class AirzoneLocalApi:
             if webserver is None:
                 raise APIError("check_feature_webserver: empty API response")
             if API_MAC in webserver:
-                self.api_features |= ApiFeature.WEBSERVER
+                await self.set_api_feature(ApiFeature.WEBSERVER)
                 self.update_webserver(webserver)
         except InvalidMethod:
             pass
 
     async def check_features(self, update: bool) -> None:
         """Check Airzone API features."""
-        await self.check_feature_webserver()
-        await self.check_feature_systems(update)
-        await self.check_feature_dhw(update)
-        await self.check_feature_version()
+        tasks = [
+            asyncio.create_task(self.check_feature_webserver()),
+            asyncio.create_task(self.check_feature_systems(update)),
+            asyncio.create_task(self.check_feature_dhw(update)),
+            asyncio.create_task(self.check_feature_version()),
+        ]
+        await asyncio.gather(*tasks)
 
         self.api_features_checked = True
 
@@ -326,17 +340,21 @@ class AirzoneLocalApi:
 
     async def update_features(self) -> None:
         """Update Airzone features data."""
+        tasks = []
+
         if not self.api_features_checked:
-            await self.check_features(True)
+            tasks += [asyncio.create_task(self.check_features(True))]
         else:
-            if self.api_features & ApiFeature.HOT_WATER:
-                await self.update_feature_dhw()
+            if self.api_feature(ApiFeature.HOT_WATER):
+                tasks += [asyncio.create_task(self.update_feature_dhw())]
 
-            if self.api_features & ApiFeature.SYSTEMS:
-                await self.update_feature_systems()
+            if self.api_feature(ApiFeature.SYSTEMS):
+                tasks += [asyncio.create_task(self.update_feature_systems())]
 
-            if self.api_features & ApiFeature.WEBSERVER:
-                await self.update_feature_webserver()
+            if self.api_feature(ApiFeature.WEBSERVER):
+                tasks += [asyncio.create_task(self.update_feature_webserver())]
+
+        await asyncio.gather(*tasks)
 
     async def validate(self) -> str | None:
         """Validate Airzone API."""
@@ -459,7 +477,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_DEMO}",
         )
-        self.set_api_raw_data(RAW_DEMO, res)
+        await self.set_api_raw_data(RAW_DEMO, res)
         return res
 
     async def get_dhw(
@@ -475,7 +493,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self.set_api_raw_data(RAW_DHW, res)
+        await self.set_api_raw_data(RAW_DHW, res)
         return res
 
     async def get_hvac_systems(
@@ -491,7 +509,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self.set_api_raw_data(RAW_SYSTEMS, res)
+        await self.set_api_raw_data(RAW_SYSTEMS, res)
         return res
 
     async def get_hvac(
@@ -508,7 +526,7 @@ class AirzoneLocalApi:
             f"{API_V1}/{API_HVAC}",
             params,
         )
-        self.set_api_raw_data(RAW_HVAC, res)
+        await self.set_api_raw_data(RAW_HVAC, res)
         return res
 
     async def get_integration(self) -> dict[str, Any] | None:
@@ -517,7 +535,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_INTEGRATION}",
         )
-        self.set_api_raw_data(RAW_INTEGRATION, res)
+        await self.set_api_raw_data(RAW_INTEGRATION, res)
         return res
 
     async def get_version(self) -> dict[str, Any] | None:
@@ -526,7 +544,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_VERSION}",
         )
-        self.set_api_raw_data(RAW_VERSION, res)
+        await self.set_api_raw_data(RAW_VERSION, res)
         return res
 
     async def get_webserver(self) -> dict[str, Any] | None:
@@ -535,7 +553,7 @@ class AirzoneLocalApi:
             "POST",
             f"{API_V1}/{API_WEBSERVER}",
         )
-        self.set_api_raw_data(RAW_WEBSERVER, res)
+        await self.set_api_raw_data(RAW_WEBSERVER, res)
         return res
 
     async def put_hvac(self, params: dict[str, Any]) -> dict[str, Any] | None:
@@ -546,10 +564,16 @@ class AirzoneLocalApi:
             params,
         )
 
-    def set_api_raw_data(self, key: str, data: dict[str, Any] | None) -> None:
+    async def set_api_feature(self, feature: int) -> None:
+        """Set API feature."""
+        async with self.api_features_lock:
+            self.api_features |= feature
+
+    async def set_api_raw_data(self, key: str, data: dict[str, Any] | None) -> None:
         """Save API raw data if not empty."""
         if data is not None:
-            self._api_raw_data[key] = data
+            async with self._api_raw_data_lock:
+                self._api_raw_data[key] = data
 
     async def set_dhw_parameters(self, params: dict[str, Any]) -> dict[str, Any]:
         """Set Airzone Hot Water parameters and handle response."""
@@ -619,6 +643,10 @@ class AirzoneLocalApi:
                 zone.set_param(key, value)
 
         return res
+
+    def api_feature(self, feature: int) -> bool:
+        """Get API feature."""
+        return bool(self.api_features & feature)
 
     def raw_data(self) -> dict[str, Any]:
         """Return raw Airzone API data."""
