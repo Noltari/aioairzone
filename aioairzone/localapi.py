@@ -166,29 +166,30 @@ class AirzoneLocalApi:
         """Device HTTP request."""
         _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
 
-        await self._api_semaphore.acquire()
-        try:
-            resp: ClientResponse = await self.aiohttp_session.request(
-                method,
-                f"http://{self.options.host}:{self.options.port}/{path}",
-                data=json.dumps(data),
-                timeout=HTTP_CALL_TIMEOUT,
-            )
-        except ClientConnectorError as err:
-            raise InvalidHost(err) from err
-        finally:
-            self._api_semaphore.release()
-
-        try:
-            resp_json = await resp.json(content_type=None)
-        except JSONDecodeError as err:
-            raise InvalidHost(err) from err
-        except UnicodeDecodeError:
-            # Workaround bogus encoding
+        async with self._api_semaphore:
             try:
-                resp_json = await resp.json(encoding="iso-8859-1", content_type=None)
+                resp: ClientResponse = await self.aiohttp_session.request(
+                    method,
+                    f"http://{self.options.host}:{self.options.port}/{path}",
+                    data=json.dumps(data),
+                    timeout=HTTP_CALL_TIMEOUT,
+                )
+            except ClientConnectorError as err:
+                raise InvalidHost(err) from err
+
+            try:
+                resp_json = await resp.json(content_type=None)
             except JSONDecodeError as err:
                 raise InvalidHost(err) from err
+            except UnicodeDecodeError:
+                # Workaround bogus encoding
+                try:
+                    resp_json = await resp.json(
+                        encoding="iso-8859-1",
+                        content_type=None,
+                    )
+                except JSONDecodeError as err:
+                    raise InvalidHost(err) from err
 
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
