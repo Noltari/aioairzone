@@ -11,7 +11,7 @@ from json import JSONDecodeError
 import logging
 from typing import Any, cast
 
-from aiohttp import ClientConnectorError, ClientSession
+from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
 
 from .common import OperationMode, get_system_zone_id
@@ -127,6 +127,7 @@ class AirzoneLocalApi:
         }
         self._api_raw_data_lock = Lock()
         self._api_semaphore: Semaphore = Semaphore(HTTP_MAX_REQUESTS)
+        self._api_timeout: ClientTimeout = ClientTimeout(total=HTTP_CALL_TIMEOUT)
         self._first_update: bool = True
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
@@ -183,7 +184,7 @@ class AirzoneLocalApi:
                     method,
                     f"http://{self.options.host}:{self.options.port}/{path}",
                     data=json.dumps(data),
-                    timeout=HTTP_CALL_TIMEOUT,
+                    timeout=self._api_timeout,
                 )
             except ClientConnectorError as err:
                 raise InvalidHost(err) from err
