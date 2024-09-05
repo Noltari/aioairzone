@@ -81,6 +81,7 @@ from .exceptions import (
     ZoneOutOfRange,
 )
 from .hotwater import HotWater
+from .http import AirzoneHttp
 from .system import System
 from .webserver import WebServer
 from .zone import Zone
@@ -104,6 +105,7 @@ class ConnectionOptions:
     host: str
     port: int = DEFAULT_PORT
     system_id: int = DEFAULT_SYSTEM_ID
+    http_quirks: bool = False
 
 
 class AirzoneLocalApi:
@@ -133,6 +135,7 @@ class AirzoneLocalApi:
         self.api_features_checked = False
         self.api_features_lock = Lock()
         self.hotwater: HotWater | None = None
+        self.http = AirzoneHttp()
         self.options = options
         self.systems: dict[int, System] = {}
         self.version: str | None = None
@@ -171,12 +174,10 @@ class AirzoneLocalApi:
                     raise ZoneNotProvided(f"{key}: {val}")
                 raise APIError(f"{key}: {val}")
 
-    async def http_request(
+    async def aiohttp_request(
         self, method: str, path: str, data: Any | None = None
     ) -> dict[str, Any] | None:
-        """Device HTTP request."""
-        _LOGGER.debug("aiohttp request: /%s (params=%s)", path, data)
-
+        """Perform aiohttp request."""
         async with self._api_semaphore:
             try:
                 resp: ClientResponse = await self.aiohttp_session.request(
@@ -214,6 +215,45 @@ class AirzoneLocalApi:
             raise APIError(f"HTTP status: {resp.status}")
 
         return cast(dict[str, Any], resp_json)
+
+    async def socket_request(
+        self, method: str, path: str, data: Any | None = None
+    ) -> dict[str, Any] | None:
+        """Perform http socket request."""
+        async with self._api_semaphore:
+            resp = await self.http.request(
+                method,
+                f"http://{self.options.host}:{self.options.port}/{path}",
+                data=json_dumps(data),
+                headers={
+                    "Content-Type": "text/json",
+                },
+                timeout=HTTP_CALL_TIMEOUT,
+            )
+
+            resp_json = resp.json()
+
+        _LOGGER.debug("aiohttp response: %s", resp_json)
+        if resp.status != 200:
+            if resp_json is not None:
+                resp_err = resp_json.get(API_ERRORS)
+            else:
+                resp_err = None
+            if resp_err is not None:
+                self.handle_errors(resp_err)
+            raise APIError(f"HTTP status: {resp.status}")
+
+        return cast(dict[str, Any], resp_json)
+
+    async def http_request(
+        self, method: str, path: str, data: Any | None = None
+    ) -> dict[str, Any] | None:
+        """Device HTTP request."""
+        _LOGGER.debug("http_request: /%s (params=%s)", path, data)
+
+        if self.options.http_quirks:
+            return await self.socket_request(method, path, data)
+        return await self.aiohttp_request(method, path, data)
 
     def update_dhw(self, data: dict[str, Any]) -> None:
         """Gather Domestic Hot Water data."""
