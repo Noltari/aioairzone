@@ -184,6 +184,7 @@ class AirzoneLocalApi:
                     method,
                     f"http://{self.options.host}:{self.options.port}/{path}",
                     data=json.dumps(data),
+                    headers={"Content-Type": "text/json"},
                     timeout=self._api_timeout,
                 )
             except ClientConnectorError as err:
