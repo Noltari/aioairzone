@@ -6,7 +6,6 @@ import asyncio
 from asyncio import Lock, Semaphore
 from dataclasses import dataclass
 from enum import IntEnum
-import json
 from json import JSONDecodeError
 import logging
 from typing import Any, cast
@@ -14,7 +13,7 @@ from typing import Any, cast
 from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
 
-from .common import OperationMode, get_system_zone_id
+from .common import OperationMode, get_system_zone_id, json_dumps
 from .const import (
     API_ACS_MAX_TEMP,
     API_ACS_MIN_TEMP,
@@ -183,7 +182,7 @@ class AirzoneLocalApi:
                 resp: ClientResponse = await self.aiohttp_session.request(
                     method,
                     f"http://{self.options.host}:{self.options.port}/{path}",
-                    data=json.dumps(data),
+                    data=json_dumps(data),
                     headers={"Content-Type": "text/json"},
                     timeout=self._api_timeout,
                 )

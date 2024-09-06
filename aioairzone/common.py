@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum, IntEnum
+import json
 from typing import Any
 
 
@@ -234,3 +235,10 @@ class WebServerType(IntEnum):
 def get_system_zone_id(system_id: int, zone_id: int) -> str:
     """Combine system and zone IDs."""
     return f"{system_id}:{zone_id}"
+
+
+def json_dumps(data: Any) -> Any:
+    """Convert data to JSON."""
+    if data is not None:
+        return json.dumps(data)
+    return None
