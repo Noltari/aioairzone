@@ -12,7 +12,7 @@ from aioairzone.exceptions import InvalidHost
 from aioairzone.localapi import AirzoneLocalApi
 
 
-async def main():
+async def main() -> None:
     """Airzone raw API data example."""
 
     async with aiohttp.ClientSession() as aiohttp_session:

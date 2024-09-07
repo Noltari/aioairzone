@@ -123,7 +123,7 @@ jobs:
 
       - name: Run Mypy on examples
         run: |
-          mypy examples
+          mypy --strict examples
 
       - name: Run Mypy on sim
         run: |
