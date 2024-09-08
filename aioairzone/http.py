@@ -1,10 +1,10 @@
 """Airzone Local API HTTP implementation."""
 
 import asyncio
+from asyncio import Future, Protocol, Transport
 import json
 from json import JSONDecodeError
 import logging
-import socket
 from typing import Any, Final
 from urllib.parse import urlparse
 
@@ -70,15 +70,18 @@ class AirzoneHttpResponse:
     def __init__(self) -> None:
         """HTTP response init."""
         self.body: str | None = None
-        self.body_bytes: bytes | None = None
+        self.buffer = bytearray()
         self.content_len: int = 0
         self.content_type: str | None = None
         self.header: str | None = None
-        self.header_bytes: bytes | None = None
         self.reason: str | None = None
         self.server: str | None = None
         self.status: int | None = None
         self.version: str | None = None
+
+    def append_data(self, data: bytes) -> None:
+        """Buffer HTTP response data."""
+        self.buffer += data
 
     def is_json(self) -> bool:
         """Check if HTTP content type is JSON."""
@@ -87,7 +90,7 @@ class AirzoneHttpResponse:
         return False
 
     def json(self) -> Any:
-        """HTTP response json."""
+        """HTTP response to JSON conversion."""
         if self.body is not None:
             try:
                 return json.loads(self.body)
@@ -97,13 +100,13 @@ class AirzoneHttpResponse:
 
     def parse_http_status(
         self,
-        line: str,
+        status: str,
     ) -> None:
         """HTTP response status parse."""
-        if not line.startswith(HTTP_PREFIX):
+        if not status.startswith(HTTP_PREFIX):
             return
 
-        status_split = line.split(" ", 2)
+        status_split = status.split(" ", maxsplit=2)
         self.reason = status_split[2]
         self.status = int(status_split[1])
         self.version = status_split[0].lstrip(f"{HTTP_PREFIX}/")
@@ -139,26 +142,84 @@ class AirzoneHttpResponse:
         for line in lines:
             self.parse_header_line(line)
 
-    def parse_header_bytes(self) -> None:
-        """HTTP response parse."""
-        if self.header_bytes is not None:
-            self.header = self.header_bytes.decode()
-            self.parse_header()
+    def parse_header_bytes(self, header_bytes: bytes) -> None:
+        """HTTP response header bytes parse."""
+        self.header = header_bytes.decode()
+        self.parse_header()
 
-            _LOGGER.debug(
-                "HTTP: version=%s status=%s reason=%s",
-                self.version,
-                self.status,
-                self.reason,
-            )
+        _LOGGER.debug(
+            "HTTP: version=%s status=%s reason=%s",
+            self.version,
+            self.status,
+            self.reason,
+        )
 
-            if not self.is_json():
-                raise InvalidHost(f"Invalid HTTP Content-Type: {self.content_type}")
+        if not self.is_json():
+            raise InvalidHost(f"Invalid HTTP Content-Type: {self.content_type}")
 
-    def parse_body_bytes(self) -> None:
-        """HTTP response parse."""
-        if self.body_bytes is not None:
-            self.body = self.body_bytes.decode()
+    def parse_body_bytes(self, body_bytes: bytes) -> None:
+        """HTTP response body bytes parse."""
+        self.body = body_bytes.decode()
+
+        _LOGGER.debug("HTTP body: %s", self.body)
+
+    def parse_data(self) -> None:
+        """Parse HTTP response data."""
+        mv = memoryview(self.buffer)
+
+        header_sep_bytes = HTTP_HDR_SEP.encode()
+        try:
+            header_end = self.buffer.index(header_sep_bytes) + len(header_sep_bytes)
+        except ValueError as err:
+            raise InvalidHost(
+                f"HTTP Header separator not found: {self.buffer}"
+            ) from err
+
+        header_bytes = bytes(mv[:header_end])
+        self.parse_header_bytes(header_bytes)
+
+        if self.content_len > 0:
+            body_end = header_end + self.content_len
+            body_bytes = bytes(mv[header_end:body_end])
+            self.parse_body_bytes(body_bytes)
+
+
+class AirzoneHttpProtocol(Protocol):
+    """Airzone HTTP Protocol."""
+
+    def __init__(
+        self,
+        request: AirzoneHttpRequest,
+        response: AirzoneHttpResponse,
+        task: Future[Any],
+    ) -> None:
+        """Airzone HTTP Protocol init."""
+        self.request = request
+        self.response = response
+        self.task = task
+
+    def connection_made(
+        self,
+        transport: Transport,  # type: ignore
+    ) -> None:
+        """HTTP connection establised."""
+        transport.write(self.request.encode())
+        transport.write_eof()
+
+    def connection_lost(self, exc: Exception | None) -> None:
+        """HTTP connection lost."""
+        if exc is not None:
+            _LOGGER.error(exc)
+
+        self.task.set_result(True)
+
+    def data_received(self, data: bytes) -> None:
+        """HTTP data received from server."""
+        self.response.append_data(data)
+
+    def eof_received(self) -> None:
+        """HTTP EOF received from server."""
+        self.response.parse_data()
 
 
 class AirzoneHttp:
@@ -170,6 +231,7 @@ class AirzoneHttp:
             "User-Agent": "aioairzone",
             "Accept": "*/*",
         }
+        self.loop = asyncio.get_running_loop()
 
     async def request(
         self,
@@ -185,42 +247,32 @@ class AirzoneHttp:
             if headers is not None:
                 req_headers |= headers
 
-            resp = AirzoneHttpResponse()
-            req = AirzoneHttpRequest(
+            response = AirzoneHttpResponse()
+            request = AirzoneHttpRequest(
                 method,
                 url,
                 headers=req_headers,
                 data=data,
             )
 
+            if request.url.hostname is None:
+                raise InvalidHost("Invalid URL host.")
+            if request.url.port is None:
+                raise InvalidHost("Invalid URL port.")
+
             try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sock.connect((req.url.hostname, req.url.port))
-                sock.sendall(req.encode())
-                sock.shutdown(socket.SHUT_WR)
+                task = self.loop.create_future()
 
-                buffer = bytearray()
-                while True:
-                    rx_bytes = sock.recv(HTTP_BUFFER)
-                    if rx_bytes == b"":
-                        break
-                    buffer += rx_bytes
-                mv = memoryview(buffer)
+                transport, protocol = await self.loop.create_connection(
+                    lambda: AirzoneHttpProtocol(request, response, task),
+                    request.url.hostname,
+                    request.url.port,
+                )
 
-                header_sep_bytes = HTTP_HDR_SEP.encode()
-                header_end = buffer.index(header_sep_bytes) + len(header_sep_bytes)
-
-                resp.header_bytes = bytes(mv[:header_end])
-                resp.parse_header_bytes()
-
-                if resp.content_len > 0:
-                    body_end = header_end + resp.content_len
-                    resp.body_bytes = bytes(mv[header_end:body_end])
-                    resp.parse_body_bytes()
-
-                sock.close()
-            except socket.error as err:
+                await task
+            except OSError as err:
                 raise InvalidHost(err) from err
+            finally:
+                transport.close()
 
-            return resp
+            return protocol.response

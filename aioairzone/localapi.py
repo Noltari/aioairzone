@@ -216,10 +216,10 @@ class AirzoneLocalApi:
 
         return cast(dict[str, Any], resp_json)
 
-    async def socket_request(
+    async def http_quirks_request(
         self, method: str, path: str, data: Any | None = None
     ) -> dict[str, Any] | None:
-        """Perform http socket request."""
+        """Perform http quirks request."""
         async with self._api_semaphore:
             resp = await self.http.request(
                 method,
@@ -252,7 +252,7 @@ class AirzoneLocalApi:
         _LOGGER.debug("http_request: /%s (params=%s)", path, data)
 
         if self.options.http_quirks:
-            return await self.socket_request(method, path, data)
+            return await self.http_quirks_request(method, path, data)
         return await self.aiohttp_request(method, path, data)
 
     def update_dhw(self, data: dict[str, Any]) -> None:
