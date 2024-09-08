@@ -191,12 +191,12 @@ class AirzoneHttpProtocol(Protocol):
         self,
         request: AirzoneHttpRequest,
         response: AirzoneHttpResponse,
-        task: Future[Any],
+        future: Future[Any],
     ) -> None:
         """Airzone HTTP Protocol init."""
+        self.future = future
         self.request = request
         self.response = response
-        self.task = task
 
     def connection_made(
         self,
@@ -211,7 +211,7 @@ class AirzoneHttpProtocol(Protocol):
         if exc is not None:
             _LOGGER.error(exc)
 
-        self.task.set_result(True)
+        self.future.set_result(True)
 
     def data_received(self, data: bytes) -> None:
         """HTTP data received from server."""
@@ -261,15 +261,15 @@ class AirzoneHttp:
                 raise InvalidHost("Invalid URL port.")
 
             try:
-                task = self.loop.create_future()
+                future = self.loop.create_future()
 
                 transport, protocol = await self.loop.create_connection(
-                    lambda: AirzoneHttpProtocol(request, response, task),
+                    lambda: AirzoneHttpProtocol(request, response, future),
                     request.url.hostname,
                     request.url.port,
                 )
 
-                await task
+                await future
             except OSError as err:
                 raise InvalidHost(err) from err
             finally:
