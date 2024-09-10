@@ -354,11 +354,13 @@ class AirzoneLocalApi:
 
     async def check_features(self, update: bool) -> None:
         """Check Airzone API features."""
+        # Check version and toggle HTTP quirks first.
+        await self.check_feature_version()
+
         tasks = [
             asyncio.create_task(self.check_feature_webserver()),
             asyncio.create_task(self.check_feature_systems(update)),
             asyncio.create_task(self.check_feature_dhw(update)),
-            asyncio.create_task(self.check_feature_version()),
         ]
         await asyncio.gather(*tasks)
 
