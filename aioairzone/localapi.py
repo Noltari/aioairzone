@@ -12,6 +12,7 @@ from typing import Any, cast
 
 from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
+from packaging.version import Version
 
 from .common import OperationMode, get_system_zone_id, json_dumps
 from .const import (
@@ -56,6 +57,7 @@ from .const import (
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
     HTTP_MAX_REQUESTS,
+    HTTP_QUIRK_VERSION,
     RAW_DEMO,
     RAW_DHW,
     RAW_HVAC,
@@ -136,6 +138,7 @@ class AirzoneLocalApi:
         self.api_features_lock = Lock()
         self.hotwater: HotWater | None = None
         self.http = AirzoneHttp()
+        self.http_quirks_needed = True
         self.options = options
         self.systems: dict[int, System] = {}
         self.version: str | None = None
@@ -173,6 +176,10 @@ class AirzoneLocalApi:
                 if val == API_ERROR_ZONE_ID_NOT_PROVIDED:
                     raise ZoneNotProvided(f"{key}: {val}")
                 raise APIError(f"{key}: {val}")
+
+    def http_quirks_enabled(self) -> bool:
+        """API expects HTTP headers + body on the same TCP segment."""
+        return self.options.http_quirks or self.http_quirks_needed
 
     async def aiohttp_request(
         self, method: str, path: str, data: Any | None = None
@@ -251,7 +258,7 @@ class AirzoneLocalApi:
         """Device HTTP request."""
         _LOGGER.debug("http_request: /%s (params=%s)", path, data)
 
-        if self.options.http_quirks:
+        if self.http_quirks_enabled():
             return await self.http_quirks_request(method, path, data)
         return await self.aiohttp_request(method, path, data)
 
@@ -322,11 +329,13 @@ class AirzoneLocalApi:
     async def check_feature_version(self) -> None:
         """Check Version feature."""
         try:
-            version = await self.get_version()
-            if version is None:
+            version_data = await self.get_version()
+            if version_data is None:
                 raise APIError("check_feature_version: empty API response")
-            if API_VERSION in version:
-                self.version = version[API_VERSION]
+            version_str = version_data.get(API_VERSION)
+            if version_str is not None:
+                self.version = version_str
+                self.http_quirks_needed = Version(version_str) < HTTP_QUIRK_VERSION
         except InvalidMethod:
             pass
 

@@ -2,6 +2,8 @@
 
 from typing import Final
 
+from packaging.version import Version
+
 API_ACS_MAX_TEMP: Final[str] = "acs_maxtemp"
 API_ACS_MIN_TEMP: Final[str] = "acs_mintemp"
 API_ACS_ON: Final[str] = "acs_power"
@@ -204,6 +206,7 @@ ERROR_ZONE: Final[str] = "zone"
 
 HTTP_CALL_TIMEOUT: Final[int] = 10
 HTTP_MAX_REQUESTS: Final[int] = 1
+HTTP_QUIRK_VERSION: Final[Version] = Version("9.99")  # Fix version is still unknown
 
 RAW_DEMO: Final[str] = "demo"
 RAW_DHW: Final[str] = "dhw"
