@@ -71,17 +71,22 @@ class AirzoneHttpResponse:
         """HTTP response init."""
         self.body: str | None = None
         self.buffer = bytearray()
-        self.content_len: int = 0
-        self.content_type: str | None = None
         self.header: str | None = None
+        self.header_map: dict[str, str] = {}
         self.reason: str | None = None
-        self.server: str | None = None
         self.status: int | None = None
         self.version: str | None = None
 
     def append_data(self, data: bytes) -> None:
         """Buffer HTTP response data."""
         self.buffer += data
+
+    def get_content_length(self) -> int:
+        """Get HTTP Content-Length."""
+        content_len = self.header_map.get(HTTP_CONTENT_LEN)
+        if content_len is not None:
+            return int(content_len)
+        return 0
 
     def json(self) -> Any:
         """HTTP response to JSON conversion."""
@@ -100,10 +105,17 @@ class AirzoneHttpResponse:
         if not status.startswith(HTTP_PREFIX):
             return
 
-        status_split = status.split(" ", maxsplit=2)
+        status_split = status.strip().split(" ", maxsplit=2)
         self.reason = status_split[2]
         self.status = int(status_split[1])
         self.version = status_split[0].lstrip(f"{HTTP_PREFIX}/")
+
+        _LOGGER.debug(
+            "HTTP: version=%s status=%s reason=%s",
+            self.version,
+            self.status,
+            self.reason,
+        )
 
     def parse_header_line(self, line: str) -> None:
         """HTTP response header line parse."""
@@ -112,14 +124,7 @@ class AirzoneHttpResponse:
             key = line_list[0].strip()
             value = line_list[1].strip()
 
-            _LOGGER.debug("HTTP: %s -> %s", key, value)
-
-            if key == HTTP_CONTENT_LEN:
-                self.content_len = int(value)
-            elif key == HTTP_CONTENT_TYPE:
-                self.content_type = value
-            elif key == HTTP_SERVER:
-                self.server = value
+            self.header_map[key] = value
 
     def parse_header(self) -> None:
         """HTTP response header parse."""
@@ -136,23 +141,18 @@ class AirzoneHttpResponse:
         for line in lines:
             self.parse_header_line(line)
 
+        _LOGGER.debug("HTTP: headers=%s", self.header_map)
+
     def parse_header_bytes(self, header_bytes: bytes) -> None:
         """HTTP response header bytes parse."""
         self.header = header_bytes.decode()
         self.parse_header()
 
-        _LOGGER.debug(
-            "HTTP: version=%s status=%s reason=%s",
-            self.version,
-            self.status,
-            self.reason,
-        )
-
     def parse_body_bytes(self, body_bytes: bytes) -> None:
         """HTTP response body bytes parse."""
         self.body = body_bytes.decode()
 
-        _LOGGER.debug("HTTP body: %s", self.body)
+        _LOGGER.debug("HTTP: body=%s", self.body)
 
     def parse_data(self) -> None:
         """Parse HTTP response data."""
@@ -169,8 +169,9 @@ class AirzoneHttpResponse:
         header_bytes = bytes(mv[:header_end])
         self.parse_header_bytes(header_bytes)
 
-        if self.content_len > 0:
-            body_end = header_end + self.content_len
+        content_len = self.get_content_length()
+        if content_len > 0:
+            body_end = header_end + content_len
             body_bytes = bytes(mv[header_end:body_end])
             self.parse_body_bytes(body_bytes)
 
