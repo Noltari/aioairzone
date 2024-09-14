@@ -83,12 +83,6 @@ class AirzoneHttpResponse:
         """Buffer HTTP response data."""
         self.buffer += data
 
-    def is_json(self) -> bool:
-        """Check if HTTP content type is JSON."""
-        if self.content_type is not None:
-            return "json" in self.content_type
-        return False
-
     def json(self) -> Any:
         """HTTP response to JSON conversion."""
         if self.body is not None:
@@ -153,9 +147,6 @@ class AirzoneHttpResponse:
             self.status,
             self.reason,
         )
-
-        if not self.is_json():
-            raise InvalidHost(f"Invalid HTTP Content-Type: {self.content_type}")
 
     def parse_body_bytes(self, body_bytes: bytes) -> None:
         """HTTP response body bytes parse."""
