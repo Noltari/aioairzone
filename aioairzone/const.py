@@ -210,8 +210,13 @@ HTTP_QUIRK_VERSION: Final[Version] = Version("9.99")  # Fix version is still unk
 
 RAW_DEMO: Final[str] = "demo"
 RAW_DHW: Final[str] = "dhw"
+RAW_HEADERS: Final[str] = "headers"
 RAW_HVAC: Final[str] = "hvac"
+RAW_HTTP: Final[str] = "http"
 RAW_INTEGRATION: Final[str] = "integration"
+RAW_QUIRKS: Final[str] = "quirks"
+RAW_REASON: Final[str] = "reason"
+RAW_STATUS: Final[str] = "status"
 RAW_SYSTEMS: Final[str] = "systems"
 RAW_VERSION: Final[str] = "version"
 RAW_WEBSERVER: Final[str] = "webserver"

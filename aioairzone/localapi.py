@@ -60,8 +60,13 @@ from .const import (
     HTTP_QUIRK_VERSION,
     RAW_DEMO,
     RAW_DHW,
+    RAW_HEADERS,
+    RAW_HTTP,
     RAW_HVAC,
     RAW_INTEGRATION,
+    RAW_QUIRKS,
+    RAW_REASON,
+    RAW_STATUS,
     RAW_SYSTEMS,
     RAW_VERSION,
     RAW_WEBSERVER,
@@ -123,6 +128,7 @@ class AirzoneLocalApi:
             RAW_DEMO: {},
             RAW_DHW: {},
             RAW_HVAC: {},
+            RAW_HTTP: {},
             RAW_INTEGRATION: {},
             RAW_SYSTEMS: {},
             RAW_VERSION: {},
@@ -250,6 +256,13 @@ class AirzoneLocalApi:
                 self.handle_errors(resp_err)
             raise APIError(f"HTTP status: {resp.status}")
 
+        if path.endswith(API_VERSION):
+            async with self._api_raw_data_lock:
+                self._api_raw_data[RAW_HTTP][RAW_HEADERS] = resp.header_map
+                self._api_raw_data[RAW_HTTP][RAW_REASON] = resp.reason
+                self._api_raw_data[RAW_HTTP][RAW_STATUS] = resp.status
+                self._api_raw_data[RAW_HTTP][RAW_VERSION] = resp.version
+
         return cast(dict[str, Any], resp_json)
 
     async def http_request(
@@ -336,6 +349,8 @@ class AirzoneLocalApi:
             if version_str is not None:
                 self.version = version_str
                 self.http_quirks_needed = Version(version_str) < HTTP_QUIRK_VERSION
+                async with self._api_raw_data_lock:
+                    self._api_raw_data[RAW_HTTP][RAW_QUIRKS] = self.http_quirks_needed
         except InvalidMethod:
             pass
 
