@@ -87,6 +87,7 @@ class OperationMode(IntEnum):
     HEATING = 3
     FAN = 4
     DRY = 5
+    AUX_HEATING = 6
     AUTO = 7
 
     @classmethod

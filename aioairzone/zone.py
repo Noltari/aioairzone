@@ -470,7 +470,7 @@ class Zone:
                 mode = self.get_mode()
                 if mode == OperationMode.COOLING:
                     action = OperationAction.COOLING
-                elif mode == OperationMode.HEATING:
+                elif mode in [OperationMode.AUX_HEATING, OperationMode.HEATING]:
                     action = OperationAction.HEATING
                 elif mode == OperationMode.FAN:
                     action = OperationAction.FAN
