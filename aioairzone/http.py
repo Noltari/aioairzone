@@ -16,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 HTTP_EOL: Final[str] = "\r\n"
 HTTP_HDR_SEP: Final[str] = f"{HTTP_EOL}{HTTP_EOL}"
 
+HTTP_CHARSET: Final[str] = "charset"
 HTTP_CONTENT_LEN: Final[str] = "Content-Length"
 HTTP_CONTENT_TYPE: Final[str] = "Content-Type"
 HTTP_SERVER: Final[str] = "Server"
@@ -71,8 +72,10 @@ class AirzoneHttpResponse:
         """HTTP response init."""
         self.body: str | None = None
         self.buffer = bytearray()
+        self.charset: str = "utf-8"
         self.header: str | None = None
         self.header_map: dict[str, str] = {}
+        self.media_type: str | None = None
         self.reason: str | None = None
         self.status: int | None = None
         self.version: str | None = None
@@ -96,6 +99,32 @@ class AirzoneHttpResponse:
             except JSONDecodeError as err:
                 raise InvalidHost(err) from err
         return None
+
+    def parse_content_type(self) -> None:
+        """HTTP content type parse."""
+        content_type = self.header_map.get(HTTP_CONTENT_TYPE)
+        if content_type is None:
+            return
+
+        ct_split = content_type.split(";")
+        if len(ct_split) < 1:
+            return
+
+        self.media_type = ct_split.pop(0).strip().lower()
+
+        charset = None
+        for ct_item in ct_split:
+            item_split = ct_item.split("=", maxsplit=1)
+            if len(item_split) == 2:
+                key = item_split[0].strip()
+                value = item_split[1].strip()
+
+                if key == HTTP_CHARSET:
+                    charset = value.lower()
+                    self.charset = charset
+
+        if self.media_type == "text/html" and charset is None:
+            self.charset = "iso-8859-1"
 
     def parse_http_status(
         self,
@@ -143,6 +172,8 @@ class AirzoneHttpResponse:
 
         _LOGGER.debug("HTTP: headers=%s", self.header_map)
 
+        self.parse_content_type()
+
     def parse_header_bytes(self, header_bytes: bytes) -> None:
         """HTTP response header bytes parse."""
         self.header = header_bytes.decode()
@@ -150,7 +181,7 @@ class AirzoneHttpResponse:
 
     def parse_body_bytes(self, body_bytes: bytes) -> None:
         """HTTP response body bytes parse."""
-        self.body = body_bytes.decode()
+        self.body = body_bytes.decode(encoding=self.charset, errors="replace")
 
         _LOGGER.debug("HTTP: body=%s", self.body)
 
