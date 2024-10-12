@@ -277,6 +277,7 @@ class AirzoneHttp:
                 headers=req_headers,
                 data=data,
             )
+            transport = None
 
             if request.url.hostname is None:
                 raise InvalidHost("Invalid URL host.")
@@ -296,6 +297,7 @@ class AirzoneHttp:
             except OSError as err:
                 raise InvalidHost(err) from err
             finally:
-                transport.close()
+                if transport is not None:
+                    transport.close()
 
             return protocol.response
