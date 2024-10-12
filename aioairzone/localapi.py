@@ -207,15 +207,6 @@ class AirzoneLocalApi:
                 resp_json = await resp.json(content_type=None)
             except JSONDecodeError as err:
                 raise InvalidHost(err) from err
-            except UnicodeDecodeError:
-                # Workaround bogus encoding
-                try:
-                    resp_json = await resp.json(
-                        encoding="iso-8859-1",
-                        content_type=None,
-                    )
-                except JSONDecodeError as err:
-                    raise InvalidHost(err) from err
 
         _LOGGER.debug("aiohttp response: %s", resp_json)
         if resp.status != 200:
