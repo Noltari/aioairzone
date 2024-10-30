@@ -86,25 +86,14 @@ class AirzoneACS:
 
     def data(self) -> dict[str, Any]:
         """Return Local API ACS data."""
-        if self.status == AirzoneACSStatus.BOGUS:
-            return {
-                API_ACS_MAX_TEMP: 0,
-                API_ACS_MIN_TEMP: 0,
-                API_ACS_ON: 0,
-                API_ACS_POWER_MODE: 0,
-                API_ACS_SET_POINT: 0,
-                API_ACS_TEMP: 0,
-                API_SYSTEM_ID: 0,
-            }
-
         return {
-            API_ACS_MAX_TEMP: self.temp_max,
-            API_ACS_MIN_TEMP: self.temp_min,
-            API_ACS_ON: int(self.on),
-            API_ACS_POWER_MODE: int(self.power),
-            API_ACS_SET_POINT: self.temp_set,
-            API_ACS_TEMP: self.temp,
-            API_SYSTEM_ID: self.id,
+            "systemID": 0,
+            "acs_temp": 0,
+            "acs_setpoint": 0,
+            "acs_mintemp": 0,
+            "acs_maxtemp": 0,
+            "acs_power": 0,
+            "acs_powerful": 0
         }
 
     def refresh(self) -> None:
@@ -169,13 +158,13 @@ class AirzoneSystem:
     def data(self) -> dict[str, Any]:
         """Return Local API System data."""
         return {
-            API_ERRORS: self.errors,
-            API_MANUFACTURER: self.manufacturer,
-            API_MC_CONNECTED: int(self.mc_connected),
-            API_POWER: self.power,
-            API_SYSTEM_FIRMWARE: self.firmware,
-            API_SYSTEM_ID: self.id,
-            API_SYSTEM_TYPE: self.type.value,
+            "systemID": 1,
+            "mc_connected": 0,
+            "system_firmware": "10.12",
+            "system_type": 2,
+            "system_technology": 1,
+            "manufacturer": "Fujitsu 3 wires",
+            "errors": []
         }
 
     def matches(self, system_id: int) -> bool:
@@ -244,31 +233,39 @@ class AirzoneZone:
 
     def data(self) -> dict[str, Any]:
         """Return Local API Zone data."""
-        _data: dict[str, Any] = {
-            API_COOL_SET_POINT: self.conv_temp(self.cool_temp_set),
-            API_COOL_MAX_TEMP: self.conv_temp(self.cool_temp_max),
-            API_COOL_MIN_TEMP: self.conv_temp(self.cool_temp_min),
-            API_ERRORS: self.errors,
-            API_HEAT_SET_POINT: self.conv_temp(self.heat_temp_set),
-            API_HEAT_MAX_TEMP: self.conv_temp(self.heat_temp_max),
-            API_HEAT_MIN_TEMP: self.conv_temp(self.heat_temp_min),
-            API_HUMIDITY: self.humidity,
-            API_MAX_TEMP: self.conv_temp(self.temp_max),
-            API_MIN_TEMP: self.conv_temp(self.temp_min),
-            API_MODE: self.mode,
-            API_MODES: self.get_modes(),
-            API_ON: int(self.on),
-            API_ROOM_TEMP: self.conv_temp(self.temp),
-            API_SET_POINT: self.conv_temp(self.temp_set),
-            API_SYSTEM_ID: self.system,
-            API_UNITS: int(self.units),
-            API_ZONE_ID: self.id,
+        return {
+            "systemID": 1,
+            "zoneID": 1,
+            "name": "Aidoo PRO",
+            "on": 1,
+            "double_sp": 0,
+            "coolsetpoint": 64,
+            "coolmaxtemp": 88,
+            "coolmintemp": 64,
+            "heatsetpoint": 72,
+            "heatmaxtemp": 88,
+            "heatmintemp": 60,
+            "maxTemp": 88,
+            "minTemp": 60,
+            "setpoint": 72,
+            "roomTemp": 3276.,
+            "sleep": 0,
+            "temp_step": 2,
+            "modes": [7, 4, 2, 3, 5],
+            "mode": 3,
+            "speed_values": [0, 1, 2, 3, 4],
+            "speeds": 4,
+            "speed_type": 0,
+            "speed": 4,
+            "humidity": 0,
+            "units": 1,
+            "errors": [],
+            "air_demand": 1,
+            "cold_demand": 0,
+            "heat_demand": 1,
+            "master_zoneID": 1,
+            "window_external_source": 0
         }
-        if len(self.name) > 0:
-            _data[API_NAME] = self.name
-        if OperationMode.AUTO in _data[API_MODES]:
-            _data[API_DOUBLE_SET_POINT] = True
-        return _data
 
     def matches(self, system_id: int, zone_id: int) -> bool:
         """Check if Zone matches params."""

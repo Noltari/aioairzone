@@ -18,7 +18,7 @@ class AirzoneVersion:
     def data(self) -> dict[str, Any]:
         """Return Local API Version data."""
         return {
-            API_VERSION: self.version,
+            "version": "1.75"
         }
 
     async def post(self) -> Response:

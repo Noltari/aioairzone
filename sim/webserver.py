@@ -46,13 +46,15 @@ class AirzoneWebServer:
     def data(self) -> dict[str, Any]:
         """Return Local API Version data."""
         return {
-            API_INTERFACE: API_WIFI,
-            API_MAC: self.mac,
-            API_WIFI_CHANNEL: self.wifi_channel,
-            API_WIFI_QUALITY: self.wifi_quality(),
-            API_WIFI_RSSI: self.wifi_rssi,
-            API_WS_FIRMWARE: self.firmware,
-            API_WS_TYPE: self.type,
+            "mac": "A0:CD:F3:A8:97:59",
+            "wifi_channel": 50,
+            "wifi_quality": 68,
+            "wifi_rssi": -42,
+            "interface": "wifi",
+            "ws_firmware": "10.12",
+            "lmachine_firmware": "06.20",
+            "cloud_connected": 1,
+            "ws_type": "ws_aidoo"
         }
 
     def refresh(self) -> None:
