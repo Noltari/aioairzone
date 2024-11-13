@@ -14,7 +14,7 @@ from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
 from packaging.version import Version
 
-from .common import OperationMode, get_system_zone_id, json_dumps
+from .common import OperationMode, get_system_zone_id, json_dumps, validate_mac_address
 from .const import (
     API_ACS_MAX_TEMP,
     API_ACS_MIN_TEMP,
@@ -355,7 +355,7 @@ class AirzoneLocalApi:
             webserver = await self.get_webserver()
             if webserver is None:
                 raise APIError("check_feature_webserver: empty API response")
-            if API_MAC in webserver:
+            if validate_mac_address(webserver.get(API_MAC)):
                 await self.set_api_feature(ApiFeature.WEBSERVER)
                 self.update_webserver(webserver)
         except InvalidMethod:

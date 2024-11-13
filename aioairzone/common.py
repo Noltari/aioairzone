@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from enum import Enum, IntEnum
 import json
+import re
 from typing import Any
 
 
@@ -243,3 +244,13 @@ def json_dumps(data: Any) -> Any:
     if data is not None:
         return json.dumps(data)
     return None
+
+
+def validate_mac_address(mac_addr: str | None) -> bool:
+    """Validate MAC address."""
+    if mac_addr is None:
+        return False
+    return (
+        re.match("[0-9a-f]{2}([-:]?)[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", mac_addr.lower())
+        is not None
+    )
