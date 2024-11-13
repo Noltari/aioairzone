@@ -289,7 +289,10 @@ class AirzoneLocalApi:
 
     def update_webserver(self, data: dict[str, Any]) -> None:
         """Gather WebServer data."""
-        self.webserver = WebServer(data)
+        if self.webserver is not None:
+            self.webserver.update_data(data)
+        else:
+            self.webserver = WebServer(data)
 
     def check_dhw(self, dhw: dict[str, Any]) -> bool:
         """Check Airzone Domestic Hot Water validity."""

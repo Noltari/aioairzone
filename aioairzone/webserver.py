@@ -39,7 +39,10 @@ class WebServer:
         self.wifi_channel: int | None = None
         self.wifi_quality: int | None = None
         self.wifi_rssi: int | None = None
+        self.update_data(data)
 
+    def update_data(self, data: dict[str, Any]) -> None:
+        """Update WebServer data."""
         if API_INTERFACE in data:
             if data[API_INTERFACE] == API_WIFI:
                 self.interface = WebServerInterface.WIFI
