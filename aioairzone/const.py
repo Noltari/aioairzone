@@ -192,12 +192,15 @@ AZD_WIFI_RSSI: Final[str] = "wifi-rssi"
 AZD_ZONES: Final[str] = "zones"
 AZD_ZONES_NUM: Final[str] = "num-zones"
 
+API_BUG_MIN_TEMP_FAH: Final[int] = 32
 API_BUG_MAX_TEMP_FAH: Final[int] = 140
 
 DEFAULT_PORT: Final[int] = 3000
 DEFAULT_SYSTEM_ID: Final[int] = 0
 DEFAULT_TEMP_MAX_CELSIUS: Final[float] = 30.0
 DEFAULT_TEMP_MAX_FAHRENHEIT: Final[float] = 86.0
+DEFAULT_TEMP_MIN_CELSIUS: Final[float] = 15.0
+DEFAULT_TEMP_MIN_FAHRENHEIT: Final[float] = 60.0
 DEFAULT_TEMP_STEP_CELSIUS: Final[float] = 0.5
 DEFAULT_TEMP_STEP_FAHRENHEIT: Final[float] = 1.0
 

@@ -18,6 +18,7 @@ from .const import (
     API_AIR_DEMAND,
     API_ANTI_FREEZE,
     API_BUG_MAX_TEMP_FAH,
+    API_BUG_MIN_TEMP_FAH,
     API_COLD_ANGLE,
     API_COLD_DEMAND,
     API_COLD_STAGE,
@@ -104,6 +105,8 @@ from .const import (
     AZD_THERMOSTAT_RADIO,
     DEFAULT_TEMP_MAX_CELSIUS,
     DEFAULT_TEMP_MAX_FAHRENHEIT,
+    DEFAULT_TEMP_MIN_CELSIUS,
+    DEFAULT_TEMP_MIN_FAHRENHEIT,
     DEFAULT_TEMP_STEP_CELSIUS,
     DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_ZONE,
@@ -432,17 +435,31 @@ class Zone:
 
     def fix_max_temp(self, max_temp: float) -> float:
         """Fix possibly bugged max temperatures."""
-        if (
-            self.get_temp_unit() == TemperatureUnit.FAHRENHEIT
-            and max_temp >= API_BUG_MAX_TEMP_FAH
-        ):
-            max_temp = max_temp / 10
+        temp_unit = self.get_temp_unit()
+        if temp_unit == TemperatureUnit.FAHRENHEIT:
+            if max_temp >= API_BUG_MAX_TEMP_FAH:
+                max_temp = max_temp / 10
+            elif max_temp <= API_BUG_MIN_TEMP_FAH:
+                max_temp = max_temp * 10
         if max_temp == 0.0:
-            if self.get_temp_unit() == TemperatureUnit.FAHRENHEIT:
+            if temp_unit == TemperatureUnit.FAHRENHEIT:
                 max_temp = DEFAULT_TEMP_MAX_FAHRENHEIT
             else:
                 max_temp = DEFAULT_TEMP_MAX_CELSIUS
         return round(max_temp, 1)
+
+    def fix_min_temp(self, min_temp: float) -> float:
+        """Fix possibly bugged min temperatures."""
+        temp_unit = self.get_temp_unit()
+        if temp_unit == TemperatureUnit.FAHRENHEIT:
+            if min_temp <= API_BUG_MIN_TEMP_FAH:
+                min_temp = min_temp * 10
+        if min_temp == 0.0:
+            if temp_unit == TemperatureUnit.FAHRENHEIT:
+                min_temp = DEFAULT_TEMP_MIN_FAHRENHEIT
+            else:
+                min_temp = DEFAULT_TEMP_MIN_CELSIUS
+        return round(min_temp, 1)
 
     def get_abs_temp_max(self) -> float:
         """Return absolute max temp."""
@@ -571,7 +588,7 @@ class Zone:
     def get_cool_temp_min(self) -> float | None:
         """Return zone minimum cool temperature."""
         if self.cool_temp_min is not None:
-            return round(self.cool_temp_min, 1)
+            return self.fix_min_temp(self.cool_temp_min)
         return None
 
     def get_cool_temp_set(self) -> float | None:
@@ -643,7 +660,7 @@ class Zone:
     def get_heat_temp_min(self) -> float | None:
         """Return zone minimum heat temperature."""
         if self.heat_temp_min is not None:
-            return round(self.heat_temp_min, 1)
+            return self.fix_min_temp(self.heat_temp_min)
         return None
 
     def get_heat_temp_set(self) -> float | None:
@@ -726,7 +743,7 @@ class Zone:
 
     def get_temp_min(self) -> float:
         """Return zone minimum temperature."""
-        return round(self.temp_min, 1)
+        return self.fix_min_temp(self.temp_min)
 
     def get_temp_set(self) -> float | None:
         """Return zone set temperature."""
