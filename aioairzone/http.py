@@ -2,13 +2,14 @@
 
 import asyncio
 from asyncio import Future, Protocol, Transport
+from asyncio.exceptions import InvalidStateError
 import json
 from json import JSONDecodeError
 import logging
 from typing import Any, Final
 from urllib.parse import urlparse
 
-from .exceptions import InvalidHost
+from .exceptions import InvalidHost, InvalidState
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -234,7 +235,10 @@ class AirzoneHttpProtocol(Protocol):
         if exc is not None:
             _LOGGER.error(exc)
 
-        self.future.set_result(True)
+        try:
+            self.future.set_result(True)
+        except InvalidStateError as err:
+            raise InvalidState(err) from err
 
     def data_received(self, data: bytes) -> None:
         """HTTP data received from server."""

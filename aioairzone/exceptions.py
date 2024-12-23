@@ -31,6 +31,10 @@ class InvalidParam(AirzoneError):
     """Exception raised when invalid param is requested."""
 
 
+class InvalidState(AirzoneError):
+    """Exception raised when InvalidStateError is raised from asyncio."""
+
+
 class InvalidSystem(AirzoneError):
     """Exception raised when invalid system is requested."""
 
