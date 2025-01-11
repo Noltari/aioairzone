@@ -385,7 +385,7 @@ class AirzoneHVAC:
         """Return HVAC System data."""
         if len(hvac_data) == 0:
             if not self.check_system(system_id):
-                return api_json_error(API_ERROR_SYSTEM_ID_NOT_AVAILABLE)
+                return api_json_error(API_ERROR_SYSTEM_ID_NOT_AVAILABLE, 500)
             return api_json_error(API_ERROR_REQUEST_MALFORMED)
         return api_json_response({API_DATA: hvac_data})
 
@@ -411,7 +411,7 @@ class AirzoneHVAC:
         """Return HVAC Zone data."""
         if len(hvac_data) == 0:
             if not self.check_system(system_id):
-                return api_json_error(API_ERROR_SYSTEM_ID_NOT_AVAILABLE)
+                return api_json_error(API_ERROR_SYSTEM_ID_NOT_AVAILABLE, 500)
             if not self.check_zone(system_id, zone_id):
                 return api_json_error(API_ERROR_ZONE_ID_NOT_AVAILABLE)
             return api_json_error(API_ERROR_REQUEST_MALFORMED)
@@ -465,6 +465,7 @@ class AirzoneHVAC:
         if system == 0:
             if zone is None:
                 return await self.acs.post()
+            return api_json_error(API_ERROR_SYSTEM_ID_NOT_AVAILABLE, 500)
             if 0 <= zone <= 32:
                 return self.post_zone(system, zone)
             return api_json_error(API_ERROR_ZONE_ID_NOT_AVAILABLE)
@@ -472,7 +473,9 @@ class AirzoneHVAC:
         if 0 < system <= 32:
             if zone is None:
                 return self.post_system(system)
-            return self.post_zone(system, zone)
+            if 0 <= zone <= 32:
+                return self.post_zone(system, zone)
+            return api_json_error(API_ERROR_ZONE_ID_NOT_AVAILABLE)
 
         return api_json_error(API_ERROR_SYSTEM_ID_OUT_RANGE)
 

@@ -49,14 +49,14 @@ def api_json_dumps(obj: Any) -> Any:
     return json.dumps(obj, indent=4, sort_keys=True)
 
 
-def api_json_error(error: str) -> Response:
+def api_json_error(error: str, status: int=200) -> Response:
     """Local API error."""
-    return api_json_response(api_error_dict(error))
+    return api_json_response(api_error_dict(error), status)
 
 
-def api_json_response(data: dict[str, Any]) -> Response:
+def api_json_response(data: dict[str, Any], status: int=200) -> Response:
     """Return Local API error."""
-    return web.json_response(data, dumps=api_json_dumps)
+    return web.json_response(data, status=status, dumps=api_json_dumps)
 
 
 def celsius_to_fahrenheit(celsius: float | int) -> float | int:

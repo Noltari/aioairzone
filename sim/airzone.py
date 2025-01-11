@@ -34,7 +34,8 @@ class Airzone:
 
 
 airzone = Airzone()
-airzone.hvac.add_zone("Salón", 1, 1, TemperatureUnit.CELSIUS)
+airzone.hvac.add_zone("Salon", 1, 1, TemperatureUnit.CELSIUS)
+airzone.hvac.add_zone("Dormitorio", 2, 1, TemperatureUnit.CELSIUS)
 airzone.hvac.acs.set_status(AirzoneACSStatus.ENABLED)
 
 # Airzone Local API simulation
