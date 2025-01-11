@@ -1,5 +1,7 @@
 """Airzone Local API simulation."""
 
+from typing import TYPE_CHECKING
+
 from aiohttp import web
 from aiohttp.web_request import Request
 from aiohttp.web_response import Response
@@ -12,6 +14,9 @@ from webserver import AirzoneWebServer
 
 from aioairzone.common import TemperatureUnit
 from aioairzone.const import API_ERROR_METHOD_NOT_SUPPORTED, API_V1, DEFAULT_PORT
+
+if TYPE_CHECKING:
+    from .hvac import AirzoneACSStatus, AirzoneHVAC
 
 # Airzone device simulation
 
