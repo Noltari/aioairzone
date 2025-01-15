@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import HotWaterOperation, TemperatureUnit
+from .common import HotWaterOperation, TemperatureUnit, parse_bool, parse_int
 from .const import (
     API_ACS_MAX_TEMP,
     API_ACS_MIN_TEMP,
@@ -49,11 +49,13 @@ class HotWater:
         self.temp_min = int(data[API_ACS_MIN_TEMP])
         self.temp_set = int(data[API_ACS_SET_POINT])
 
-        if API_ACS_POWER_MODE in data:
-            self.power_mode = bool(data[API_ACS_POWER_MODE])
+        acs_power_mode = parse_bool(data.get(API_ACS_POWER_MODE))
+        if acs_power_mode is not None:
+            self.power_mode = acs_power_mode
 
-        if API_UNITS in data:
-            self.temp_unit = TemperatureUnit(data[API_UNITS])
+        units = parse_int(data.get(API_UNITS))
+        if units is not None:
+            self.temp_unit = TemperatureUnit(units)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone Hot Water data."""
