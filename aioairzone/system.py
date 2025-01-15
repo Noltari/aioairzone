@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import EcoAdapt, OperationMode, SystemType
+from .common import EcoAdapt, OperationMode, SystemType, get_dict_cast
 from .const import (
     API_ECO_ADAPT,
     API_ERRORS,
@@ -252,23 +252,28 @@ class System:
 
         self.available = True
 
-        if API_MC_CONNECTED in data:
-            self.clamp_meter = bool(data[API_MC_CONNECTED])
+        mc_connected = get_dict_cast(data, API_MC_CONNECTED, bool)
+        if mc_connected is not None:
+            self.clamp_meter = mc_connected
 
-        if API_ERRORS in data:
-            errors: list[dict[str, str]] = data[API_ERRORS]
+        errors = get_dict_cast(data, API_ERRORS, list[dict[str, str]])
+        if errors is not None:
             for error in errors:
                 for val in error.values():
                     self.add_error(val)
 
-        if API_MANUFACTURER in data:
-            self.manufacturer = str(data[API_MANUFACTURER])
+        manufacturer = get_dict_cast(data, API_MANUFACTURER, str)
+        if manufacturer is not None:
+            self.manufacturer = manufacturer
 
-        if API_POWER in data:
-            self.energy = int(data[API_POWER])
+        power = get_dict_cast(data, API_POWER, int)
+        if power is not None:
+            self.energy = power
 
-        if API_SYSTEM_FIRMWARE in data:
-            self.firmware = str(data[API_SYSTEM_FIRMWARE])
+        system_firmware = get_dict_cast(data, API_SYSTEM_FIRMWARE, str)
+        if system_firmware is not None:
+            self.firmware = system_firmware
 
-        if API_SYSTEM_TYPE in data:
-            self.type = SystemType(data[API_SYSTEM_TYPE])
+        system_type = get_dict_cast(data, API_SYSTEM_TYPE, SystemType)
+        if system_type is not None:
+            self.type = system_type

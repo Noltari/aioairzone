@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import WebServerInterface, WebServerType
+from .common import WebServerInterface, WebServerType, get_dict_cast
 from .const import (
     API_INTERFACE,
     API_MAC,
@@ -43,29 +43,36 @@ class WebServer:
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update WebServer data."""
-        if API_INTERFACE in data:
-            if data[API_INTERFACE] == API_WIFI:
+        interface = get_dict_cast(data, API_INTERFACE, str)
+        if interface is not None:
+            if interface == API_WIFI:
                 self.interface = WebServerInterface.WIFI
             else:
                 self.interface = WebServerInterface.ETHERNET
 
-        if API_MAC in data:
-            self.mac = str(data[API_MAC])
+        mac = get_dict_cast(data, API_MAC, str)
+        if mac is not None:
+            self.mac = mac
 
-        if API_WIFI_CHANNEL in data:
+        wifi_channel = get_dict_cast(data, API_WIFI_CHANNEL, int)
+        if wifi_channel is not None:
             self.wifi_channel = int(data[API_WIFI_CHANNEL])
-        if API_WIFI_QUALITY in data:
+        wifi_quality = get_dict_cast(data, API_WIFI_QUALITY, int)
+        if wifi_quality is not None:
             self.wifi_quality = int(data[API_WIFI_QUALITY])
-        if API_WIFI_RSSI in data:
+        wifi_rssi = get_dict_cast(data, API_WIFI_RSSI, int)
+        if wifi_rssi is not None:
             self.wifi_rssi = int(data[API_WIFI_RSSI])
 
-        if API_WS_FIRMWARE in data:
-            self.firmware = str(data[API_WS_FIRMWARE])
+        ws_firmware = get_dict_cast(data, API_WS_FIRMWARE, str)
+        if ws_firmware is not None:
+            self.firmware = ws_firmware
 
-        if API_WS_TYPE in data:
-            if data[API_WS_TYPE] == API_WS_AZ:
+        ws_type = get_dict_cast(data, API_WS_TYPE, str)
+        if ws_type is not None:
+            if ws_type == API_WS_AZ:
                 self.type = WebServerType.AIRZONE
-            elif data[API_WS_TYPE] == API_WS_AIDOO:
+            elif ws_type == API_WS_AIDOO:
                 self.type = WebServerType.AIDOO
             else:
                 self.type = WebServerType.UNKNOWN

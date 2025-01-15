@@ -5,7 +5,9 @@ from __future__ import annotations
 from enum import Enum, IntEnum
 import json
 import re
-from typing import Any
+from typing import Any, Type, TypeVar
+
+_T = TypeVar("_T")
 
 
 class AirzoneStages(IntEnum):
@@ -232,6 +234,14 @@ class WebServerType(IntEnum):
             self.AIDOO: "Aidoo WebServer",
         }
         return models[self.value]
+
+
+def get_dict_cast(data: dict[str, Any], key: str, typ: Type[_T]) -> _T | None:
+    """Get value from dict with cast."""
+    value = data.get(key)
+    if value is not None:
+        return typ(value)  # type: ignore [call-arg]
+    return None
 
 
 def get_system_zone_id(system_id: int, zone_id: int) -> str:

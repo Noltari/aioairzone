@@ -12,6 +12,7 @@ from .common import (
     OperationMode,
     SleepTimeout,
     TemperatureUnit,
+    get_dict_cast,
     get_system_zone_id,
 )
 from .const import (
@@ -173,115 +174,135 @@ class Zone:
         self.temp_unit = TemperatureUnit(zone_data[API_UNITS])
         self.thermostat = Thermostat(zone_data)
 
-        if API_MASTER_ZONE_ID in zone_data:
-            master_zone_id = int(zone_data[API_MASTER_ZONE_ID])
+        master_zone_id = get_dict_cast(zone_data, API_MASTER_ZONE_ID, int)
+        if master_zone_id is not None:
             if master_zone_id != self.id:
                 self.master_zone = master_zone_id
 
-        if API_AIR_DEMAND in zone_data:
-            self.air_demand = bool(zone_data[API_AIR_DEMAND])
-        if API_FLOOR_DEMAND in zone_data:
-            self.floor_demand = bool(zone_data[API_FLOOR_DEMAND])
+        air_demand = get_dict_cast(zone_data, API_AIR_DEMAND, bool)
+        if air_demand is not None:
+            self.air_demand = air_demand
+        floor_demand = get_dict_cast(zone_data, API_FLOOR_DEMAND, bool)
+        if floor_demand is not None:
+            self.floor_demand = floor_demand
 
-        if API_ANTI_FREEZE in zone_data:
-            self.anti_freeze = bool(zone_data[API_ANTI_FREEZE])
+        anti_freeze = get_dict_cast(zone_data, API_ANTI_FREEZE, bool)
+        if anti_freeze is not None:
+            self.anti_freeze = anti_freeze
 
-        if API_COLD_DEMAND in zone_data:
-            self.cold_demand = bool(zone_data[API_COLD_DEMAND])
-        if API_HEAT_DEMAND in zone_data:
-            self.heat_demand = bool(zone_data[API_HEAT_DEMAND])
+        cold_demand = get_dict_cast(zone_data, API_COLD_DEMAND, bool)
+        if cold_demand is not None:
+            self.cold_demand = cold_demand
+        heat_demand = get_dict_cast(zone_data, API_HEAT_DEMAND, bool)
+        if heat_demand is not None:
+            self.heat_demand = heat_demand
 
-        if API_DOUBLE_SET_POINT in zone_data:
-            self.double_set_point = bool(zone_data[API_DOUBLE_SET_POINT])
+        double_set_point = get_dict_cast(zone_data, API_DOUBLE_SET_POINT, bool)
+        if double_set_point is not None:
+            self.double_set_point = double_set_point
 
-        if API_ECO_ADAPT in zone_data:
-            self.eco_adapt = EcoAdapt(zone_data[API_ECO_ADAPT])
+        eco_adapt = get_dict_cast(zone_data, API_ECO_ADAPT, EcoAdapt)
+        if eco_adapt is not None:
+            self.eco_adapt = eco_adapt
 
-        if API_HUMIDITY in zone_data:
-            self.humidity = int(zone_data[API_HUMIDITY])
+        humidity = get_dict_cast(zone_data, API_HUMIDITY, int)
+        if humidity is not None:
+            self.humidity = humidity
 
-        if API_COLD_ANGLE in zone_data:
-            self.cold_angle = GrilleAngle(zone_data[API_COLD_ANGLE])
-        if API_HEAT_ANGLE in zone_data:
-            self.heat_angle = GrilleAngle(zone_data[API_HEAT_ANGLE])
+        cold_angle = get_dict_cast(zone_data, API_COLD_ANGLE, GrilleAngle)
+        if cold_angle is not None:
+            self.cold_angle = cold_angle
+        heat_angle = get_dict_cast(zone_data, API_HEAT_ANGLE, GrilleAngle)
+        if heat_angle is not None:
+            self.heat_angle = heat_angle
 
-        if API_COLD_STAGE in zone_data:
-            self.cold_stage = AirzoneStages(zone_data[API_COLD_STAGE])
-        if API_COLD_STAGES in zone_data:
-            cold_stages = AirzoneStages(zone_data[API_COLD_STAGES])
-            self.cold_stages = cold_stages.to_list()
+        cold_stage = get_dict_cast(zone_data, API_COLD_STAGE, AirzoneStages)
+        if cold_stage is not None:
+            self.cold_stage = cold_stage
+        cold_stages = get_dict_cast(zone_data, API_COLD_STAGES, AirzoneStages)
+        if cold_stages is not None:
+            self.cold_stages = AirzoneStages(cold_stages).to_list()
         elif self.cold_stage and self.cold_stage.exists():
             self.cold_stages = [self.cold_stage]
 
-        if API_HEAT_STAGE in zone_data:
-            self.heat_stage = AirzoneStages(zone_data[API_HEAT_STAGE])
-        if API_HEAT_STAGES in zone_data:
-            heat_stages = AirzoneStages(zone_data[API_HEAT_STAGES])
+        heat_stage = get_dict_cast(zone_data, API_HEAT_STAGE, AirzoneStages)
+        if heat_stage is not None:
+            self.heat_stage = heat_stage
+        heat_stages = get_dict_cast(zone_data, API_HEAT_STAGES, AirzoneStages)
+        if heat_stages is not None:
             self.heat_stages = heat_stages.to_list()
         elif self.heat_stage and self.heat_stage.exists():
             self.heat_stages = [self.heat_stage]
 
-        if API_COOL_MAX_TEMP in zone_data:
-            self.cool_temp_max = float(zone_data[API_COOL_MAX_TEMP])
-        if API_COOL_MIN_TEMP in zone_data:
-            self.cool_temp_min = float(zone_data[API_COOL_MIN_TEMP])
-        if API_COOL_SET_POINT in zone_data:
-            cool_temp_set = self.validate_temp_set(
-                float(zone_data[API_COOL_SET_POINT]), self.cool_temp_max
-            )
+        cool_temp_max = get_dict_cast(zone_data, API_COOL_MAX_TEMP, float)
+        if cool_temp_max is not None:
+            self.cool_temp_max = cool_temp_max
+        cool_temp_min = get_dict_cast(zone_data, API_COOL_MIN_TEMP, float)
+        if cool_temp_min is not None:
+            self.cool_temp_min = cool_temp_min
+        cool_set_point = get_dict_cast(zone_data, API_COOL_SET_POINT, float)
+        if cool_set_point is not None:
+            cool_temp_set = self.validate_temp_set(cool_set_point, self.cool_temp_max)
             if cool_temp_set is not None:
                 self.cool_temp_set = cool_temp_set
 
-        if API_HEAT_MAX_TEMP in zone_data:
-            self.heat_temp_max = float(zone_data[API_HEAT_MAX_TEMP])
-        if API_HEAT_MIN_TEMP in zone_data:
-            self.heat_temp_min = float(zone_data[API_HEAT_MIN_TEMP])
-        if API_HEAT_SET_POINT in zone_data:
-            heat_temp_set = self.validate_temp_set(
-                float(zone_data[API_HEAT_SET_POINT]), self.heat_temp_max
-            )
+        heat_temp_max = get_dict_cast(zone_data, API_HEAT_MAX_TEMP, float)
+        if heat_temp_max is not None:
+            self.heat_temp_max = heat_temp_max
+        heat_temp_min = get_dict_cast(zone_data, API_HEAT_MIN_TEMP, float)
+        if heat_temp_min is not None:
+            self.heat_temp_min = heat_temp_min
+        heat_set_point = get_dict_cast(zone_data, API_HEAT_SET_POINT, float)
+        if heat_set_point is not None:
+            heat_temp_set = self.validate_temp_set(heat_set_point, self.heat_temp_max)
             if heat_temp_set is not None:
                 self.heat_temp_set = heat_temp_set
 
-        if API_ERRORS in zone_data:
-            errors: list[dict[str, str]] = zone_data[API_ERRORS]
+        errors = get_dict_cast(zone_data, API_ERRORS, list[dict[str, str]])
+        if errors is not None:
             for error in errors:
                 for key, val in error.items():
                     self.add_error(key, val)
 
-        if API_MODE in zone_data:
-            self.mode = OperationMode(zone_data[API_MODE])
+        mode = get_dict_cast(zone_data, API_MODE, OperationMode)
+        if mode is not None:
+            self.mode = mode
         else:
             self.master = True
             self.mode = OperationMode.AUTO
             self.modes = [self.mode]
 
         if self.master:
-            if API_MODES in zone_data:
-                self.modes = []
-                for mode in zone_data[API_MODES]:
-                    self.modes += [OperationMode(mode)]
+            modes = zone_data.get(API_MODES)
+            if modes is not None:
+                mode_list = []
+                for cur_mode in modes:
+                    mode_list += [OperationMode(cur_mode)]
+                self.modes = mode_list
 
-        if API_NAME in zone_data:
-            self.name = str(zone_data[API_NAME])
+        name = get_dict_cast(zone_data, API_NAME, str)
+        if name is not None:
+            self.name = name
 
-        if API_SLEEP in zone_data:
-            self.sleep = SleepTimeout(zone_data[API_SLEEP])
+        sleep = get_dict_cast(zone_data, API_SLEEP, SleepTimeout)
+        if sleep is not None:
+            self.sleep = sleep
 
-        if API_SPEED in zone_data:
-            self.speed = int(zone_data[API_SPEED])
-        if API_SPEEDS in zone_data:
-            speeds = int(zone_data[API_SPEEDS])
+        speed = get_dict_cast(zone_data, API_SPEED, int)
+        if speed is not None:
+            self.speed = speed
+        speeds = get_dict_cast(zone_data, API_SPEEDS, int)
+        if speeds is not None:
             self.speeds = list(range(0, speeds + 1))
 
-        if API_SET_POINT in zone_data:
-            temp_set = self.validate_temp_set(
-                float(zone_data[API_SET_POINT]), self.temp_max
-            )
+        set_point = get_dict_cast(zone_data, API_SET_POINT, float)
+        if set_point is not None:
+            temp_set = self.validate_temp_set(set_point, self.temp_max)
             if temp_set is not None:
                 self.temp_set = temp_set
-        if API_TEMP_STEP in zone_data:
-            self.temp_step = float(zone_data[API_TEMP_STEP])
+        temp_step = get_dict_cast(zone_data, API_TEMP_STEP, float)
+        if temp_step is not None:
+            self.temp_step = temp_step
         else:
             if self.temp_unit == TemperatureUnit.FAHRENHEIT:
                 self.temp_step = DEFAULT_TEMP_STEP_FAHRENHEIT

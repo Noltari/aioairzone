@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import ThermostatType
+from .common import ThermostatType, get_dict_cast
 from .const import (
     API_THERMOS_FIRMWARE,
     API_THERMOS_RADIO,
@@ -23,12 +23,15 @@ class Thermostat:
         self.radio: bool | None = None
         self.type: ThermostatType | None = None
 
-        if API_THERMOS_FIRMWARE in data:
-            self.firmware = str(data[API_THERMOS_FIRMWARE])
-        if API_THERMOS_RADIO in data:
-            self.radio = bool(data[API_THERMOS_RADIO])
-        if API_THERMOS_TYPE in data:
-            self.type = ThermostatType(data[API_THERMOS_TYPE])
+        thermos_firmware = get_dict_cast(data, API_THERMOS_FIRMWARE, str)
+        if thermos_firmware is not None:
+            self.firmware = thermos_firmware
+        thermos_radio = get_dict_cast(data, API_THERMOS_RADIO, bool)
+        if thermos_radio is not None:
+            self.radio = thermos_radio
+        thermos_type = get_dict_cast(data, API_THERMOS_TYPE, ThermostatType)
+        if thermos_type is not None:
+            self.type = thermos_type
 
     def get_firmware(self) -> str | None:
         """Return Airzone Thermostat firmware."""
