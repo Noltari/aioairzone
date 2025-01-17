@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum, IntEnum
+from enum import IntEnum, StrEnum
 import json
 import re
 from typing import Any
@@ -40,7 +40,7 @@ class AirzoneStages(IntEnum):
         return []
 
 
-class EcoAdapt(str, Enum):
+class EcoAdapt(StrEnum):
     """Airzone Eco-Adapt."""
 
     OFF = "off"
