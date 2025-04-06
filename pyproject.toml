@@ -1,6 +1,6 @@
 [project]
 name = "aioairzone"
-version = "0.9.9"
+version = "1.0.0"
 description = "Library to control Airzone devices"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -10,7 +10,7 @@ authors = [
   {name = "Álvaro Fernández Rojas", email = "noltari@gmail.com" }
 ]
 classifiers = [
-  "Development Status :: 4 - Beta",
+  "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Natural Language :: English",
   "Programming Language :: Python :: 3",
