@@ -104,9 +104,11 @@ from .const import (
     AZD_TEMP_SET,
     AZD_TEMP_STEP,
     AZD_TEMP_UNIT,
+    AZD_THERMOSTAT_BATTERY,
     AZD_THERMOSTAT_FW,
     AZD_THERMOSTAT_MODEL,
     AZD_THERMOSTAT_RADIO,
+    AZD_THERMOSTAT_SIGNAL,
     DEFAULT_TEMP_MAX_CELSIUS,
     DEFAULT_TEMP_MAX_FAHRENHEIT,
     DEFAULT_TEMP_MIN_CELSIUS,
@@ -434,6 +436,9 @@ class Zone:
         if temp_step is not None:
             data[AZD_TEMP_STEP] = temp_step
 
+        thermostat_battery = self.thermostat.get_battery()
+        if thermostat_battery is not None:
+            data[AZD_THERMOSTAT_BATTERY] = thermostat_battery
         thermostat_firmware = self.thermostat.get_firmware()
         if thermostat_firmware is not None:
             data[AZD_THERMOSTAT_FW] = thermostat_firmware
@@ -443,6 +448,9 @@ class Zone:
         thermostat_radio = self.thermostat.get_radio()
         if thermostat_radio is not None:
             data[AZD_THERMOSTAT_RADIO] = thermostat_radio
+        thermostat_signal = self.thermostat.get_signal()
+        if thermostat_signal is not None:
+            data[AZD_THERMOSTAT_SIGNAL] = thermostat_signal
 
         battery_low = self.get_battery_low()
         if battery_low is not None:
@@ -580,6 +588,9 @@ class Zone:
 
     def get_battery_low(self) -> bool | None:
         """Return battery status."""
+        battery_low = self.thermostat.get_battery_low()
+        if battery_low is not None:
+            return battery_low
         if self.thermostat.get_radio():
             return API_ERROR_LOW_BATTERY in self.errors
         return None
