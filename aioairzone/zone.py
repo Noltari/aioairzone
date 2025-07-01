@@ -21,6 +21,7 @@ from .common import (
 from .const import (
     API_AIR_DEMAND,
     API_ANTI_FREEZE,
+    API_AQ_QUALITY,
     API_BUG_MAX_TEMP_FAH,
     API_BUG_MIN_TEMP_FAH,
     API_COLD_ANGLE,
@@ -63,6 +64,7 @@ from .const import (
     AZD_ACTION,
     AZD_AIR_DEMAND,
     AZD_ANTI_FREEZE,
+    AZD_AQ_STATUS,
     AZD_AVAILABLE,
     AZD_BATTERY_LOW,
     AZD_COLD_ANGLE,
@@ -127,6 +129,7 @@ class Zone:
         """Zone init."""
         self.air_demand: bool | None = None
         self.anti_freeze: bool | None = None
+        self.aq_status: str | None = None
         self.available: bool = True
         self.cold_angle: GrilleAngle | None = None
         self.cold_demand: bool | None = None
@@ -193,6 +196,10 @@ class Zone:
         anti_freeze = parse_bool(zone_data.get(API_ANTI_FREEZE))
         if anti_freeze is not None:
             self.anti_freeze = anti_freeze
+
+        aq_status = parse_str(zone_data.get(API_AQ_QUALITY))
+        if aq_status is not None:
+            self.aq_status = aq_status
 
         cold_demand = parse_bool(zone_data.get(API_COLD_DEMAND))
         if cold_demand is not None:
@@ -346,6 +353,10 @@ class Zone:
         anti_freeze = self.get_anti_freeze()
         if anti_freeze is not None:
             data[AZD_ANTI_FREEZE] = anti_freeze
+
+        aq_status = self.get_aq_status()
+        if aq_status is not None:
+            data[AZD_AQ_STATUS] = aq_status
 
         eco_adapt = self.get_eco_adapt()
         if eco_adapt is not None:
@@ -544,6 +555,10 @@ class Zone:
     def get_anti_freeze(self) -> bool | None:
         """Return zone anti freeze."""
         return self.anti_freeze
+
+    def get_aq_status(self) -> str | None:
+        """Return HVAC device Air Quality status."""
+        return self.aq_status
 
     def get_auto_mode(self) -> OperationAction:
         """Return action from auto mode."""
