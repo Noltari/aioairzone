@@ -7,6 +7,7 @@ from typing import Any
 from .common import (
     EcoAdapt,
     OperationMode,
+    QAdapt,
     SystemType,
     parse_bool,
     parse_int,
@@ -19,6 +20,7 @@ from .const import (
     API_MC_CONNECTED,
     API_MODE,
     API_POWER,
+    API_Q_ADAPT,
     API_SYSTEM_FIRMWARE,
     API_SYSTEM_TYPE,
     AZD_AVAILABLE,
@@ -36,6 +38,7 @@ from .const import (
     AZD_MODEL,
     AZD_MODES,
     AZD_PROBLEMS,
+    AZD_Q_ADAPT,
     ERROR_SYSTEM,
 )
 from .zone import Zone
@@ -58,6 +61,7 @@ class System:
         self.master_zone: int | None = None
         self.mode: OperationMode | None = None
         self.modes: list[OperationMode] = []
+        self.q_adapt: QAdapt | None = None
         self.type: SystemType | None = None
         self.zones: dict[int, Zone] = {}
 
@@ -128,6 +132,10 @@ class System:
         modes = self.get_modes()
         if modes is not None:
             data[AZD_MODES] = modes
+
+        q_adapt = self.get_qadapt()
+        if q_adapt is not None:
+            data[AZD_Q_ADAPT] = q_adapt
 
         data[AZD_PROBLEMS] = self.get_problems()
 
@@ -220,6 +228,10 @@ class System:
         """Return system problems."""
         return bool(self.errors)
 
+    def get_qadapt(self) -> QAdapt | None:
+        """Return system Q-Adapt."""
+        return self.q_adapt
+
     def set_available(self, available: bool) -> None:
         """Set availability."""
         self.available = available
@@ -248,6 +260,8 @@ class System:
         """Update parameters by key and value."""
         if key == API_ECO_ADAPT:
             self.eco_adapt = EcoAdapt(value)
+        elif key == API_Q_ADAPT:
+            self.q_adapt = QAdapt(value)
         elif key == API_MODE:
             self.mode = OperationMode(value)
 
@@ -284,3 +298,7 @@ class System:
         system_type = parse_int(data.get(API_SYSTEM_TYPE))
         if system_type is not None:
             self.type = SystemType(system_type)
+
+        q_adapt = parse_int(data.get(API_Q_ADAPT))
+        if q_adapt is not None:
+            self.q_adapt = QAdapt(q_adapt)

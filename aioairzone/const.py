@@ -51,6 +51,7 @@ API_MODES: Final[str] = "modes"
 API_NAME: Final[str] = "name"
 API_ON: Final[str] = "on"
 API_POWER: Final[str] = "power"
+API_Q_ADAPT: Final[str] = "qadapt"
 API_ROOM_TEMP: Final[str] = "roomTemp"
 API_SET_POINT: Final[str] = "setpoint"
 API_SLEEP: Final[str] = "sleep"
@@ -108,6 +109,7 @@ API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
 ]
 API_SYSTEM_PARAMS: Final[list[str]] = [
     API_MODE,
+    API_Q_ADAPT,
     API_SPEED,
 ]
 API_ZONE_PARAMS: Final[list[str]] = [
@@ -171,6 +173,7 @@ AZD_OPERATIONS: Final[str] = "operations"
 AZD_ON: Final[str] = "on"
 AZD_POWER_MODE: Final[str] = "power-mode"
 AZD_PROBLEMS: Final[str] = "problems"
+AZD_Q_ADAPT: Final[str] = "q-adapt"
 AZD_SLEEP: Final[str] = "sleep"
 AZD_SPEED: Final[str] = "speed"
 AZD_SPEEDS: Final[str] = "speeds"

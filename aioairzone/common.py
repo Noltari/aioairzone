@@ -110,6 +110,34 @@ class HotWaterOperation(IntEnum):
         return cls.UNKNOWN
 
 
+class QAdapt(IntEnum):
+    """Airzone Q-Adapt."""
+
+    UNKNOWN = -1
+
+    STANDARD = 0
+    POWER = 1
+    SILENCE = 2
+    MINIMUM = 3
+    MAXIMUM = 4
+
+    @classmethod
+    def _missing_(cls, value: Any) -> QAdapt:
+        return cls.UNKNOWN
+
+    def __str__(self) -> str:
+        """Convert QAdapt value to string."""
+        models: dict[int, str] = {
+            self.UNKNOWN: "Unknown",
+            self.STANDARD: "Standard",
+            self.POWER: "Power",
+            self.SILENCE: "Silence",
+            self.MINIMUM: "Minimum",
+            self.MAXIMUM: "Maximum",
+        }
+        return models[self.value]
+
+
 class SleepTimeout(IntEnum):
     """Airzone sleep timeouts."""
 

@@ -4,7 +4,8 @@
       "systemID": 1,
       "power": 0,
       "system_firmware": "3.31",
-      "system_type": 1
+      "system_type": 1,
+      "qadapt": 0
     }
   ]
 }

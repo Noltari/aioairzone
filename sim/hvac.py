@@ -15,6 +15,7 @@ from helpers import (
 
 from aioairzone.common import (
     OperationMode,
+    QAdapt,
     SystemType,
     TemperatureUnit,
     get_system_zone_id,
@@ -51,6 +52,7 @@ from aioairzone.const import (
     API_NAME,
     API_ON,
     API_POWER,
+    API_Q_ADAPT,
     API_ROOM_TEMP,
     API_SET_POINT,
     API_SYSTEM_FIRMWARE,
@@ -164,6 +166,7 @@ class AirzoneSystem:
         self.mc_connected: bool = False
         self.manufacturer: str = "Python"
         self.power: int = 0
+        self.q_adapt: QAdapt = QAdapt.UNKNOWN
         self.type: SystemType = SystemType.C3
 
     def data(self) -> dict[str, Any]:
@@ -173,6 +176,7 @@ class AirzoneSystem:
             API_MANUFACTURER: self.manufacturer,
             API_MC_CONNECTED: int(self.mc_connected),
             API_POWER: self.power,
+            API_Q_ADAPT: self.q_adapt,
             API_SYSTEM_FIRMWARE: self.firmware,
             API_SYSTEM_ID: self.id,
             API_SYSTEM_TYPE: self.type.value,
