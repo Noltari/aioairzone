@@ -122,7 +122,7 @@ class System:
             data[AZD_MODE] = mode
 
         model = self.get_model()
-        if self.type is not None:
+        if model is not None:
             data[AZD_MODEL] = model
 
         modes = self.get_modes()
