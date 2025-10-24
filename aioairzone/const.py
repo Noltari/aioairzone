@@ -2,7 +2,10 @@
 
 from typing import Final
 
+from aiohttp import __version__ as aiohttp_version
 from packaging.version import Version
+
+AIOHTTP_COALESCE: Final[bool] = Version(aiohttp_version) >= Version("3.12.0")
 
 API_ACS_MAX_TEMP: Final[str] = "acs_maxtemp"
 API_ACS_MIN_TEMP: Final[str] = "acs_mintemp"

@@ -16,6 +16,7 @@ from packaging.version import Version
 
 from .common import OperationMode, get_system_zone_id, json_dumps, validate_mac_address
 from .const import (
+    AIOHTTP_COALESCE,
     API_ACS_MAX_TEMP,
     API_ACS_MIN_TEMP,
     API_ACS_ON,
@@ -144,7 +145,7 @@ class AirzoneLocalApi:
         self.api_features_lock = Lock()
         self.hotwater: HotWater | None = None
         self.http = AirzoneHttp()
-        self.http_quirks_needed = True
+        self.http_quirks_needed = not AIOHTTP_COALESCE
         self.options = options
         self.systems: dict[int, System] = {}
         self.version: str | None = None
@@ -342,7 +343,9 @@ class AirzoneLocalApi:
             version_str = version_data.get(API_VERSION)
             if version_str is not None:
                 self.version = version_str
-                self.http_quirks_needed = Version(version_str) < HTTP_QUIRK_VERSION
+                self.http_quirks_needed = (
+                    not AIOHTTP_COALESCE and Version(version_str) < HTTP_QUIRK_VERSION
+                )
                 async with self._api_raw_data_lock:
                     self._api_raw_data[RAW_HTTP][RAW_QUIRKS] = self.http_quirks_needed
         except InvalidMethod:
