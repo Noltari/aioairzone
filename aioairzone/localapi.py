@@ -14,7 +14,7 @@ from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
 from packaging.version import Version
 
-from .common import OperationMode, get_system_zone_id, json_dumps, validate_mac_address
+from .common import get_system_zone_id, json_dumps, validate_mac_address
 from .const import (
     AIOHTTP_COALESCE,
     API_ACS_MAX_TEMP,
@@ -38,6 +38,7 @@ from .const import (
     API_HVAC,
     API_INTEGRATION,
     API_MAC,
+    API_MASTER_PARAMS,
     API_NO_FEEDBACK_PARAMS,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
@@ -493,47 +494,28 @@ class AirzoneLocalApi:
                         self.systems[system_id], self.zones[system_zone_id]
                     )
 
-        self.update_zones_from_master_zone()
+        self.update_slaves_from_masters()
 
     def update_system_from_zone(self, system: System, zone: Zone) -> None:
         """Update system data from zone."""
         if zone.get_master():
             if (eco_adapt := zone.get_eco_adapt()) is not None:
                 system.set_eco_adapt(eco_adapt)
-
-            system.set_master_system_zone(zone.get_system_zone_id())
-            system.set_master_zone(zone.get_id())
-
-            if (mode := zone.get_mode()) is not None:
-                system.set_mode(mode)
-
-            system.set_modes(zone.get_modes())
         else:
             if system.get_eco_adapt() is None:
                 system.set_eco_adapt(zone.get_eco_adapt())
-            if system.get_mode() is None:
-                system.set_mode(zone.get_mode())
-            if len(system.get_modes()) == 0:
-                system.set_modes(zone.get_modes())
 
-    def update_zones_from_master_zone(self) -> None:
-        """Update slave zones data with their master zone."""
-        for zone in self.zones.values():
-            system_id = zone.get_system_id()
-
-            if system_id is not None and not zone.get_master():
-                modes: list[OperationMode] = []
-
-                master_id = zone.get_master_zone()
-                if master_id is None:
-                    system = self.get_system(system_id)
-                    modes = system.get_modes()
-                else:
-                    master_zone = self.get_zone(system_id, master_id)
-                    modes = master_zone.get_modes()
-
+    def update_slaves_from_masters(self) -> None:
+        """Update slave zones data with their master zones."""
+        for system in self.systems.values():
+            for slave in system.slaves.values():
+                master = system.get_slave_master(slave)
+                if master is None:
+                    _LOGGER.error("no master for %s", slave.get_system_zone_id())
+                    continue
+                modes = master.get_modes()
                 if len(modes) > 0:
-                    zone.set_modes(modes)
+                    slave.set_modes(modes)
 
     async def get_demo(self) -> dict[str, Any] | None:
         """Return Airzone demo."""
@@ -698,10 +680,16 @@ class AirzoneLocalApi:
             if key not in data:
                 raise InvalidParam(f"set_hvac: param not in data: {key}={value}")
 
-        system = self.get_system(data[API_SYSTEM_ID])
-        zone = self.get_zone(data[API_SYSTEM_ID], data[API_ZONE_ID])
+        system_id: int = data[API_SYSTEM_ID]
+        zone_id: int = data[API_ZONE_ID]
+
+        system = self.get_system(system_id)
+        zone = self.get_zone(system_id, zone_id)
+        master_id = zone.get_master_zone()
         for key, value in data.items():
-            if key in API_SYSTEM_PARAMS:
+            if key in API_MASTER_PARAMS:
+                system.set_master_param(master_id, key, value)
+            elif key in API_SYSTEM_PARAMS:
                 system.set_param(key, value)
             elif key in API_ZONE_PARAMS:
                 zone.set_param(key, value)

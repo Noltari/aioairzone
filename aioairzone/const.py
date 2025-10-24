@@ -110,10 +110,12 @@ API_DOUBLE_SET_POINT_PARAMS: Final[set[str]] = {
 API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
     API_MODE,
 ]
-API_SYSTEM_PARAMS: Final[list[str]] = [
+API_MASTER_PARAMS: Final[list[str]] = [
     API_MODE,
-    API_Q_ADAPT,
     API_SPEED,
+]
+API_SYSTEM_PARAMS: Final[list[str]] = [
+    API_Q_ADAPT,
 ]
 API_ZONE_PARAMS: Final[list[str]] = [
     API_COOL_SET_POINT,
@@ -165,7 +167,8 @@ AZD_INTERFACE: Final[str] = "interface"
 AZD_MAC: Final[str] = "mac"
 AZD_MANUFACTURER: Final[str] = "manufacturer"
 AZD_MASTER: Final[str] = "master"
-AZD_MASTER_SYSTEM_ZONE: Final[str] = "master-system-zone"
+AZD_MASTERS: Final[str] = "masters"
+AZD_MASTERS_SLAVES: Final[str] = "masters-slaves"
 AZD_MASTER_ZONE: Final[str] = "master-zone"
 AZD_MODE: Final[str] = "mode"
 AZD_MODEL: Final[str] = "model"
@@ -177,6 +180,7 @@ AZD_ON: Final[str] = "on"
 AZD_POWER_MODE: Final[str] = "power-mode"
 AZD_PROBLEMS: Final[str] = "problems"
 AZD_Q_ADAPT: Final[str] = "q-adapt"
+AZD_SLAVES: Final[str] = "slaves"
 AZD_SLEEP: Final[str] = "sleep"
 AZD_SPEED: Final[str] = "speed"
 AZD_SPEEDS: Final[str] = "speeds"

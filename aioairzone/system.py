@@ -2,23 +2,15 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
-from .common import (
-    EcoAdapt,
-    OperationMode,
-    QAdapt,
-    SystemType,
-    parse_bool,
-    parse_int,
-    parse_str,
-)
+from .common import EcoAdapt, QAdapt, SystemType, parse_bool, parse_int, parse_str
 from .const import (
     API_ECO_ADAPT,
     API_ERRORS,
     API_MANUFACTURER,
     API_MC_CONNECTED,
-    API_MODE,
     API_POWER,
     API_Q_ADAPT,
     API_SYSTEM_FIRMWARE,
@@ -32,16 +24,17 @@ from .const import (
     AZD_FULL_NAME,
     AZD_ID,
     AZD_MANUFACTURER,
-    AZD_MASTER_SYSTEM_ZONE,
-    AZD_MASTER_ZONE,
-    AZD_MODE,
+    AZD_MASTERS,
+    AZD_MASTERS_SLAVES,
     AZD_MODEL,
-    AZD_MODES,
     AZD_PROBLEMS,
     AZD_Q_ADAPT,
+    AZD_SLAVES,
     ERROR_SYSTEM,
 )
 from .zone import Zone
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class System:
@@ -57,11 +50,9 @@ class System:
         self.id: int = system_id
         self.firmware: str | None = None
         self.manufacturer: str | None = None
-        self.master_system_zone: str | None = None
-        self.master_zone: int | None = None
-        self.mode: OperationMode | None = None
-        self.modes: list[OperationMode] = []
+        self.masters: dict[int, Zone] = {}
         self.q_adapt: QAdapt | None = None
+        self.slaves: dict[int, Zone] = {}
         self.type: SystemType | None = None
         self.zones: dict[int, Zone] = {}
 
@@ -113,31 +104,27 @@ class System:
         if manufacturer is not None:
             data[AZD_MANUFACTURER] = manufacturer
 
-        master_system_zone = self.get_master_system_zone()
-        if master_system_zone is not None:
-            data[AZD_MASTER_SYSTEM_ZONE] = master_system_zone
+        masters = self.get_masters()
+        if masters is not None:
+            data[AZD_MASTERS] = masters
 
-        master_zone = self.get_master_zone()
-        if master_zone is not None:
-            data[AZD_MASTER_ZONE] = master_zone
-
-        mode = self.get_mode()
-        if mode is not None:
-            data[AZD_MODE] = mode
+        masters_slaves = self.get_masters_slaves()
+        if masters_slaves is not None:
+            data[AZD_MASTERS_SLAVES] = masters_slaves
 
         model = self.get_model()
         if model is not None:
             data[AZD_MODEL] = model
 
-        modes = self.get_modes()
-        if modes is not None:
-            data[AZD_MODES] = modes
+        data[AZD_PROBLEMS] = self.get_problems()
 
         q_adapt = self.get_qadapt()
         if q_adapt is not None:
             data[AZD_Q_ADAPT] = q_adapt
 
-        data[AZD_PROBLEMS] = self.get_problems()
+        slaves = self.get_slaves()
+        if slaves is not None:
+            data[AZD_SLAVES] = slaves
 
         return data
 
@@ -155,6 +142,16 @@ class System:
         zone_id = zone.get_id()
         if zone_id not in self.zones:
             self.zones[zone_id] = zone
+        if zone.get_master():
+            if zone_id not in self.masters:
+                self.masters[zone_id] = zone
+            if zone_id in self.slaves:
+                self.slaves.pop(zone_id)
+        else:
+            if zone_id not in self.slaves:
+                self.slaves[zone_id] = zone
+            if zone_id in self.masters:
+                self.masters.pop(zone_id)
 
     def get_available(self) -> bool:
         """Return availability."""
@@ -194,35 +191,31 @@ class System:
         """Return system manufacturer."""
         return self.manufacturer
 
-    def get_master_system_zone(self) -> str | None:
-        """Return master system zone ID."""
-        return self.master_system_zone
+    def get_masters(self) -> list[int] | None:
+        """Return system master zones."""
+        if len(self.masters) > 0:
+            return list(self.masters.keys())
+        return None
 
-    def get_master_zone(self) -> int | None:
-        """Return master zone ID."""
-        return self.master_zone
+    def get_masters_slaves(self) -> dict[int, list[int]] | None:
+        """Return system masters and slaves zones."""
+        if len(self.masters) == 0:
+            return None
+        masters: dict[int, list[int]] = {}
+        for master in self.masters.values():
+            master_id = master.get_id()
+            masters[master_id] = []
+            for slave in self.slaves.values():
+                slave_master = slave.get_master_zone()
+                if slave_master is None or slave_master == master_id:
+                    masters[master_id] += [slave.get_id()]
+        return masters
 
     def get_model(self) -> str | None:
         """Return system model."""
         if self.type:
             return str(self.type)
         return None
-
-    def get_mode(self) -> OperationMode | None:
-        """Return system mode."""
-        return self.mode
-
-    def get_modes(self) -> list[OperationMode]:
-        """Return system modes."""
-        modes = self.modes
-
-        if len(modes) == 0 and self.mode is not None:
-            modes = [self.mode]
-
-        if OperationMode.STOP not in modes:
-            modes += [OperationMode.STOP]
-
-        return modes
 
     def get_problems(self) -> bool:
         """Return system problems."""
@@ -232,6 +225,30 @@ class System:
         """Return system Q-Adapt."""
         return self.q_adapt
 
+    def get_slave_master(self, slave: Zone) -> Zone | None:
+        """Find the corresponding master from a slave."""
+        master_id = slave.get_master_zone()
+        if master_id is None:
+            if len(self.masters) > 0:
+                master = list(self.masters.values())[0]
+            else:
+                master = None
+            if len(self.masters) > 1:
+                _LOGGER.warning(
+                    "multiple masters for %s -> %s",
+                    slave.get_system_zone_id(),
+                    list(self.masters.keys()),
+                )
+        else:
+            master = self.masters.get(master_id)
+        return master
+
+    def get_slaves(self) -> list[int] | None:
+        """Return system slave zones."""
+        if len(self.slaves) > 0:
+            return list(self.slaves.keys())
+        return None
+
     def set_available(self, available: bool) -> None:
         """Set availability."""
         self.available = available
@@ -240,33 +257,34 @@ class System:
         """Set system Eco Adapt."""
         self.eco_adapt = eco_adapt
 
-    def set_master_system_zone(self, master_system_zone: str) -> None:
-        """Set master system zone ID."""
-        self.master_system_zone = master_system_zone
-
-    def set_master_zone(self, master_zone: int) -> None:
-        """Set master zone ID."""
-        self.master_zone = master_zone
-
-    def set_mode(self, mode: OperationMode | None) -> None:
-        """Set system mode."""
-        self.mode = mode
-
-    def set_modes(self, modes: list[OperationMode]) -> None:
-        """Set system modes."""
-        self.modes = modes
+    def set_master_param(self, master: int | None, key: str, value: Any) -> None:
+        """Update master parameter by key and value."""
+        if master is None or master == 0:
+            self.set_param_all_zones(key, value)
+        else:
+            self.set_param_master_zone(master, key, value)
 
     def set_param(self, key: str, value: Any) -> None:
-        """Update parameters by key and value."""
+        """Update parameter by key and value."""
         if key == API_ECO_ADAPT:
             self.eco_adapt = EcoAdapt(value)
         elif key == API_Q_ADAPT:
             self.q_adapt = QAdapt(value)
-        elif key == API_MODE:
-            self.mode = OperationMode(value)
 
+    def set_param_all_zones(self, key: str, value: Any) -> None:
+        """Update all zones parameter by key and value."""
         for zone in self.zones.values():
             zone.set_param(key, value)
+
+    def set_param_master_zone(self, master: int | None, key: str, value: Any) -> None:
+        """Update master zone parameter by key and value."""
+        for zone in self.zones.values():
+            if zone.get_master():
+                if zone.get_id() == master:
+                    zone.set_param(key, value)
+            else:
+                if zone.get_master_zone() == master:
+                    zone.set_param(key, value)
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update system parameters by dict."""
