@@ -15,6 +15,7 @@ from .const import (
     API_Q_ADAPT,
     API_SYSTEM_FIRMWARE,
     API_SYSTEM_TYPE,
+    API_ZONE_ID,
     AZD_AVAILABLE,
     AZD_CLAMP_METER,
     AZD_ECO_ADAPT,
@@ -46,7 +47,7 @@ class System:
         self.clamp_meter: bool | None = None
         self.eco_adapt: EcoAdapt | None = None
         self.energy: int | None = None
-        self.errors: list[str] = []
+        self.errors: dict[int, list[str]] = {}
         self.id: int = system_id
         self.firmware: str | None = None
         self.manufacturer: str | None = None
@@ -62,10 +63,13 @@ class System:
         """Update System data."""
         self.available = True
 
-        errors: list[dict[str, str]] = zone_data.get(API_ERRORS, [])
-        for error in errors:
-            for key, val in error.items():
-                self.add_error(val, key)
+        zone_id = int(zone_data.get(API_ZONE_ID, 0))
+        errors: list[dict[str, str]] | None = zone_data.get(API_ERRORS)
+        if errors is not None and zone_id > 0:
+            self.errors[zone_id] = []
+            for error in errors:
+                for key, val in error.items():
+                    self.add_error(zone_id, val, key)
 
     def data(self) -> dict[str, Any]:
         """Return Airzone system data."""
@@ -128,14 +132,17 @@ class System:
 
         return data
 
-    def add_error(self, error: str, error_id: str | None = None) -> None:
+    def add_error(self, zone_id: int, error: str, error_id: str | None = None) -> None:
         """Add system error."""
         if error_id is not None:
-            if error_id.casefold() == ERROR_SYSTEM and error not in self.errors:
-                self.errors += [error]
+            if (
+                error_id.casefold() == ERROR_SYSTEM
+                and error not in self.errors[zone_id]
+            ):
+                self.errors[zone_id] += [error]
         else:
-            if error not in self.errors:
-                self.errors += [error]
+            if error not in self.errors[zone_id]:
+                self.errors[zone_id] += [error]
 
     def add_zone(self, zone: Zone) -> None:
         """Add zone to system."""
@@ -171,7 +178,10 @@ class System:
 
     def get_errors(self) -> list[str]:
         """Return system errors."""
-        return self.errors
+        errors: list[str] = []
+        for zone_errors in self.errors.values():
+            errors += zone_errors
+        return errors
 
     def get_id(self) -> int:
         """Return system ID."""
@@ -219,7 +229,10 @@ class System:
 
     def get_problems(self) -> bool:
         """Return system problems."""
-        return bool(self.errors)
+        for zone_errors in self.errors.values():
+            if len(zone_errors) > 0:
+                return True
+        return False
 
     def get_qadapt(self) -> QAdapt | None:
         """Return system Q-Adapt."""
@@ -297,9 +310,10 @@ class System:
 
         errors: list[dict[str, str]] | None = data.get(API_ERRORS)
         if errors is not None:
+            self.errors[0] = []
             for error in errors:
                 for val in error.values():
-                    self.add_error(val)
+                    self.add_error(0, val)
 
         manufacturer = parse_str(data.get(API_MANUFACTURER))
         if manufacturer is not None:

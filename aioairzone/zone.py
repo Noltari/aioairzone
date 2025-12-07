@@ -264,6 +264,7 @@ class Zone:
 
         errors: list[dict[str, str]] | None = zone_data.get(API_ERRORS)
         if errors is not None:
+            self.errors = []
             for error in errors:
                 for key, val in error.items():
                     self.add_error(key, val)
