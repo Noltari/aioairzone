@@ -180,7 +180,7 @@ class Zone:
         self.thermostat = Thermostat(zone_data)
 
         master_zone_id = parse_int(zone_data.get(API_MASTER_ZONE_ID))
-        if master_zone_id is not None and master_zone_id != self.id:
+        if master_zone_id is not None:
             self.master_zone = master_zone_id
 
         air_demand = parse_bool(zone_data.get(API_AIR_DEMAND))
