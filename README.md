@@ -27,6 +27,8 @@ pip install --upgrade .
 ## Examples
 Examples can be found in the `examples` folder
 
+HTTPS is also supported. Use `ConnectionOptions(..., use_https=True)` to switch to `https://` requests. If `port` is omitted, the library uses `3443` for HTTPS and `3000` for HTTP.
+
 ## API Call examples
 Run the following command to list all your Airzone Zones:
 ```

@@ -56,6 +56,7 @@ from .const import (
     AZD_ZONES,
     AZD_ZONES_NUM,
     DEFAULT_PORT,
+    DEFAULT_PORT_HTTPS,
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
     HTTP_MAX_REQUESTS,
@@ -112,9 +113,15 @@ class ConnectionOptions:
     """Airzone Local API options for connection."""
 
     host: str
-    port: int = DEFAULT_PORT
+    port: int | None = None
     system_id: int = DEFAULT_SYSTEM_ID
     http_quirks: bool = False
+    use_https: bool = False
+
+    def __post_init__(self) -> None:
+        """Set default port according to selected protocol."""
+        if self.port is None:
+            self.port = DEFAULT_PORT_HTTPS if self.use_https else DEFAULT_PORT
 
 
 class AirzoneLocalApi:
@@ -189,6 +196,11 @@ class AirzoneLocalApi:
         """API expects HTTP headers + body on the same TCP segment."""
         return self.options.http_quirks or self.http_quirks_needed
 
+    def get_api_url(self, path: str) -> str:
+        """Build API URL from connection options."""
+        scheme = "https" if self.options.use_https else "http"
+        return f"{scheme}://{self.options.host}:{self.options.port}/{path}"
+
     async def aiohttp_request(
         self, method: str, path: str, data: Any | None = None
     ) -> dict[str, Any] | None:
@@ -197,7 +209,7 @@ class AirzoneLocalApi:
             try:
                 resp: ClientResponse = await self.aiohttp_session.request(
                     method,
-                    f"http://{self.options.host}:{self.options.port}/{path}",
+                    self.get_api_url(path),
                     data=json_dumps(data),
                     headers={"Content-Type": "text/json"},
                     timeout=self._api_timeout,
@@ -229,7 +241,7 @@ class AirzoneLocalApi:
         async with self._api_semaphore:
             resp = await self.http.request(
                 method,
-                f"http://{self.options.host}:{self.options.port}/{path}",
+                self.get_api_url(path),
                 data=json_dumps(data),
                 headers={
                     "Content-Type": "text/json",
