@@ -43,6 +43,11 @@ Run the following command to fetch your Airzone Altherma parameters:
 curl -s --location --request POST "http://192.168.1.25:3000/api/v1/hvac" -d '{"systemID": 0}' | jq
 ```
 
+Run the following command to fetch your Airzone IAQ sensors:
+```
+curl -s --location --request POST "http://192.168.1.25:3000/api/v1/iaq" -d '{"systemID": 0, "iaqsensorID": 0}' | jq
+```
+
 Run the following command to fetch your Airzone WebServer parameters:
 ```
 curl -s --location --request POST "http://192.168.1.25:3000/api/v1/webserver" | jq

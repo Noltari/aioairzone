@@ -36,6 +36,8 @@ from .const import (
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_HVAC,
+    API_IAQ,
+    API_IAQ_SENSOR_ID,
     API_INTEGRATION,
     API_MAC,
     API_MASTER_PARAMS,
@@ -49,6 +51,7 @@ from .const import (
     API_ZONE_ID,
     API_ZONE_PARAMS,
     AZD_HOT_WATER,
+    AZD_IAQ_SENSORS,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
     AZD_VERSION,
@@ -65,6 +68,7 @@ from .const import (
     RAW_HEADERS,
     RAW_HTTP,
     RAW_HVAC,
+    RAW_IAQ,
     RAW_INTEGRATION,
     RAW_QUIRKS,
     RAW_REASON,
@@ -91,6 +95,7 @@ from .exceptions import (
 )
 from .hotwater import HotWater
 from .http import AirzoneHttp
+from .iaqsensor import IAQSensor
 from .system import System
 from .webserver import WebServer
 from .zone import Zone
@@ -105,6 +110,7 @@ class ApiFeature(IntEnum):
     SYSTEMS = 1
     WEBSERVER = 2
     HOT_WATER = 4
+    IAQ = 8
 
 
 @dataclass
@@ -130,6 +136,7 @@ class AirzoneLocalApi:
             RAW_DEMO: {},
             RAW_DHW: {},
             RAW_HVAC: {},
+            RAW_IAQ: {},
             RAW_HTTP: {},
             RAW_INTEGRATION: {},
             RAW_SYSTEMS: {},
@@ -146,6 +153,7 @@ class AirzoneLocalApi:
         self.api_features_lock = Lock()
         self.hotwater: HotWater | None = None
         self.http = AirzoneHttp()
+        self.iaq_sensors: dict[str, IAQSensor] = {}
         self.http_quirks_needed = not AIOHTTP_COALESCE
         self.options = options
         self.systems: dict[int, System] = {}
@@ -276,6 +284,26 @@ class AirzoneLocalApi:
         else:
             self.hotwater = HotWater(dhw)
 
+    def update_iaq(self, data: dict[str, Any]) -> None:
+        """Gather IAQ Sensors data."""
+        if self.options.system_id == DEFAULT_SYSTEM_ID:
+            for system_data in data.get(API_SYSTEMS, []):
+                self.parse_iaq_sensors(system_data)
+        else:
+            self.parse_iaq_sensors(data)
+
+    def parse_iaq_sensors(self, system_data: dict[str, Any]) -> None:
+        """Parse all IAQ Sensors from system data."""
+        for sensor_data in system_data.get(API_DATA, []):
+            system_id = int(sensor_data.get(API_SYSTEM_ID, 0))
+            sensor_id = int(sensor_data.get(API_IAQ_SENSOR_ID, 0))
+            if system_id > 0 and sensor_id > 0:
+                key = get_system_zone_id(system_id, sensor_id)
+                if key in self.iaq_sensors:
+                    self.iaq_sensors[key].update_data(sensor_data)
+                else:
+                    self.iaq_sensors[key] = IAQSensor(system_id, sensor_id, sensor_data)
+
     def update_systems(self, data: dict[str, Any] | None) -> None:
         """Gather Systems data."""
         if data is None:
@@ -320,6 +348,20 @@ class AirzoneLocalApi:
                 if update:
                     self.update_dhw(dhw)
         except (HotWaterNotAvailable, ZoneNotProvided):
+            pass
+
+    async def check_feature_iaq(self, update: bool) -> None:
+        """Check IAQ Sensors feature."""
+        try:
+            iaq = await self.get_iaq()
+            if iaq is None:
+                raise APIError("check_feature_iaq: empty API response")
+            self.update_iaq(iaq)
+            if self.iaq_sensors:
+                await self.set_api_feature(ApiFeature.IAQ)
+            if not update:
+                self.iaq_sensors = {}
+        except (IaqSensorNotAvailable, InvalidMethod, SystemNotAvailable):
             pass
 
     async def check_feature_systems(self, update: bool) -> None:
@@ -374,6 +416,7 @@ class AirzoneLocalApi:
             asyncio.create_task(self.check_feature_webserver()),
             asyncio.create_task(self.check_feature_systems(update)),
             asyncio.create_task(self.check_feature_dhw(update)),
+            asyncio.create_task(self.check_feature_iaq(update)),
         ]
         await asyncio.gather(*tasks)
 
@@ -386,6 +429,14 @@ class AirzoneLocalApi:
             self.update_dhw(dhw)
         else:
             self.handle_empty_response("update_features", "DHW")
+
+    async def update_feature_iaq(self) -> None:
+        """Update IAQ Sensors feature."""
+        iaq = await self.get_iaq()
+        if iaq is not None:
+            self.update_iaq(iaq)
+        else:
+            self.handle_empty_response("update_features", "IAQ")
 
     async def update_feature_systems(self) -> None:
         """Update Systems feature."""
@@ -412,6 +463,9 @@ class AirzoneLocalApi:
         else:
             if self.api_feature(ApiFeature.HOT_WATER):
                 tasks += [asyncio.create_task(self.update_feature_dhw())]
+
+            if self.api_feature(ApiFeature.IAQ):
+                tasks += [asyncio.create_task(self.update_feature_iaq())]
 
             if self.api_feature(ApiFeature.SYSTEMS):
                 tasks += [asyncio.create_task(self.update_feature_systems())]
@@ -573,6 +627,23 @@ class AirzoneLocalApi:
             params,
         )
         await self.set_api_raw_data(RAW_HVAC, res)
+        return res
+
+    async def get_iaq(
+        self, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
+        """Return Airzone IAQ Sensors."""
+        if not params:
+            params = {
+                API_SYSTEM_ID: self.options.system_id,
+                API_IAQ_SENSOR_ID: 0,
+            }
+        res = await self.http_request(
+            "POST",
+            f"{API_V1}/{API_IAQ}",
+            params,
+        )
+        await self.set_api_raw_data(RAW_IAQ, res)
         return res
 
     async def get_integration(self) -> dict[str, Any] | None:
@@ -741,6 +812,11 @@ class AirzoneLocalApi:
 
         if self.hotwater is not None:
             data[AZD_HOT_WATER] = self.hotwater.data()
+
+        if len(self.iaq_sensors) > 0:
+            data[AZD_IAQ_SENSORS] = {
+                key: sensor.data() for key, sensor in self.iaq_sensors.items()
+            }
 
         data[AZD_SYSTEMS_NUM] = self.num_systems()
         if len(self.systems) > 0:
