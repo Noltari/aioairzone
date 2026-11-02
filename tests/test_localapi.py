@@ -1,10 +1,43 @@
 """Tests for the Airzone Local API client."""
 
-from unittest import IsolatedAsyncioTestCase
+from unittest import IsolatedAsyncioTestCase, TestCase
 from unittest.mock import AsyncMock, MagicMock
 
 from aioairzone.http import AirzoneHttpRequest
 from aioairzone.localapi import AirzoneLocalApi, ConnectionOptions
+from aioairzone.zone import Zone
+
+
+class TestAirzoneZone(TestCase):
+    """Test Airzone zone data."""
+
+    def test_air_quality_settings_are_parsed_and_returned(self) -> None:
+        """Expose optional AirQ settings in zone data."""
+        zone = Zone(
+            1,
+            1,
+            {
+                "aq_mode": 2,
+                "aq_quality": 2,
+                "aq_thrhigh": 50,
+                "aq_thrlow": 12,
+                "maxTemp": 30,
+                "minTemp": 15,
+                "on": 1,
+                "roomTemp": 22,
+                "units": 0,
+            },
+        )
+
+        self.assertEqual(
+            {
+                "aq-mode": 2,
+                "aq-quality": 2,
+                "aq-thrhigh": 50,
+                "aq-thrlow": 12,
+            },
+            {key: value for key, value in zone.data().items() if key.startswith("aq-")},
+        )
 
 
 class TestAirzoneLocalApi(IsolatedAsyncioTestCase):

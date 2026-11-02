@@ -27,6 +27,10 @@ from aioairzone.const import (
     API_ACS_POWER_MODE,
     API_ACS_SET_POINT,
     API_ACS_TEMP,
+    API_AQ_MODE,
+    API_AQ_QUALITY,
+    API_AQ_THRHIGH,
+    API_AQ_THRLOW,
     API_COOL_MAX_TEMP,
     API_COOL_MIN_TEMP,
     API_COOL_SET_POINT,
@@ -218,6 +222,10 @@ class AirzoneZone:
         self.errors: list[dict[str, str]] = []
         self.humidity: int = 50
         self.id: int = zone_id
+        self.aq_mode: int = 2
+        self.aq_quality: int = 2
+        self.aq_thrhigh: int = 40
+        self.aq_thrlow: int = 10
         self.mode: OperationMode = OperationMode.HEATING
         self.modes: list[OperationMode] = [
             OperationMode.COOLING,
@@ -252,6 +260,10 @@ class AirzoneZone:
             API_COOL_SET_POINT: self.conv_temp(self.cool_temp_set),
             API_COOL_MAX_TEMP: self.conv_temp(self.cool_temp_max),
             API_COOL_MIN_TEMP: self.conv_temp(self.cool_temp_min),
+            API_AQ_MODE: self.aq_mode,
+            API_AQ_QUALITY: self.aq_quality,
+            API_AQ_THRHIGH: self.aq_thrhigh,
+            API_AQ_THRLOW: self.aq_thrlow,
             API_ERRORS: self.errors,
             API_HEAT_SET_POINT: self.conv_temp(self.heat_temp_set),
             API_HEAT_MAX_TEMP: self.conv_temp(self.heat_temp_max),

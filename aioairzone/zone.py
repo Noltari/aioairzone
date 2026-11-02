@@ -21,6 +21,10 @@ from .common import (
 from .const import (
     API_AIR_DEMAND,
     API_ANTI_FREEZE,
+    API_AQ_MODE,
+    API_AQ_QUALITY,
+    API_AQ_THRHIGH,
+    API_AQ_THRLOW,
     API_BUG_MAX_TEMP_FAH,
     API_BUG_MIN_TEMP_FAH,
     API_COLD_ANGLE,
@@ -63,6 +67,10 @@ from .const import (
     AZD_ACTION,
     AZD_AIR_DEMAND,
     AZD_ANTI_FREEZE,
+    AZD_AQ_MODE,
+    AZD_AQ_QUALITY,
+    AZD_AQ_THRHIGH,
+    AZD_AQ_THRLOW,
     AZD_AVAILABLE,
     AZD_BATTERY_LOW,
     AZD_COLD_ANGLE,
@@ -126,6 +134,10 @@ class Zone:
     def __init__(self, system_id: int, zone_id: int, zone_data: dict[str, Any]):
         """Zone init."""
         self.air_demand: bool | None = None
+        self.aq_mode: int | None = None
+        self.aq_quality: int | None = None
+        self.aq_thrhigh: int | None = None
+        self.aq_thrlow: int | None = None
         self.anti_freeze: bool | None = None
         self.available: bool = True
         self.cold_angle: GrilleAngle | None = None
@@ -186,6 +198,18 @@ class Zone:
         air_demand = parse_bool(zone_data.get(API_AIR_DEMAND))
         if air_demand is not None:
             self.air_demand = air_demand
+        aq_mode = parse_int(zone_data.get(API_AQ_MODE))
+        if aq_mode is not None:
+            self.aq_mode = aq_mode
+        aq_quality = parse_int(zone_data.get(API_AQ_QUALITY))
+        if aq_quality is not None:
+            self.aq_quality = aq_quality
+        aq_thrhigh = parse_int(zone_data.get(API_AQ_THRHIGH))
+        if aq_thrhigh is not None:
+            self.aq_thrhigh = aq_thrhigh
+        aq_thrlow = parse_int(zone_data.get(API_AQ_THRLOW))
+        if aq_thrlow is not None:
+            self.aq_thrlow = aq_thrlow
         floor_demand = parse_bool(zone_data.get(API_FLOOR_DEMAND))
         if floor_demand is not None:
             self.floor_demand = floor_demand
@@ -347,6 +371,19 @@ class Zone:
         anti_freeze = self.get_anti_freeze()
         if anti_freeze is not None:
             data[AZD_ANTI_FREEZE] = anti_freeze
+
+        aq_mode = self.get_aq_mode()
+        if aq_mode is not None:
+            data[AZD_AQ_MODE] = aq_mode
+        aq_quality = self.get_aq_quality()
+        if aq_quality is not None:
+            data[AZD_AQ_QUALITY] = aq_quality
+        aq_thrhigh = self.get_aq_thrhigh()
+        if aq_thrhigh is not None:
+            data[AZD_AQ_THRHIGH] = aq_thrhigh
+        aq_thrlow = self.get_aq_thrlow()
+        if aq_thrlow is not None:
+            data[AZD_AQ_THRLOW] = aq_thrlow
 
         eco_adapt = self.get_eco_adapt()
         if eco_adapt is not None:
@@ -545,6 +582,22 @@ class Zone:
     def get_anti_freeze(self) -> bool | None:
         """Return zone anti freeze."""
         return self.anti_freeze
+
+    def get_aq_mode(self) -> int | None:
+        """Return zone air quality mode."""
+        return self.aq_mode
+
+    def get_aq_quality(self) -> int | None:
+        """Return zone air quality setting."""
+        return self.aq_quality
+
+    def get_aq_thrhigh(self) -> int | None:
+        """Return zone upper air quality threshold."""
+        return self.aq_thrhigh
+
+    def get_aq_thrlow(self) -> int | None:
+        """Return zone lower air quality threshold."""
+        return self.aq_thrlow
 
     def get_auto_mode(self) -> OperationAction:
         """Return action from auto mode."""
