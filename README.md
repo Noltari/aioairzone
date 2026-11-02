@@ -62,3 +62,15 @@ Run the following command to fetch your Airzone LocalAPI integration driver:
 ```
 curl -s --location --request POST "http://192.168.1.25:3000/api/v1/integration" -d '{}' | jq
 ```
+
+Run the following command to fetch AirQ sensor data:
+```
+curl -s --get "http://192.168.1.25:3000/api/v1/iaq" \
+  --data-urlencode "systemid=1" \
+  --data-urlencode "iaqsensorid=1" | jq
+```
+
+The same request can be made with the library:
+```python
+iaq_data = await airzone.get_iaq(system_id=1, iaq_sensor_id=1)
+```

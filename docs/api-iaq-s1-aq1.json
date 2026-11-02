@@ -1,0 +1,17 @@
+{
+  "data": [
+    {
+      "systemID": 1,
+      "airqsensorID": 1,
+      "name": "AirQ",
+      "iaq_mode_vent": 2,
+      "iaq_index": 1,
+      "iaq_score": 96,
+      "co2_value": 524,
+      "pm2_5_value": 1,
+      "pm10_value": 2,
+      "tvoc_value": 147,
+      "pressure_value": 984
+    }
+  ]
+}

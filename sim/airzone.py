@@ -6,6 +6,7 @@ from aiohttp.web_response import Response
 from demo import AirzoneDemo
 from helpers import api_json_error
 from hvac import AirzoneACSStatus, AirzoneHVAC
+from iaq import AirzoneIAQ
 from integration import AirzoneIntegration
 from version import AirzoneVersion
 from webserver import AirzoneWebServer
@@ -23,6 +24,7 @@ class Airzone:
         """Local API Version init."""
         self.demo: AirzoneDemo = AirzoneDemo()
         self.hvac: AirzoneHVAC = AirzoneHVAC()
+        self.iaq: AirzoneIAQ = AirzoneIAQ()
         self.integration: AirzoneIntegration = AirzoneIntegration("driver")
         self.version: AirzoneVersion = AirzoneVersion("1.64")
         self.webserver: AirzoneWebServer = AirzoneWebServer("11:22:33:44:55:66")
@@ -48,6 +50,12 @@ async def demo_post_handler(request: Request) -> Response:
 async def hvac_post_handler(request: Request) -> Response:
     """POST /hvac."""
     return await airzone.hvac.post(request)
+
+
+@routes.get(f"/{API_V1}/iaq")
+async def iaq_get_handler(request: Request) -> Response:
+    """GET /iaq."""
+    return await airzone.iaq.get(request)
 
 
 @routes.put(f"/{API_V1}/hvac")

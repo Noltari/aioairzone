@@ -54,7 +54,10 @@ class AirzoneHttpRequest:
 
     def header(self) -> str:
         """HTTP request header."""
-        http = f"{self.method} {self.url.path} {HTTP_PREFIX}/{HTTP_VERSION}"
+        path = self.url.path
+        if self.url.query:
+            path = f"{path}?{self.url.query}"
+        http = f"{self.method} {path} {HTTP_PREFIX}/{HTTP_VERSION}"
         host = f"Host: {self.url.netloc}"
         headers = ""
         for key, value in self.headers.items():

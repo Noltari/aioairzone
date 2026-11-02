@@ -36,11 +36,14 @@ from .const import (
     API_ERROR_ZONE_ID_OUT_RANGE,
     API_ERRORS,
     API_HVAC,
+    API_IAQ,
+    API_IAQ_SENSOR_ID,
     API_INTEGRATION,
     API_MAC,
     API_MASTER_PARAMS,
     API_NO_FEEDBACK_PARAMS,
     API_SYSTEM_ID,
+    API_SYSTEM_ID_QUERY,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
     API_V1,
@@ -65,6 +68,7 @@ from .const import (
     RAW_HEADERS,
     RAW_HTTP,
     RAW_HVAC,
+    RAW_IAQ,
     RAW_INTEGRATION,
     RAW_QUIRKS,
     RAW_REASON,
@@ -130,6 +134,7 @@ class AirzoneLocalApi:
             RAW_DEMO: {},
             RAW_DHW: {},
             RAW_HVAC: {},
+            RAW_IAQ: {},
             RAW_HTTP: {},
             RAW_INTEGRATION: {},
             RAW_SYSTEMS: {},
@@ -573,6 +578,18 @@ class AirzoneLocalApi:
             params,
         )
         await self.set_api_raw_data(RAW_HVAC, res)
+        return res
+
+    async def get_iaq(
+        self, system_id: int, iaq_sensor_id: int
+    ) -> dict[str, Any] | None:
+        """Return Airzone AirQ sensor data."""
+        res = await self.http_request(
+            "GET",
+            f"{API_V1}/{API_IAQ}?{API_SYSTEM_ID_QUERY}={system_id}"
+            f"&{API_IAQ_SENSOR_ID}={iaq_sensor_id}",
+        )
+        await self.set_api_raw_data(RAW_IAQ, res)
         return res
 
     async def get_integration(self) -> dict[str, Any] | None:
