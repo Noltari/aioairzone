@@ -25,6 +25,7 @@ from .const import (
     API_DATA,
     API_DEMO,
     API_DHW_PARAMS,
+    API_ERROR_ALTHERMA_NOT_CONNECTED,
     API_ERROR_HOT_WATER_NOT_CONNECTED,
     API_ERROR_IAQ_SENSOR_ID_NOT_AVAILABLE,
     API_ERROR_METHOD_NOT_SUPPORTED,
@@ -165,7 +166,10 @@ class AirzoneLocalApi:
         """Handle API errors."""
         for error in errors:
             for key, val in error.items():
-                if val == API_ERROR_HOT_WATER_NOT_CONNECTED:
+                if val in (
+                    API_ERROR_ALTHERMA_NOT_CONNECTED,
+                    API_ERROR_HOT_WATER_NOT_CONNECTED,
+                ):
                     raise HotWaterNotAvailable(f"{key}: {val}")
                 if val == API_ERROR_IAQ_SENSOR_ID_NOT_AVAILABLE:
                     raise IaqSensorNotAvailable(f"{key}: {val}")
@@ -315,6 +319,8 @@ class AirzoneLocalApi:
             dhw = await self.get_dhw()
             if dhw is None:
                 raise APIError("check_feature_dhw: empty API response")
+            if API_ERRORS in dhw and API_DATA not in dhw:
+                self.handle_errors(dhw[API_ERRORS])
             if self.check_dhw(dhw.get(API_DATA, {})):
                 await self.set_api_feature(ApiFeature.HOT_WATER)
                 if update:
@@ -432,8 +438,12 @@ class AirzoneLocalApi:
             raise APIError("validate: empty HVAC API response")
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             if API_SYSTEMS not in response:
+                if API_ERRORS in response:
+                    self.handle_errors(response[API_ERRORS])
                 raise InvalidHost(f"validate: {API_SYSTEMS} not in API response")
         elif API_DATA not in response:
+            if API_ERRORS in response:
+                self.handle_errors(response[API_ERRORS])
             raise InvalidHost(f"validate: {API_DATA} not in API response")
 
         if self.webserver:
@@ -457,6 +467,8 @@ class AirzoneLocalApi:
         if self.options.system_id == DEFAULT_SYSTEM_ID:
             hvac_systems = hvac.get(API_SYSTEMS)
             if hvac_systems is None:
+                if API_ERRORS in hvac:
+                    self.handle_errors(hvac[API_ERRORS])
                 raise APIError(f"update: {API_SYSTEMS} not in API response")
             for system_data in hvac_systems:
                 self.parse_system_zones(system_data)
