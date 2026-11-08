@@ -11,7 +11,7 @@
 Python library to control Airzone devices.
 
 ## Requirements
-- Python >= 3.13
+- Python >= 3.14
 
 ## Install
 ```bash

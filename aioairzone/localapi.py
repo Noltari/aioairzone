@@ -347,7 +347,7 @@ class AirzoneLocalApi:
                 await self.set_api_feature(ApiFeature.HOT_WATER)
                 if update:
                     self.update_dhw(dhw)
-        except (HotWaterNotAvailable, ZoneNotProvided):
+        except HotWaterNotAvailable, ZoneNotProvided:
             pass
 
     async def check_feature_iaq(self, update: bool) -> None:
@@ -361,7 +361,7 @@ class AirzoneLocalApi:
                 await self.set_api_feature(ApiFeature.IAQ)
             if not update:
                 self.iaq_sensors = {}
-        except (IaqSensorNotAvailable, InvalidMethod, SystemNotAvailable):
+        except IaqSensorNotAvailable, InvalidMethod, SystemNotAvailable:
             pass
 
     async def check_feature_systems(self, update: bool) -> None:
@@ -374,7 +374,7 @@ class AirzoneLocalApi:
                 await self.set_api_feature(ApiFeature.SYSTEMS)
                 if update:
                     self.update_systems(systems)
-        except (SystemOutOfRange, ZoneNotProvided):
+        except SystemOutOfRange, ZoneNotProvided:
             pass
 
     async def check_feature_version(self) -> None:

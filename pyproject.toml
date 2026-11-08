@@ -3,7 +3,7 @@ name = "aioairzone"
 version = "1.0.5"
 description = "Library to control Airzone devices"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.14"
 license = "Apache-2.0"
 keywords = ["airzone", "hvac", "home"] 
 authors = [
@@ -14,7 +14,6 @@ classifiers = [
   "Intended Audience :: Developers",
   "Natural Language :: English",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Topic :: Home Automation",
 ]
@@ -27,10 +26,10 @@ dependencies = [
 "Bug Tracker" = "https://github.com/Noltari/aioairzone/issues"
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 
 [tool.pylint.MAIN]
-py-version = "3.13"
+py-version = "3.14"
 
 [tool.pylint.BASIC]
 class-const-naming-style = "any"
