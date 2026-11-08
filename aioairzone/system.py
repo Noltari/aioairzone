@@ -241,19 +241,21 @@ class System:
     def get_slave_master(self, slave: Zone) -> Zone | None:
         """Find the corresponding master from a slave."""
         master_id = slave.get_master_zone()
-        if master_id is None:
+        if master_id is not None:
+            master = self.masters.get(master_id)
+        else:
+            master = None
+
+        if master is None:
             if len(self.masters) > 0:
                 master = list(self.masters.values())[0]
-            else:
-                master = None
             if len(self.masters) > 1:
                 _LOGGER.warning(
                     "multiple masters for %s -> %s",
                     slave.get_system_zone_id(),
                     list(self.masters.keys()),
                 )
-        else:
-            master = self.masters.get(master_id)
+
         return master
 
     def get_slaves(self) -> list[int] | None:
