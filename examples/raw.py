@@ -37,7 +37,7 @@ async def main() -> None:
             print(json.dumps(airzone.raw_data(), indent=4, sort_keys=True))
             print("***")
             print(f"Update time: {update_end - update_start}")
-        except (ClientConnectorError, InvalidHost):
+        except ClientConnectorError, InvalidHost:
             print("Invalid host.")
 
 

@@ -80,7 +80,7 @@ async def main() -> None:
             update_end = timeit.default_timer()
             print(json.dumps(airzone.data(), indent=4, sort_keys=True))
             print(f"Update time: {update_end - update_start}")
-        except (ClientConnectorError, InvalidHost):
+        except ClientConnectorError, InvalidHost:
             print("Invalid host.")
 
 
