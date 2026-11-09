@@ -42,6 +42,7 @@ from .const import (
     API_MAC,
     API_MASTER_PARAMS,
     API_NO_FEEDBACK_PARAMS,
+    API_RENAME_PARAMS,
     API_SYSTEM_ID,
     API_SYSTEM_PARAMS,
     API_SYSTEMS,
@@ -726,6 +727,10 @@ class AirzoneLocalApi:
             raise APIError(f"set_hvac: {API_DATA} not in API response")
 
         data: dict[str, Any] = res[API_DATA][0]
+
+        for r_key, r_val in API_RENAME_PARAMS.items():
+            if r_key in data:
+                data[r_val] = data.pop(r_key)
 
         for param in API_NO_FEEDBACK_PARAMS:
             value = params.get(param)

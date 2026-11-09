@@ -123,10 +123,14 @@ API_MASTER_PARAMS: Final[list[str]] = [
     API_MODE,
     API_SPEED,
 ]
+API_RENAME_PARAMS: Final[dict[str, str]] = {
+    "antiFreeze": API_ANTI_FREEZE,
+}
 API_SYSTEM_PARAMS: Final[list[str]] = [
     API_Q_ADAPT,
 ]
 API_ZONE_PARAMS: Final[list[str]] = [
+    API_ANTI_FREEZE,
     API_COOL_SET_POINT,
     API_COLD_ANGLE,
     API_COLD_STAGE,
