@@ -116,12 +116,12 @@ API_DOUBLE_SET_POINT_PARAMS: Final[set[str]] = {
     API_HEAT_MIN_TEMP,
     API_HEAT_SET_POINT,
 }
-API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
-    API_MODE,
-]
 API_MASTER_PARAMS: Final[list[str]] = [
     API_MODE,
     API_SPEED,
+]
+API_NO_FEEDBACK_PARAMS: Final[list[str]] = [
+    API_MODE,
 ]
 API_RENAME_PARAMS: Final[dict[str, str]] = {
     "antiFreeze": API_ANTI_FREEZE,
