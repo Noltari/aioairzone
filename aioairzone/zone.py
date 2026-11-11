@@ -316,7 +316,7 @@ class Zone:
 
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
-        data = {
+        data: dict[str, Any] = {
             AZD_ABS_TEMP_MAX: self.get_abs_temp_max(),
             AZD_ABS_TEMP_MIN: self.get_abs_temp_min(),
             AZD_ACTION: self.get_action(),
