@@ -73,9 +73,11 @@ class System:
 
     def data(self) -> dict[str, Any]:
         """Return Airzone system data."""
-        data: dict[str, Any] = {}
-
-        data[AZD_AVAILABLE] = self.get_available()
+        data: dict[str, Any] = {
+            AZD_AVAILABLE: self.get_available(),
+            AZD_ID: self.get_id(),
+            AZD_PROBLEMS: self.get_problems(),
+        }
 
         clamp_meter = self.get_clamp_meter()
         if clamp_meter is not None:
@@ -102,8 +104,6 @@ class System:
         if full_name is not None:
             data[AZD_FULL_NAME] = full_name
 
-        data[AZD_ID] = self.get_id()
-
         manufacturer = self.get_manufacturer()
         if manufacturer is not None:
             data[AZD_MANUFACTURER] = manufacturer
@@ -119,8 +119,6 @@ class System:
         model = self.get_model()
         if model is not None:
             data[AZD_MODEL] = model
-
-        data[AZD_PROBLEMS] = self.get_problems()
 
         q_adapt = self.get_qadapt()
         if q_adapt is not None:
