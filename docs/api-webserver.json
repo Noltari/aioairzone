@@ -1,5 +1,6 @@
 {
   "mac": "11:22:33:44:55:66",
+  "cloud_connected": 1,
   "wifi_channel": 6,
   "wifi_quality": 60,
   "wifi_rssi": -46,

@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import WebServerInterface, WebServerType, parse_int, parse_str
+from .common import WebServerInterface, WebServerType, parse_bool, parse_int, parse_str
 from .const import (
+    API_CLOUD_CONNECTED,
     API_INTERFACE,
     API_MAC,
     API_WIFI,
@@ -16,6 +17,7 @@ from .const import (
     API_WS_AZ,
     API_WS_FIRMWARE,
     API_WS_TYPE,
+    AZD_CLOUD_CONNECTED,
     AZD_FIRMWARE,
     AZD_FULL_NAME,
     AZD_INTERFACE,
@@ -32,6 +34,7 @@ class WebServer:
 
     def __init__(self, data: dict[str, Any]):
         """WebServer init."""
+        self.cloud_connected: bool | None = None
         self.firmware: str | None = None
         self.interface: WebServerInterface | None = None
         self.mac: str | None = None
@@ -43,6 +46,10 @@ class WebServer:
 
     def update_data(self, data: dict[str, Any]) -> None:
         """Update WebServer data."""
+        cloud_connected = parse_bool(data.get(API_CLOUD_CONNECTED))
+        if cloud_connected is not None:
+            self.cloud_connected = cloud_connected
+
         interface = parse_str(data.get(API_INTERFACE))
         if interface == API_WIFI:
             self.interface = WebServerInterface.WIFI
@@ -78,6 +85,9 @@ class WebServer:
     def data(self) -> dict[str, Any]:
         """Return Airzone system data."""
         data: dict[str, Any] = {}
+
+        if self.cloud_connected is not None:
+            data[AZD_CLOUD_CONNECTED] = self.cloud_connected
 
         firmware = self.get_firmware()
         if firmware is not None:
