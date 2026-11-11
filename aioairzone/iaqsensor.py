@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import get_system_zone_id, parse_float, parse_int, parse_str
+from .common import EntityType, get_system_zone_id, parse_float, parse_int, parse_str
 from .const import (
     API_CO2_VALUE,
     API_IAQ_INDEX,
@@ -25,13 +25,16 @@ from .const import (
     AZD_SYSTEM,
     AZD_TVOC,
 )
+from .entity import Entity
 
 
-class IAQSensor:
+class IAQSensor(Entity):
     """Airzone IAQ Sensor."""
 
     def __init__(self, system_id: int, sensor_id: int, data: dict[str, Any]):
         """IAQ Sensor init."""
+        super().__init__(EntityType.IAQ, system_id, sensor_id)
+
         self.system_id = system_id
         self.sensor_id = sensor_id
         self.name: str = f"Airzone IAQ {system_id}:{sensor_id}"
@@ -42,6 +45,7 @@ class IAQSensor:
         self.pm10: float | None = None
         self.pressure: float | None = None
         self.tvoc: float | None = None
+
         self.update_data(data)
 
     def update_data(self, data: dict[str, Any]) -> None:

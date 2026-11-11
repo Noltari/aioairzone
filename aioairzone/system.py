@@ -5,7 +5,15 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .common import EcoAdapt, QAdapt, SystemType, parse_bool, parse_int, parse_str
+from .common import (
+    EcoAdapt,
+    EntityType,
+    QAdapt,
+    SystemType,
+    parse_bool,
+    parse_int,
+    parse_str,
+)
 from .const import (
     API_ECO_ADAPT,
     API_ERRORS,
@@ -33,16 +41,19 @@ from .const import (
     AZD_SLAVES,
     ERROR_SYSTEM,
 )
+from .entity import Entity
 from .zone import Zone
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class System:
+class System(Entity):
     """Airzone System."""
 
     def __init__(self, system_id: int, zone_data: dict[str, Any]):
         """System init."""
+        super().__init__(EntityType.System, system_id)
+
         self.available: bool = True
         self.clamp_meter: bool | None = None
         self.eco_adapt: EcoAdapt | None = None

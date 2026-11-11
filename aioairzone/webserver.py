@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import WebServerInterface, WebServerType, parse_bool, parse_int, parse_str
+from .common import (
+    EntityType,
+    WebServerInterface,
+    WebServerType,
+    parse_bool,
+    parse_int,
+    parse_str,
+)
 from .const import (
     API_CLOUD_CONNECTED,
     API_INTERFACE,
@@ -27,13 +34,16 @@ from .const import (
     AZD_WIFI_QUALITY,
     AZD_WIFI_RSSI,
 )
+from .entity import Entity
 
 
-class WebServer:
+class WebServer(Entity):
     """Airzone WebServer."""
 
     def __init__(self, data: dict[str, Any]):
         """WebServer init."""
+        super().__init__(EntityType.WebServer)
+
         self.cloud_connected: bool | None = None
         self.firmware: str | None = None
         self.interface: WebServerInterface | None = None
@@ -42,6 +52,7 @@ class WebServer:
         self.wifi_channel: int | None = None
         self.wifi_quality: int | None = None
         self.wifi_rssi: int | None = None
+
         self.update_data(data)
 
     def update_data(self, data: dict[str, Any]) -> None:

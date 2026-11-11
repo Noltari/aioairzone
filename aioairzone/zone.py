@@ -7,6 +7,7 @@ from typing import Any
 from .common import (
     AirzoneStages,
     EcoAdapt,
+    EntityType,
     GrilleAngle,
     OperationAction,
     OperationMode,
@@ -117,14 +118,17 @@ from .const import (
     DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_ZONE,
 )
+from .entity import Entity
 from .thermostat import Thermostat
 
 
-class Zone:
+class Zone(Entity):
     """Airzone Zone."""
 
     def __init__(self, system_id: int, zone_id: int, zone_data: dict[str, Any]):
         """Zone init."""
+        super().__init__(EntityType.Zone, system_id, zone_id)
+
         self.air_demand: bool | None = None
         self.anti_freeze: bool | None = None
         self.available: bool = True

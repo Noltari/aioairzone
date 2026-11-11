@@ -78,6 +78,7 @@ from .const import (
     RAW_VERSION,
     RAW_WEBSERVER,
 )
+from .entity import Entity
 from .exceptions import (
     APIError,
     HotWaterNotAvailable,
@@ -152,6 +153,7 @@ class AirzoneLocalApi:
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
         self.api_features_lock = Lock()
+        self.entities: dict[str, Entity] = {}
         self.hotwater: HotWater | None = None
         self.http = AirzoneHttp()
         self.iaq_sensors: dict[str, IAQSensor] = {}
@@ -283,7 +285,10 @@ class AirzoneLocalApi:
         if self.hotwater is not None:
             self.hotwater.update_data(dhw)
         else:
-            self.hotwater = HotWater(dhw)
+            _dhw = HotWater(dhw)
+            entity_id = _dhw.get_entity_id()
+            self.entities[entity_id] = _dhw
+            self.hotwater = _dhw
 
     def update_iaq(self, data: dict[str, Any]) -> None:
         """Gather IAQ Sensors data."""
@@ -303,7 +308,10 @@ class AirzoneLocalApi:
                 if key in self.iaq_sensors:
                     self.iaq_sensors[key].update_data(sensor_data)
                 else:
-                    self.iaq_sensors[key] = IAQSensor(system_id, sensor_id, sensor_data)
+                    _iaq = IAQSensor(system_id, sensor_id, sensor_data)
+                    entity_id = _iaq.get_entity_id()
+                    self.entities[entity_id] = _iaq
+                    self.iaq_sensors[key] = _iaq
 
     def update_systems(self, data: dict[str, Any] | None) -> None:
         """Gather Systems data."""
@@ -323,7 +331,10 @@ class AirzoneLocalApi:
         if self.webserver is not None:
             self.webserver.update_data(data)
         else:
-            self.webserver = WebServer(data)
+            _webserver = WebServer(data)
+            entity_id = _webserver.get_entity_id()
+            self.entities[entity_id] = _webserver
+            self.webserver = _webserver
 
     def check_dhw(self, dhw: dict[str, Any]) -> bool:
         """Check Airzone Domestic Hot Water validity."""
@@ -530,7 +541,10 @@ class AirzoneLocalApi:
             system_id = int(zone_data.get(API_SYSTEM_ID, 0))
             if system_id > 0:
                 if system_id not in self.systems:
-                    self.systems[system_id] = System(system_id, zone_data)
+                    _system = System(system_id, zone_data)
+                    entity_id = _system.get_entity_id()
+                    self.entities[entity_id] = _system
+                    self.systems[system_id] = _system
                 else:
                     self.systems[system_id].update_zone_data(zone_data)
 
@@ -540,6 +554,8 @@ class AirzoneLocalApi:
 
                     if system_zone_id not in self.zones:
                         _zone = Zone(system_id, zone_id, zone_data)
+                        entity_id = _zone.get_entity_id()
+                        self.entities[entity_id] = _zone
                         self.zones[system_zone_id] = _zone
                         self.systems[system_id].add_zone(_zone)
                     else:

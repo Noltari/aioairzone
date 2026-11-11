@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from .common import HotWaterOperation, TemperatureUnit, parse_bool, parse_int
+from .common import (
+    EntityType,
+    HotWaterOperation,
+    TemperatureUnit,
+    parse_bool,
+    parse_int,
+)
 from .const import (
     API_ACS_MAX_TEMP,
     API_ACS_MIN_TEMP,
@@ -24,13 +30,16 @@ from .const import (
     AZD_TEMP_SET,
     AZD_TEMP_UNIT,
 )
+from .entity import Entity
 
 
-class HotWater:
+class HotWater(Entity):
     """Airzone Domestic Hot Water."""
 
     def __init__(self, data: dict[str, Any]):
         """Hot Water init."""
+        super().__init__(EntityType.HotWater)
+
         self.name: str = "Airzone DHW"
         self.on: bool
         self.temp: int
@@ -39,6 +48,7 @@ class HotWater:
         self.temp_set: int
         self.temp_unit: TemperatureUnit = TemperatureUnit.CELSIUS
         self.power_mode: bool | None = None
+
         self.update_data(data)
 
     def update_data(self, data: dict[str, Any]) -> None:

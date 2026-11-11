@@ -2,10 +2,38 @@
 
 from __future__ import annotations
 
-from enum import IntEnum, StrEnum
+from enum import Enum, IntEnum, StrEnum, auto
 import json
 import re
 from typing import Any
+
+
+class EntityType(Enum):
+    """Airzone Entity type."""
+
+    HotWater = auto()
+    IAQ = auto()
+    System = auto()
+    Unknown = auto()
+    WebServer = auto()
+    Zone = auto()
+
+    def type_str(self) -> str:
+        """Convert entity type to string."""
+        type_str: str
+        if self.value == self.HotWater.value:
+            type_str = "dhw"
+        elif self.value == self.IAQ.value:
+            type_str = "iaq"
+        elif self.value == self.System.value:
+            type_str = "system"
+        elif self.value == self.WebServer.value:
+            type_str = "webserver"
+        elif self.value == self.Zone.value:
+            type_str = "zone"
+        else:
+            type_str = "unknown"
+        return type_str
 
 
 class AirzoneStages(IntEnum):
