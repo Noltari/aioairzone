@@ -124,6 +124,76 @@ class OperationMode(IntEnum):
         return cls.UNKNOWN
 
 
+class OperationModeMqtt(IntEnum):
+    """Airzone MQTT operation modes."""
+
+    UNKNOWN = -1
+
+    STOP = 0
+    AUTO = 1
+    COOLING = 2
+    HEATING = 3
+    FAN = 4
+    DRY = 5
+    EMERGENCY_HEATING = 6
+    HEAT_MODE = 7
+    HEAT_RADIANT_MODE = 8
+    HEAT_COMBINED_MODE = 9
+    COOL_MODE = 10
+    COOL_RADIANT_MODE = 11
+    COOL_COMBINED_MODE = 12
+    BYPASS_MODE = 13
+    RECOVERY_MODE = 14
+    REGULATION_TEMP_MODE = 15
+    PURIFICATION_MODE = 16
+    FAN_PURIFICATION_MODE = 17
+    FAN_ENERGY_MODE = 18
+
+    @classmethod
+    def _missing_(cls, value: Any) -> OperationModeMqtt:
+        return cls.UNKNOWN
+
+    def to_local(self) -> OperationMode:
+        """Convert MQTT mode to local."""
+        local_mode: OperationMode
+        if self.value in [
+            self.STOP,
+        ]:
+            local_mode = OperationMode.STOP
+        elif self.value in [
+            self.AUTO,
+        ]:
+            local_mode = OperationMode.AUTO
+        elif self.value in [
+            self.COOLING,
+            self.COOL_MODE,
+            self.COOL_RADIANT_MODE,
+            self.COOL_COMBINED_MODE,
+        ]:
+            local_mode = OperationMode.COOLING
+        elif self.value in [
+            self.EMERGENCY_HEATING,
+            self.HEATING,
+            self.HEAT_MODE,
+            self.HEAT_RADIANT_MODE,
+            self.HEAT_COMBINED_MODE,
+        ]:
+            local_mode = OperationMode.HEATING
+        elif self.value in [
+            self.FAN,
+            self.FAN_PURIFICATION_MODE,
+            self.FAN_ENERGY_MODE,
+        ]:
+            local_mode = OperationMode.FAN
+        elif self.value in [
+            self.DRY,
+        ]:
+            local_mode = OperationMode.DRY
+        else:
+            local_mode = OperationMode.UNKNOWN
+        return local_mode
+
+
 class HotWaterOperation(IntEnum):
     """Airzone Hot Water operations."""
 

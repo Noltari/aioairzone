@@ -11,6 +11,7 @@ from .common import (
     GrilleAngle,
     OperationAction,
     OperationMode,
+    OperationModeMqtt,
     SleepTimeout,
     TemperatureUnit,
     get_system_zone_id,
@@ -70,6 +71,7 @@ from .const import (
     AZD_COLD_DEMAND,
     AZD_COLD_STAGE,
     AZD_COLD_STAGES,
+    AZD_CONNECTED,
     AZD_COOL_TEMP_MAX,
     AZD_COOL_TEMP_MIN,
     AZD_COOL_TEMP_SET,
@@ -117,8 +119,28 @@ from .const import (
     DEFAULT_TEMP_STEP_CELSIUS,
     DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_ZONE,
+    MQTT_API_AIR_ACTIVE,
+    MQTT_API_BODY,
+    MQTT_API_HEADERS,
+    MQTT_API_HUMIDITY,
+    MQTT_API_IS_CONNECTED,
+    MQTT_API_MAX,
+    MQTT_API_MIN,
+    MQTT_API_MODE,
+    MQTT_API_PARAMETERS,
+    MQTT_API_POWER,
+    MQTT_API_RAD_ACTIVE,
+    MQTT_API_RANGE_SP,
+    MQTT_API_RANGE_SP_COOL,
+    MQTT_API_RANGE_SP_HEAT,
+    MQTT_API_SETPOINT,
+    MQTT_API_SETPOINT_COOL,
+    MQTT_API_SETPOINT_HEAT,
+    MQTT_API_SPEED_CONF,
+    MQTT_API_ZONE_WORK_TEMP,
 )
 from .entity import Entity
+from .mqtt import AirzoneMqttUpdate
 from .thermostat import Thermostat
 
 
@@ -136,6 +158,7 @@ class Zone(Entity):
         self.cold_demand: bool | None = None
         self.cold_stage: AirzoneStages | None = None
         self.cold_stages: list[AirzoneStages] = []
+        self.connected: bool | None = None
         self.cool_temp_max: float | None = None
         self.cool_temp_min: float | None = None
         self.cool_temp_set: float | None = None
@@ -318,6 +341,102 @@ class Zone(Entity):
             else:
                 self.temp_step = DEFAULT_TEMP_STEP_CELSIUS
 
+    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+        """Perform Entity MQTT update."""
+        data = update.data
+
+        headers = data.get(MQTT_API_HEADERS)
+        body = data.get(MQTT_API_BODY)
+        if headers is None or body is None:
+            return
+
+        params = body.get(MQTT_API_PARAMETERS)
+        if params is None:
+            return
+
+        air_active = parse_bool(params.get(MQTT_API_AIR_ACTIVE))
+        if air_active is not None:
+            self.air_demand = air_active
+
+        humidity = parse_int(params.get(MQTT_API_HUMIDITY))
+        if humidity is not None:
+            self.humidity = humidity
+
+        is_connected = parse_bool(params.get(MQTT_API_IS_CONNECTED))
+        if is_connected is not None:
+            self.connected = is_connected
+
+        mode = parse_int(params.get(MQTT_API_MODE))
+        if mode is not None:
+            mqtt_mode = OperationModeMqtt(mode)
+            local_mode = mqtt_mode.to_local()
+            if local_mode != OperationMode.UNKNOWN:
+                self.mode = local_mode
+
+        power = parse_bool(params.get(MQTT_API_POWER))
+        if power is not None:
+            self.on = power
+
+        rad_active = parse_bool(params.get(MQTT_API_RAD_ACTIVE))
+        if rad_active is not None:
+            self.floor_demand = rad_active
+
+        range_sp: dict[str, Any] | None = params.get(MQTT_API_RANGE_SP)
+        if range_sp is not None:
+            range_sp_max = parse_float(range_sp.get(MQTT_API_MAX))
+            if range_sp_max is not None:
+                self.temp_max = range_sp_max
+
+            range_sp_min = parse_float(range_sp.get(MQTT_API_MIN))
+            if range_sp_min is not None:
+                self.temp_min = range_sp_min
+
+        range_sp_cool: dict[str, Any] | None = params.get(MQTT_API_RANGE_SP_COOL)
+        if range_sp_cool is not None:
+            range_sp_cool_max = parse_float(range_sp_cool.get(MQTT_API_MAX))
+            if range_sp_cool_max is not None:
+                self.cool_temp_max = range_sp_cool_max
+
+            range_sp_cool_min = parse_float(range_sp_cool.get(MQTT_API_MIN))
+            if range_sp_cool_min is not None:
+                self.cool_temp_min = range_sp_cool_min
+
+        range_sp_heat: dict[str, Any] | None = params.get(MQTT_API_RANGE_SP_HEAT)
+        if range_sp_heat is not None:
+            range_sp_heat_max = parse_float(range_sp_heat.get(MQTT_API_MAX))
+            if range_sp_heat_max is not None:
+                self.heat_temp_max = range_sp_heat_max
+
+            range_sp_heat_min = parse_float(range_sp_heat.get(MQTT_API_MIN))
+            if range_sp_heat_min is not None:
+                self.heat_temp_min = range_sp_heat_min
+
+        setpoint = parse_float(params.get(MQTT_API_SETPOINT))
+        if setpoint is not None:
+            temp_set = self.validate_temp_set(setpoint, self.temp_max)
+            if temp_set is not None:
+                self.temp_set = temp_set
+
+        setpoint_cool = parse_float(params.get(MQTT_API_SETPOINT_COOL))
+        if setpoint_cool is not None:
+            cool_temp_set = self.validate_temp_set(setpoint_cool, self.cool_temp_max)
+            if cool_temp_set is not None:
+                self.cool_temp_set = cool_temp_set
+
+        setpoint_heat = parse_float(params.get(MQTT_API_SETPOINT_HEAT))
+        if setpoint_heat is not None:
+            heat_temp_set = self.validate_temp_set(setpoint_heat, self.heat_temp_max)
+            if heat_temp_set is not None:
+                self.heat_temp_set = heat_temp_set
+
+        speed_conf = parse_int(params.get(MQTT_API_SPEED_CONF))
+        if speed_conf is not None:
+            self.speed = speed_conf
+
+        zone_work_temp = parse_float(params.get(MQTT_API_ZONE_WORK_TEMP))
+        if zone_work_temp is not None:
+            self.temp = zone_work_temp
+
     def data(self) -> dict[str, Any]:
         """Return Airzone zone data."""
         data: dict[str, Any] = {
@@ -325,6 +444,7 @@ class Zone(Entity):
             AZD_ABS_TEMP_MIN: self.get_abs_temp_min(),
             AZD_ACTION: self.get_action(),
             AZD_AVAILABLE: self.get_available(),
+            AZD_CONNECTED: self.get_connected(),
             AZD_DEMAND: self.get_demand(),
             AZD_DOUBLE_SET_POINT: self.get_double_set_point(),
             AZD_ID: self.get_id(),
@@ -617,6 +737,10 @@ class Zone(Entity):
         if len(self.cold_stages) > 0:
             return self.cold_stages
         return None
+
+    def get_connected(self) -> bool | None:
+        """Return connection status."""
+        return self.connected
 
     def get_cool_temp_max(self) -> float | None:
         """Return zone maximum cool temperature."""

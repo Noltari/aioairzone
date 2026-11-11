@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from .common import EntityType
+from .mqtt import AirzoneMqttUpdate
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -29,3 +30,7 @@ class Entity:
     def get_entity_id(self) -> str:
         """Return Entity ID."""
         return self.entity_id
+
+    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+        """Perform Entity MQTT update."""
+        _LOGGER.debug(update.data)

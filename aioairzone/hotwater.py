@@ -19,6 +19,7 @@ from .const import (
     API_ACS_SET_POINT,
     API_ACS_TEMP,
     API_UNITS,
+    AZD_CONNECTED,
     AZD_NAME,
     AZD_ON,
     AZD_OPERATION,
@@ -29,8 +30,19 @@ from .const import (
     AZD_TEMP_MIN,
     AZD_TEMP_SET,
     AZD_TEMP_UNIT,
+    MQTT_API_BODY,
+    MQTT_API_HEADERS,
+    MQTT_API_IS_CONNECTED,
+    MQTT_API_MAX,
+    MQTT_API_MIN,
+    MQTT_API_PARAMETERS,
+    MQTT_API_POWER,
+    MQTT_API_POWERFUL_MODE,
+    MQTT_API_RANGE_SP,
+    MQTT_API_SETPOINT,
 )
 from .entity import Entity
+from .mqtt import AirzoneMqttUpdate
 
 
 class HotWater(Entity):
@@ -40,6 +52,7 @@ class HotWater(Entity):
         """Hot Water init."""
         super().__init__(EntityType.HotWater)
 
+        self.connected: bool | None = None
         self.name: str = "Airzone DHW"
         self.on: bool
         self.temp: int
@@ -67,9 +80,49 @@ class HotWater(Entity):
         if units is not None:
             self.temp_unit = TemperatureUnit(units)
 
+    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+        """Perform Entity MQTT update."""
+        data = update.data
+
+        headers = data.get(MQTT_API_HEADERS)
+        body = data.get(MQTT_API_BODY)
+        if headers is None or body is None:
+            return
+
+        params = body.get(MQTT_API_PARAMETERS)
+        if params is None:
+            return
+
+        is_connected = parse_bool(params.get(MQTT_API_IS_CONNECTED))
+        if is_connected is not None:
+            self.connected = is_connected
+
+        power = parse_bool(params.get(MQTT_API_POWER))
+        if power is not None:
+            self.on = power
+
+        powerful_mode = parse_bool(params.get(MQTT_API_POWERFUL_MODE))
+        if powerful_mode is not None:
+            self.power_mode = powerful_mode
+
+        range_sp: dict[str, Any] | None = params.get(MQTT_API_RANGE_SP)
+        if range_sp is not None:
+            range_sp_max = parse_int(range_sp.get(MQTT_API_MAX))
+            if range_sp_max is not None:
+                self.temp_max = range_sp_max
+
+            range_sp_min = parse_int(range_sp.get(MQTT_API_MIN))
+            if range_sp_min is not None:
+                self.temp_min = range_sp_min
+
+        setpoint = parse_int(params.get(MQTT_API_SETPOINT))
+        if setpoint is not None:
+            self.temp_set = setpoint
+
     def data(self) -> dict[str, Any]:
         """Return Airzone Hot Water data."""
         data: dict[str, Any] = {
+            AZD_CONNECTED: self.get_connected(),
             AZD_NAME: self.get_name(),
             AZD_ON: self.get_on(),
             AZD_OPERATION: self.get_operation(),
@@ -86,6 +139,10 @@ class HotWater(Entity):
             data[AZD_POWER_MODE] = power_mode
 
         return data
+
+    def get_connected(self) -> bool | None:
+        """Return connection status."""
+        return self.connected
 
     def get_name(self) -> str | None:
         """Return Hot Water name."""

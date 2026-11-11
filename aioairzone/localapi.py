@@ -53,6 +53,7 @@ from .const import (
     API_ZONE_PARAMS,
     AZD_HOT_WATER,
     AZD_IAQ_SENSORS,
+    AZD_MQTT,
     AZD_SYSTEMS,
     AZD_SYSTEMS_NUM,
     AZD_VERSION,
@@ -98,6 +99,7 @@ from .exceptions import (
 from .hotwater import HotWater
 from .http import AirzoneHttp
 from .iaqsensor import IAQSensor
+from .mqtt import AirzoneMqtt, AirzoneMqttUpdate, AirzoneMqttUpdateType
 from .system import System
 from .webserver import WebServer
 from .zone import Zone
@@ -158,6 +160,7 @@ class AirzoneLocalApi:
         self.http = AirzoneHttp()
         self.iaq_sensors: dict[str, IAQSensor] = {}
         self.http_quirks_needed = not AIOHTTP_COALESCE
+        self.mqtt = AirzoneMqtt()
         self.options = options
         self.systems: dict[int, System] = {}
         self.version: str | None = None
@@ -533,6 +536,29 @@ class AirzoneLocalApi:
 
         self._first_update = False
 
+    def mqtt_update_events_status(self, update: AirzoneMqttUpdate) -> None:
+        """Update MQTT events status."""
+        if update.entity_id is not None:
+            entity = self.entities.get(update.entity_id)
+        else:
+            entity = None
+
+        if entity is not None:
+            entity.update_mqtt(update)
+
+    def mqtt_update_online(self, update: AirzoneMqttUpdate) -> None:
+        """Update MQTT online."""
+        self.mqtt.update_online(update)
+
+    def mqtt_update(self, update: AirzoneMqttUpdate) -> None:
+        """Perform MQTT update."""
+        if update.type == AirzoneMqttUpdateType.Online:
+            self.mqtt_update_online(update)
+        elif update.type == AirzoneMqttUpdateType.EventsStatus:
+            self.mqtt_update_events_status(update)
+        else:
+            _LOGGER.debug("mqtt: topic=%s payload=%s", update.topic, update.data)
+
     def parse_system_zones(self, system_data: dict[str, Any]) -> None:
         """Parse all zones from system data."""
 
@@ -838,6 +864,8 @@ class AirzoneLocalApi:
             data[AZD_IAQ_SENSORS] = {
                 key: sensor.data() for key, sensor in self.iaq_sensors.items()
             }
+
+        data[AZD_MQTT] = self.mqtt.data()
 
         data[AZD_SYSTEMS_NUM] = self.num_systems()
         if len(self.systems) > 0:

@@ -26,6 +26,7 @@ from .const import (
     API_ZONE_ID,
     AZD_AVAILABLE,
     AZD_CLAMP_METER,
+    AZD_CONNECTED,
     AZD_ECO_ADAPT,
     AZD_ENERGY,
     AZD_ERRORS,
@@ -40,8 +41,13 @@ from .const import (
     AZD_Q_ADAPT,
     AZD_SLAVES,
     ERROR_SYSTEM,
+    MQTT_API_BODY,
+    MQTT_API_HEADERS,
+    MQTT_API_IS_CONNECTED,
+    MQTT_API_PARAMETERS,
 )
 from .entity import Entity
+from .mqtt import AirzoneMqttUpdate
 from .zone import Zone
 
 _LOGGER = logging.getLogger(__name__)
@@ -55,6 +61,7 @@ class System(Entity):
         super().__init__(EntityType.System, system_id)
 
         self.available: bool = True
+        self.connected: bool | None = None
         self.clamp_meter: bool | None = None
         self.eco_adapt: EcoAdapt | None = None
         self.energy: int | None = None
@@ -86,6 +93,7 @@ class System(Entity):
         """Return Airzone system data."""
         data: dict[str, Any] = {
             AZD_AVAILABLE: self.get_available(),
+            AZD_CONNECTED: self.get_connected(),
             AZD_ID: self.get_id(),
             AZD_PROBLEMS: self.get_problems(),
         }
@@ -176,6 +184,10 @@ class System(Entity):
     def get_clamp_meter(self) -> bool | None:
         """Return system clamp meter connection."""
         return self.clamp_meter
+
+    def get_connected(self) -> bool | None:
+        """Return connection status."""
+        return self.connected
 
     def get_eco_adapt(self) -> EcoAdapt | None:
         """Return system Eco Adapt."""
@@ -345,3 +357,20 @@ class System(Entity):
         q_adapt = parse_int(data.get(API_Q_ADAPT))
         if q_adapt is not None:
             self.q_adapt = QAdapt(q_adapt)
+
+    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+        """Perform Entity MQTT update."""
+        data = update.data
+
+        headers = data.get(MQTT_API_HEADERS)
+        body = data.get(MQTT_API_BODY)
+        if headers is None or body is None:
+            return
+
+        params = body.get(MQTT_API_PARAMETERS)
+        if params is None:
+            return
+
+        is_connected = parse_bool(params.get(MQTT_API_IS_CONNECTED))
+        if is_connected is not None:
+            self.connected = is_connected

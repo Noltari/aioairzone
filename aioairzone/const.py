@@ -158,6 +158,7 @@ AZD_COLD_ANGLE: Final[str] = "cold-angle"
 AZD_COLD_DEMAND: Final[str] = "cold-demand"
 AZD_COLD_STAGE: Final[str] = "cold-stage"
 AZD_COLD_STAGES: Final[str] = "cold-stages"
+AZD_CONNECTED: Final[str] = "connected"
 AZD_COOL_TEMP_MAX: Final[str] = "cool-temp-max"
 AZD_COOL_TEMP_MIN: Final[str] = "cool-temp-min"
 AZD_COOL_TEMP_SET: Final[str] = "cool-temp-set"
@@ -192,10 +193,12 @@ AZD_MASTER_ZONE: Final[str] = "master-zone"
 AZD_MODE: Final[str] = "mode"
 AZD_MODEL: Final[str] = "model"
 AZD_MODES: Final[str] = "modes"
+AZD_MQTT: Final[str] = "mqtt"
 AZD_NAME: Final[str] = "name"
 AZD_OPERATION: Final[str] = "operation"
 AZD_OPERATIONS: Final[str] = "operations"
 AZD_ON: Final[str] = "on"
+AZD_ONLINE: Final[str] = "online"
 AZD_PM10: Final[str] = "pm10"
 AZD_PM2_5: Final[str] = "pm2.5"
 AZD_POWER_MODE: Final[str] = "power-mode"
@@ -247,6 +250,53 @@ ERROR_ZONE: Final[str] = "zone"
 HTTP_CALL_TIMEOUT: Final[int] = 10
 HTTP_MAX_REQUESTS: Final[int] = 1
 HTTP_QUIRK_VERSION: Final[Version] = Version("9.99")  # Fix version is still unknown
+
+MQTT_API_AIR_ACTIVE: Final[str] = "air_active"
+MQTT_API_BODY: Final[str] = "body"
+MQTT_API_CMD: Final[str] = "cmd"
+MQTT_API_DEVICE_ID: Final[str] = "device_id"
+MQTT_API_DEVICE_TYPE: Final[str] = "device_type"
+MQTT_API_HEADERS: Final[str] = "headers"
+MQTT_API_HUMIDITY: Final[str] = "humidity"
+MQTT_API_IS_CONNECTED: Final[str] = "is_connected"
+MQTT_API_MAX: Final[str] = "max"
+MQTT_API_META: Final[str] = "meta"
+MQTT_API_MIN: Final[str] = "min"
+MQTT_API_MODE: Final[str] = "mode"
+MQTT_API_ONLINE: Final[str] = "online"
+MQTT_API_PARAMETERS: Final[str] = "parameters"
+MQTT_API_POWER: Final[str] = "power"
+MQTT_API_POWERFUL_MODE: Final[str] = "powerful_mode"
+MQTT_API_RAD_ACTIVE: Final[str] = "rad_active"
+MQTT_API_RANGE_SP: Final[str] = "range_sp"
+MQTT_API_RANGE_SP_COOL: Final[str] = "range_sp_cool"
+MQTT_API_RANGE_SP_HEAT: Final[str] = "range_sp_heat"
+MQTT_API_SETPOINT: Final[str] = "setpoint"
+MQTT_API_SETPOINT_COOL: Final[str] = "setpoint_cool"
+MQTT_API_SETPOINT_HEAT: Final[str] = "setpoint_heat"
+MQTT_API_SPEED_CONF: Final[str] = "speed_conf"
+MQTT_API_SYSTEM_ID: Final[str] = "system_id"
+MQTT_API_TS: Final[str] = "ts"
+MQTT_API_UNITS: Final[str] = "units"
+MQTT_API_ZONE_WORK_TEMP: Final[str] = "zone_work_temp"
+
+MQTT_TIMEOUT: Final[int] = 15
+MQTT_TOPIC_EVENTS: Final[str] = "events"
+MQTT_TOPIC_ONLINE: Final[str] = "online"
+MQTT_TOPIC_STATUS: Final[str] = "status"
+MQTT_TOPIC_V1: Final[str] = "v1"
+
+MQTT_DEV_TYPES_HOT_WATER: Final[list[str]] = [
+    "aidoo_acs",
+    "az_acs",
+]
+MQTT_DEV_TYPES_SYSTEM: Final[list[str]] = [
+    "az_system",
+]
+MQTT_DEV_TYPES_ZONE: Final[list[str]] = [
+    "aidoo_it",
+    "az_zone",
+]
 
 RAW_DEMO: Final[str] = "demo"
 RAW_DHW: Final[str] = "dhw"

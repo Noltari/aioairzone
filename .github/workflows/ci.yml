@@ -64,6 +64,7 @@ jobs:
       - name: Install Requirements
         run: |
           pip install -r requirements.txt
+          pip install -r requirements_test.txt
 
       - name: Install Pylint
         run: |
@@ -108,6 +109,7 @@ jobs:
       - name: Install Requirements
         run: |
           pip install -r requirements.txt
+          pip install -r requirements_test.txt
 
       - name: Install Mypy
         run: |
