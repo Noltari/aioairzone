@@ -1,9 +1,6 @@
 """Airzone MQTT."""
 
 from enum import Enum, auto
-import json
-from json import JSONDecodeError
-import logging
 from typing import Any
 
 from .common import EntityType
@@ -18,8 +15,6 @@ from .const import (
     MQTT_TOPIC_STATUS,
     MQTT_TOPIC_V1,
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class AirzoneMqttUpdateType(Enum):
@@ -46,17 +41,12 @@ class AirzoneMqttUpdate:
     def __init__(
         self,
         topic: str,
-        payload: bytes | bytearray,
+        data: dict[str, Any],
     ):
         """Airzone MQTT update init."""
+        self.data = data
         self.topic = topic
         self.topics = topic.split("/")
-
-        try:
-            self.data = json.loads(payload)
-        except JSONDecodeError as err:
-            self.data = {}
-            _LOGGER.error(err)
 
         self.device_id = None
         self.entity_id = None

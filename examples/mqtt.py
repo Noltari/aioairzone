@@ -1,6 +1,9 @@
 """Airzone MQTT helper example."""
 
 from collections.abc import Callable
+import json
+from json import JSONDecodeError
+import logging
 from threading import Event
 import timeit
 from typing import Any
@@ -14,6 +17,8 @@ from paho.mqtt.reasoncodes import ReasonCode
 
 from aioairzone.const import MQTT_TIMEOUT
 from aioairzone.mqtt import AirzoneMqttUpdate
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class AirzoneMqttHelper:
@@ -75,8 +80,15 @@ class AirzoneMqttHelper:
         # pylint: disable=unused-argument
         """MQTT message event callback."""
         if self.msg_callback is not None:
+            mqtt_data: dict[str, Any]
+            try:
+                mqtt_data = json.loads(message.payload)
+            except JSONDecodeError as err:
+                mqtt_data = {}
+                _LOGGER.error(err)
             mqtt_topic = message.topic.removeprefix(f"{MQTT_TOPIC}/")
-            mqtt_update = AirzoneMqttUpdate(topic=mqtt_topic, payload=message.payload)
+
+            mqtt_update = AirzoneMqttUpdate(topic=mqtt_topic, data=mqtt_data)
             self.msg_callback(mqtt_update)
 
     def on_subscribe(
