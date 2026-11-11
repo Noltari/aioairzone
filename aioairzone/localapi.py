@@ -9,6 +9,7 @@ from enum import IntEnum
 from json import JSONDecodeError
 import logging
 from typing import Any, cast
+from urllib.parse import urlparse
 
 from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
@@ -161,6 +162,7 @@ class AirzoneLocalApi:
         self.mqtt = AirzoneMqtt()
         self.options = options
         self.systems: dict[int, System] = {}
+        self.url = urlparse(options.url)
         self.version: str | None = None
         self.webserver: WebServer | None = None
         self.zones: dict[str, Zone] = {}
@@ -213,6 +215,7 @@ class AirzoneLocalApi:
                     data=json_dumps(data),
                     headers={"Content-Type": "text/json"},
                     timeout=self._api_timeout,
+                    ssl=False,
                 )
             except ClientConnectorError as err:
                 raise InvalidHost(err) from err
@@ -276,7 +279,7 @@ class AirzoneLocalApi:
         """Device HTTP request."""
         _LOGGER.debug("http_request: /%s (params=%s)", path, data)
 
-        if self.http_quirks_enabled():
+        if self.url.scheme == "http" and self.http_quirks_enabled():
             return await self.http_quirks_request(method, path, data)
         return await self.aiohttp_request(method, path, data)
 
