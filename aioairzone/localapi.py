@@ -60,7 +60,6 @@ from .const import (
     AZD_WEBSERVER,
     AZD_ZONES,
     AZD_ZONES_NUM,
-    DEFAULT_PORT,
     DEFAULT_SYSTEM_ID,
     HTTP_CALL_TIMEOUT,
     HTTP_MAX_REQUESTS,
@@ -121,8 +120,7 @@ class ApiFeature(IntEnum):
 class ConnectionOptions:
     """Airzone Local API options for connection."""
 
-    host: str
-    port: int = DEFAULT_PORT
+    url: str
     system_id: int = DEFAULT_SYSTEM_ID
     http_quirks: bool = False
 
@@ -211,7 +209,7 @@ class AirzoneLocalApi:
             try:
                 resp: ClientResponse = await self.aiohttp_session.request(
                     method,
-                    f"http://{self.options.host}:{self.options.port}/{path}",
+                    f"{self.options.url}/{path}",
                     data=json_dumps(data),
                     headers={"Content-Type": "text/json"},
                     timeout=self._api_timeout,
@@ -243,7 +241,7 @@ class AirzoneLocalApi:
         async with self._api_semaphore:
             resp = await self.http.request(
                 method,
-                f"http://{self.options.host}:{self.options.port}/{path}",
+                f"{self.options.url}/{path}",
                 data=json_dumps(data),
                 headers={
                     "Content-Type": "text/json",

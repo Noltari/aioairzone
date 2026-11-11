@@ -12,7 +12,7 @@ from version import AirzoneVersion
 from webserver import AirzoneWebServer
 
 from aioairzone.common import TemperatureUnit
-from aioairzone.const import API_ERROR_METHOD_NOT_SUPPORTED, API_V1, DEFAULT_PORT
+from aioairzone.const import API_ERROR_METHOD_NOT_SUPPORTED, API_V1, DEFAULT_PORT_HTTP
 
 # Airzone device simulation
 
@@ -114,4 +114,4 @@ async def root_put_handler(request: Request) -> Response:
 
 app = web.Application()
 app.add_routes(routes)
-web.run_app(app, port=DEFAULT_PORT)
+web.run_app(app, port=DEFAULT_PORT_HTTP)
