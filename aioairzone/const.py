@@ -283,6 +283,7 @@ MQTT_API_ZONE_WORK_TEMP: Final[str] = "zone_work_temp"
 
 MQTT_TIMEOUT: Final[int] = 15
 MQTT_TOPIC_EVENTS: Final[str] = "events"
+MQTT_TOPIC_INVOKE: Final[str] = "invoke"
 MQTT_TOPIC_ONLINE: Final[str] = "online"
 MQTT_TOPIC_STATUS: Final[str] = "status"
 MQTT_TOPIC_V1: Final[str] = "v1"

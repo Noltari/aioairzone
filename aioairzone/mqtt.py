@@ -11,6 +11,7 @@ from .const import (
     MQTT_DEV_TYPES_SYSTEM,
     MQTT_DEV_TYPES_ZONE,
     MQTT_TOPIC_EVENTS,
+    MQTT_TOPIC_INVOKE,
     MQTT_TOPIC_ONLINE,
     MQTT_TOPIC_STATUS,
     MQTT_TOPIC_V1,
@@ -32,6 +33,7 @@ class AirzoneMqttUpdateType(Enum):
     """Airzone MQTT update type."""
 
     EventsStatus = auto()
+    Invoke = auto()
     Online = auto()
     Unknown = auto()
 
@@ -124,6 +126,8 @@ class AirzoneMqttUpdate:
                 self.device_id = device_id
 
             self.build_entity_id()
+        elif req_type == MQTT_TOPIC_INVOKE:
+            self.type = AirzoneMqttUpdateType.Invoke
         else:
             self.type = AirzoneMqttUpdateType.Unknown
 

@@ -557,6 +557,8 @@ class AirzoneLocalApi:
             self.mqtt_update_online(update)
         elif update.type == AirzoneMqttUpdateType.EventsStatus:
             self.mqtt_update_events_status(update)
+        elif update.type == AirzoneMqttUpdateType.Invoke:
+            pass
         else:
             _LOGGER.debug("mqtt: topic=%s payload=%s", update.topic, update.data)
 
