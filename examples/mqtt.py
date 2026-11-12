@@ -10,7 +10,7 @@ from typing import Any
 
 from _secrets import MQTT_HOST, MQTT_PASS, MQTT_PORT, MQTT_TOPIC, MQTT_USER
 import paho.mqtt.client as mqtt
-from paho.mqtt.client import ConnectFlags, DisconnectFlags
+from paho.mqtt.client import ConnectFlags, DisconnectFlags, PayloadType
 from paho.mqtt.enums import CallbackAPIVersion
 from paho.mqtt.properties import Properties
 from paho.mqtt.reasoncodes import ReasonCode
@@ -148,3 +148,13 @@ class AirzoneMqttHelper:
         self.mqtt_event_subscribe.wait(MQTT_TIMEOUT)
         subscribe_end = timeit.default_timer()
         print(f"MQTT subscribe time: {subscribe_end - subscribe_start}")
+
+    async def publish(
+        self,
+        topic: str,
+        payload: PayloadType = None,
+        qos: int = 0,
+        retain: bool = False,
+    ) -> None:
+        """Publish message on MQTT topic."""
+        self.mqtt_client.publish(topic, payload, qos, retain)

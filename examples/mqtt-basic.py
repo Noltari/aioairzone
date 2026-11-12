@@ -5,6 +5,7 @@ import json
 import timeit
 
 import _config
+from _secrets import MQTT_TOPIC
 import aiohttp
 from aiohttp.client_exceptions import ClientConnectorError
 from mqtt import AirzoneMqttHelper
@@ -48,6 +49,12 @@ async def main() -> None:
 
     mqtt_helper.connect_helper()
     mqtt_helper.subscribe_helper()
+    topic, payload = airzone.mqtt.cmd_get_status(MQTT_TOPIC)
+    await mqtt_helper.publish(
+        topic=topic,
+        payload=json.dumps(payload),
+        qos=1,
+    )
     print("***")
 
     print("Sleeping...")

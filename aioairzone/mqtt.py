@@ -5,10 +5,18 @@ from typing import Any
 
 from .const import (
     AZD_ONLINE,
+    MQTT_API_BODY,
+    MQTT_API_CMD,
+    MQTT_API_DESTINATION,
+    MQTT_API_HEADERS,
     MQTT_API_ONLINE,
+    MQTT_API_REQ_ID,
+    MQTT_CMD_AZ_GET_STATUS,
     MQTT_TOPIC_EVENTS,
+    MQTT_TOPIC_GET_STATUS,
     MQTT_TOPIC_INVOKE,
     MQTT_TOPIC_ONLINE,
+    MQTT_TOPIC_REQUEST,
     MQTT_TOPIC_STATUS,
     MQTT_TOPIC_V1,
 )
@@ -26,6 +34,7 @@ class AirzoneMqttUpdateType(Enum):
     """Airzone MQTT update type."""
 
     EventsStatus = auto()
+    GetStatus = auto()
     Invoke = auto()
     Online = auto()
     Unknown = auto()
@@ -73,6 +82,8 @@ class AirzoneMqttUpdate:
             self.type = AirzoneMqttUpdateType.Online
         elif req_type == MQTT_TOPIC_EVENTS and req_subtype == MQTT_TOPIC_STATUS:
             self.type = AirzoneMqttUpdateType.EventsStatus
+        elif req_type == MQTT_TOPIC_REQUEST and req_subtype == MQTT_TOPIC_GET_STATUS:
+            self.type = AirzoneMqttUpdateType.GetStatus
         elif req_type == MQTT_TOPIC_INVOKE:
             self.type = AirzoneMqttUpdateType.Invoke
         else:
@@ -86,6 +97,38 @@ class AirzoneMqtt:
         """Airzone MQTT init."""
         self.online: bool = False
 
+    def cmd_get_status(self, topic_pfx: str) -> tuple[str, dict[str, Any]]:
+        """Return MQTT cmd get_status topic/payload."""
+        topic_list = [
+            topic_pfx,
+            MQTT_TOPIC_V1,
+            MQTT_TOPIC_INVOKE,
+        ]
+        topic = "/".join(topic_list)
+
+        dest_list = [
+            topic_pfx,
+            MQTT_TOPIC_V1,
+            MQTT_TOPIC_REQUEST,
+            MQTT_TOPIC_GET_STATUS,
+        ]
+        destination = "/".join(dest_list)
+
+        payload: dict[str, Any] = {
+            MQTT_API_HEADERS: {
+                MQTT_API_CMD: MQTT_CMD_AZ_GET_STATUS,
+                MQTT_API_DESTINATION: destination,
+                MQTT_API_REQ_ID: f"request-{MQTT_TOPIC_GET_STATUS}",
+            },
+            MQTT_API_BODY: None,
+        }
+
+        return topic, payload
+
+    def get_online(self) -> bool:
+        """Return MQTT online."""
+        return self.online
+
     def update_online(self, update: AirzoneMqttUpdate) -> None:
         """Perform MQTT online."""
         data = update.data
@@ -93,10 +136,6 @@ class AirzoneMqtt:
         online = data.get(MQTT_API_ONLINE)
         if online is not None:
             self.online = bool(online)
-
-    def get_online(self) -> bool:
-        """Return MQTT online."""
-        return self.online
 
     def data(self) -> dict[str, Any]:
         """Return Airzone MQTT data."""

@@ -75,6 +75,7 @@ from .const import (
     MQTT_API_BODY,
     MQTT_API_DEVICE_ID,
     MQTT_API_DEVICE_TYPE,
+    MQTT_API_DEVICES,
     MQTT_API_HEADERS,
     MQTT_API_SYSTEM_ID,
     RAW_DEMO,
@@ -585,6 +586,17 @@ class AirzoneLocalApi:
 
         self.mqtt_update_entity(body)
 
+    def mqtt_update_get_status(self, update: AirzoneMqttUpdate) -> None:
+        """Update MQTT get status."""
+        body: dict[str, Any] | None = update.data.get(MQTT_API_BODY)
+        headers: dict[str, Any] | None = update.data.get(MQTT_API_HEADERS)
+        if headers is None or body is None:
+            return
+
+        devices: list[dict[str, Any]] = body.get(MQTT_API_DEVICES, [])
+        for device in devices:
+            self.mqtt_update_entity(device)
+
     def mqtt_update_online(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT online."""
         self.mqtt.update_online(update)
@@ -595,6 +607,8 @@ class AirzoneLocalApi:
             self.mqtt_update_online(update)
         elif update.type == AirzoneMqttUpdateType.EventsStatus:
             self.mqtt_update_events_status(update)
+        elif update.type == AirzoneMqttUpdateType.GetStatus:
+            self.mqtt_update_get_status(update)
         elif update.type == AirzoneMqttUpdateType.Invoke:
             pass
         else:
