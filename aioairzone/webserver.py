@@ -97,8 +97,9 @@ class WebServer(Entity):
         """Return Airzone system data."""
         data: dict[str, Any] = {}
 
-        if self.cloud_connected is not None:
-            data[AZD_CLOUD_CONNECTED] = self.cloud_connected
+        cloud_connected = self.get_cloud_connected()
+        if cloud_connected is not None:
+            data[AZD_CLOUD_CONNECTED] = cloud_connected
 
         firmware = self.get_firmware()
         if firmware is not None:
@@ -131,6 +132,10 @@ class WebServer(Entity):
             data[AZD_WIFI_RSSI] = wifi_rssi
 
         return data
+
+    def get_cloud_connected(self) -> bool | None:
+        """Return WebServer cloud connection."""
+        return self.cloud_connected
 
     def get_firmware(self) -> str | None:
         """Return WebServer firmware."""
