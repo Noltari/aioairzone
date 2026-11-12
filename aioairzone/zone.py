@@ -120,8 +120,6 @@ from .const import (
     DEFAULT_TEMP_STEP_FAHRENHEIT,
     ERROR_ZONE,
     MQTT_API_AIR_ACTIVE,
-    MQTT_API_BODY,
-    MQTT_API_HEADERS,
     MQTT_API_HUMIDITY,
     MQTT_API_IS_CONNECTED,
     MQTT_API_MAX,
@@ -140,7 +138,6 @@ from .const import (
     MQTT_API_ZONE_WORK_TEMP,
 )
 from .entity import Entity
-from .mqtt import AirzoneMqttUpdate
 from .thermostat import Thermostat
 
 
@@ -341,16 +338,9 @@ class Zone(Entity):
             else:
                 self.temp_step = DEFAULT_TEMP_STEP_CELSIUS
 
-    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+    def update_mqtt(self, data: dict[str, Any]) -> None:
         """Perform Entity MQTT update."""
-        data = update.data
-
-        headers = data.get(MQTT_API_HEADERS)
-        body = data.get(MQTT_API_BODY)
-        if headers is None or body is None:
-            return
-
-        params = body.get(MQTT_API_PARAMETERS)
+        params = data.get(MQTT_API_PARAMETERS)
         if params is None:
             return
 

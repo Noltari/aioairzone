@@ -7,6 +7,8 @@ import json
 import re
 from typing import Any
 
+from .const import MQTT_DEV_TYPES_HOT_WATER, MQTT_DEV_TYPES_SYSTEM, MQTT_DEV_TYPES_ZONE
+
 
 class EntityType(Enum):
     """Airzone Entity type."""
@@ -17,6 +19,19 @@ class EntityType(Enum):
     Unknown = auto()
     WebServer = auto()
     Zone = auto()
+
+    @classmethod
+    def from_mqtt(cls, device_type: str | None) -> EntityType:
+        """Airzone MQTT device type to entity type."""
+        if device_type in MQTT_DEV_TYPES_HOT_WATER:
+            entity_type = EntityType.HotWater
+        elif device_type in MQTT_DEV_TYPES_SYSTEM:
+            entity_type = EntityType.System
+        elif device_type in MQTT_DEV_TYPES_ZONE:
+            entity_type = EntityType.Zone
+        else:
+            entity_type = EntityType.Unknown
+        return entity_type
 
     def type_str(self) -> str:
         """Convert entity type to string."""

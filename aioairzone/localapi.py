@@ -15,7 +15,14 @@ from aiohttp import ClientConnectorError, ClientSession, ClientTimeout
 from aiohttp.client_reqrep import ClientResponse
 from packaging.version import Version
 
-from .common import get_system_zone_id, json_dumps, validate_mac_address
+from .common import (
+    EntityType,
+    get_system_zone_id,
+    json_dumps,
+    parse_int,
+    parse_str,
+    validate_mac_address,
+)
 from .const import (
     AIOHTTP_COALESCE,
     API_ACS_MAX_TEMP,
@@ -65,6 +72,11 @@ from .const import (
     HTTP_CALL_TIMEOUT,
     HTTP_MAX_REQUESTS,
     HTTP_QUIRK_VERSION,
+    MQTT_API_BODY,
+    MQTT_API_DEVICE_ID,
+    MQTT_API_DEVICE_TYPE,
+    MQTT_API_HEADERS,
+    MQTT_API_SYSTEM_ID,
     RAW_DEMO,
     RAW_DHW,
     RAW_HEADERS,
@@ -537,15 +549,41 @@ class AirzoneLocalApi:
 
         self._first_update = False
 
+    def mqtt_update_entity(self, data: dict[str, Any]) -> None:
+        """Update MQTT entity."""
+        device_id = parse_int(data.get(MQTT_API_DEVICE_ID))
+        device_type = parse_str(data.get(MQTT_API_DEVICE_TYPE))
+        system_id = parse_int(data.get(MQTT_API_SYSTEM_ID))
+
+        if device_type is None:
+            return
+
+        entity_type = EntityType.from_mqtt(device_type)
+        if entity_type == EntityType.Unknown:
+            return
+
+        entity_id = entity_type.type_str()
+
+        if system_id is not None and system_id > 0:
+            entity_id += f"_{system_id}"
+
+        if device_id is not None and device_id > 0:
+            entity_id += f"_{device_id}"
+
+        entity = self.entities.get(entity_id)
+        if entity is None:
+            return
+
+        entity.update_mqtt(data)
+
     def mqtt_update_events_status(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT events status."""
-        if update.entity_id is not None:
-            entity = self.entities.get(update.entity_id)
-        else:
-            entity = None
+        body: dict[str, Any] | None = update.data.get(MQTT_API_BODY)
+        headers: dict[str, Any] | None = update.data.get(MQTT_API_HEADERS)
+        if headers is None or body is None:
+            return
 
-        if entity is not None:
-            entity.update_mqtt(update)
+        self.mqtt_update_entity(body)
 
     def mqtt_update_online(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT online."""

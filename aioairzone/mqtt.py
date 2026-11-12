@@ -3,13 +3,9 @@
 from enum import Enum, IntEnum, auto
 from typing import Any
 
-from .common import EntityType, parse_int
 from .const import (
     AZD_ONLINE,
     MQTT_API_ONLINE,
-    MQTT_DEV_TYPES_HOT_WATER,
-    MQTT_DEV_TYPES_SYSTEM,
-    MQTT_DEV_TYPES_ZONE,
     MQTT_TOPIC_EVENTS,
     MQTT_TOPIC_INVOKE,
     MQTT_TOPIC_ONLINE,
@@ -24,9 +20,6 @@ class AirzoneMqttTopic(IntEnum):
     Version = 0
     ReqType = 1
     ReqSubType = 2
-    DevType = 3
-    SysID = 4
-    DevID = 5
 
 
 class AirzoneMqttUpdateType(Enum):
@@ -42,10 +35,6 @@ class AirzoneMqttUpdate:
     """Airzone MQTT update."""
 
     data: dict[str, Any]
-    device_id: int | None
-    entity_id: str | None
-    entity_type: EntityType | None
-    system_id: int | None
     topic: str
     topics: list[str]
     type: AirzoneMqttUpdateType
@@ -60,11 +49,6 @@ class AirzoneMqttUpdate:
         self.data = data
         self.topic = topic
         self.topics = topic.split("/")
-
-        self.device_id = None
-        self.entity_id = None
-        self.entity_type = None
-        self.system_id = None
         self.type = AirzoneMqttUpdateType.Unknown
 
         version = self.get_topic_index(AirzoneMqttTopic.Version)
@@ -74,34 +58,12 @@ class AirzoneMqttUpdate:
         else:
             self.version = None
 
-    def build_entity_id(self) -> None:
-        """Airzone MQTT parse device type."""
-        if self.entity_type is not None:
-            entity_id = self.entity_type.type_str()
-            if self.system_id is not None:
-                entity_id += f"_{self.system_id}"
-            if self.device_id is not None:
-                entity_id += f"_{self.device_id}"
-            self.entity_id = entity_id
-
     def get_topic_index(self, index: int, default: str | None = None) -> str | None:
         """Airzone MQTT topic by index."""
         try:
             return self.topics[index]
         except IndexError:
             return default
-
-    def parse_device_type(self, device_type: str | None) -> EntityType:
-        """Airzone MQTT parse device type."""
-        if device_type in MQTT_DEV_TYPES_HOT_WATER:
-            entity_type = EntityType.HotWater
-        elif device_type in MQTT_DEV_TYPES_SYSTEM:
-            entity_type = EntityType.System
-        elif device_type in MQTT_DEV_TYPES_ZONE:
-            entity_type = EntityType.Zone
-        else:
-            entity_type = EntityType.Unknown
-        return entity_type
 
     def parse_v1(self) -> None:
         """Airzone MQTT parse v1."""
@@ -111,21 +73,6 @@ class AirzoneMqttUpdate:
             self.type = AirzoneMqttUpdateType.Online
         elif req_type == MQTT_TOPIC_EVENTS and req_subtype == MQTT_TOPIC_STATUS:
             self.type = AirzoneMqttUpdateType.EventsStatus
-
-            device_type = self.get_topic_index(AirzoneMqttTopic.DevType)
-            entity_type = self.parse_device_type(device_type)
-            if entity_type != EntityType.Unknown:
-                self.entity_type = entity_type
-
-            system_id = parse_int(self.get_topic_index(AirzoneMqttTopic.SysID))
-            if system_id is not None and system_id > 0:
-                self.system_id = system_id
-
-            device_id = parse_int(self.get_topic_index(AirzoneMqttTopic.DevID))
-            if device_id is not None and device_id > 0:
-                self.device_id = device_id
-
-            self.build_entity_id()
         elif req_type == MQTT_TOPIC_INVOKE:
             self.type = AirzoneMqttUpdateType.Invoke
         else:

@@ -30,8 +30,6 @@ from .const import (
     AZD_TEMP_MIN,
     AZD_TEMP_SET,
     AZD_TEMP_UNIT,
-    MQTT_API_BODY,
-    MQTT_API_HEADERS,
     MQTT_API_IS_CONNECTED,
     MQTT_API_MAX,
     MQTT_API_MIN,
@@ -42,7 +40,6 @@ from .const import (
     MQTT_API_SETPOINT,
 )
 from .entity import Entity
-from .mqtt import AirzoneMqttUpdate
 
 
 class HotWater(Entity):
@@ -80,16 +77,9 @@ class HotWater(Entity):
         if units is not None:
             self.temp_unit = TemperatureUnit(units)
 
-    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+    def update_mqtt(self, data: dict[str, Any]) -> None:
         """Perform Entity MQTT update."""
-        data = update.data
-
-        headers = data.get(MQTT_API_HEADERS)
-        body = data.get(MQTT_API_BODY)
-        if headers is None or body is None:
-            return
-
-        params = body.get(MQTT_API_PARAMETERS)
+        params = data.get(MQTT_API_PARAMETERS)
         if params is None:
             return
 

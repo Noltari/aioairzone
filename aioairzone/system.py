@@ -41,13 +41,10 @@ from .const import (
     AZD_Q_ADAPT,
     AZD_SLAVES,
     ERROR_SYSTEM,
-    MQTT_API_BODY,
-    MQTT_API_HEADERS,
     MQTT_API_IS_CONNECTED,
     MQTT_API_PARAMETERS,
 )
 from .entity import Entity
-from .mqtt import AirzoneMqttUpdate
 from .zone import Zone
 
 _LOGGER = logging.getLogger(__name__)
@@ -358,16 +355,9 @@ class System(Entity):
         if q_adapt is not None:
             self.q_adapt = QAdapt(q_adapt)
 
-    def update_mqtt(self, update: AirzoneMqttUpdate) -> None:
+    def update_mqtt(self, data: dict[str, Any]) -> None:
         """Perform Entity MQTT update."""
-        data = update.data
-
-        headers = data.get(MQTT_API_HEADERS)
-        body = data.get(MQTT_API_BODY)
-        if headers is None or body is None:
-            return
-
-        params = body.get(MQTT_API_PARAMETERS)
+        params = data.get(MQTT_API_PARAMETERS)
         if params is None:
             return
 
