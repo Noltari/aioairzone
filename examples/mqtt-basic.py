@@ -20,9 +20,9 @@ async def main() -> None:
 
     airzone: AirzoneLocalApi
 
-    def mqtt_update_callback(update: AirzoneMqttUpdate) -> None:
+    async def mqtt_update_callback(update: AirzoneMqttUpdate) -> None:
         """MQTT update callback function."""
-        airzone.mqtt_update(update)
+        await airzone.mqtt_update(update)
 
     mqtt_helper = AirzoneMqttHelper()
     mqtt_helper.msg_callback = mqtt_update_callback
@@ -62,6 +62,8 @@ async def main() -> None:
     print("***")
 
     print(json.dumps(airzone.data(), indent=4, sort_keys=True))
+    print("***")
+    print(json.dumps(airzone.raw_data(), indent=4, sort_keys=True))
     print("***")
 
     mqtt_helper.disconnect_helper()

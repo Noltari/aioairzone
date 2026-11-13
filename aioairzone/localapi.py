@@ -85,6 +85,7 @@ from .const import (
     RAW_HVAC,
     RAW_IAQ,
     RAW_INTEGRATION,
+    RAW_MQTT,
     RAW_QUIRKS,
     RAW_REASON,
     RAW_STATUS,
@@ -586,12 +587,14 @@ class AirzoneLocalApi:
 
         self.mqtt_update_entity(body)
 
-    def mqtt_update_get_status(self, update: AirzoneMqttUpdate) -> None:
+    async def mqtt_update_get_status(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT get status."""
         body: dict[str, Any] | None = update.data.get(MQTT_API_BODY)
         headers: dict[str, Any] | None = update.data.get(MQTT_API_HEADERS)
         if headers is None or body is None:
             return
+
+        await self.set_api_raw_data(RAW_MQTT, update.data)
 
         devices: list[dict[str, Any]] = body.get(MQTT_API_DEVICES, [])
         for device in devices:
@@ -601,14 +604,14 @@ class AirzoneLocalApi:
         """Update MQTT online."""
         self.mqtt.update_online(update)
 
-    def mqtt_update(self, update: AirzoneMqttUpdate) -> None:
+    async def mqtt_update(self, update: AirzoneMqttUpdate) -> None:
         """Perform MQTT update."""
         if update.type == AirzoneMqttUpdateType.Online:
             self.mqtt_update_online(update)
         elif update.type == AirzoneMqttUpdateType.EventsStatus:
             self.mqtt_update_events_status(update)
         elif update.type == AirzoneMqttUpdateType.GetStatus:
-            self.mqtt_update_get_status(update)
+            await self.mqtt_update_get_status(update)
         elif update.type == AirzoneMqttUpdateType.Invoke:
             pass
         else:

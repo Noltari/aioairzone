@@ -1,6 +1,7 @@
 """Airzone MQTT helper example."""
 
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Coroutine
 import json
 from json import JSONDecodeError
 import logging
@@ -26,12 +27,15 @@ class AirzoneMqttHelper:
 
     def __init__(self) -> None:
         """Airzone MQTT Helper init."""
+        self.loop = asyncio.get_running_loop()
         self.mqtt_client = mqtt.Client(CallbackAPIVersion.VERSION2)
         self.mqtt_event_connect = Event()
         self.mqtt_event_disconnect = Event()
         self.mqtt_event_subscribe = Event()
         self.mqtt_is_connected = False
-        self.msg_callback: Callable[[AirzoneMqttUpdate], None] | None = None
+        self.msg_callback: (
+            Callable[[AirzoneMqttUpdate], Coroutine[Any, Any, None]] | None
+        ) = None
 
         self.mqtt_client.username_pw_set(
             username=MQTT_USER,
@@ -89,7 +93,10 @@ class AirzoneMqttHelper:
             mqtt_topic = message.topic.removeprefix(f"{MQTT_TOPIC}/")
 
             mqtt_update = AirzoneMqttUpdate(topic=mqtt_topic, data=mqtt_data)
-            self.msg_callback(mqtt_update)
+            asyncio.run_coroutine_threadsafe(
+                self.msg_callback(mqtt_update),
+                self.loop,
+            )
 
     def on_subscribe(
         self,
