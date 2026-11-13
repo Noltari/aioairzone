@@ -597,9 +597,13 @@ class AirzoneLocalApi:
         for device in devices:
             self.mqtt_update_entity(device)
 
+        self.mqtt.event_status.set()
+
     def mqtt_update_online(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT online."""
         self.mqtt.update_online(update)
+
+        self.mqtt.event_online.set()
 
     async def mqtt_update(self, update: AirzoneMqttUpdate) -> None:
         """Perform MQTT update."""

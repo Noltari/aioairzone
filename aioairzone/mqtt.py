@@ -1,5 +1,7 @@
 """Airzone MQTT."""
 
+import asyncio
+from asyncio import Event
 from enum import Enum, IntEnum, auto
 from typing import Any
 
@@ -11,6 +13,7 @@ from .const import (
     MQTT_API_HEADERS,
     MQTT_API_ONLINE,
     MQTT_API_REQ_ID,
+    MQTT_API_TIMEOUT,
     MQTT_CMD_AZ_GET_STATUS,
     MQTT_TOPIC_EVENTS,
     MQTT_TOPIC_GET_STATUS,
@@ -95,6 +98,8 @@ class AirzoneMqtt:
 
     def __init__(self) -> None:
         """Airzone MQTT init."""
+        self.event_online = Event()
+        self.event_status = Event()
         self.online: bool = False
 
     def cmd_get_status(self, topic_pfx: str) -> tuple[str, dict[str, Any]]:
@@ -144,3 +149,13 @@ class AirzoneMqtt:
         }
 
         return data
+
+    async def await_event_online(self) -> None:
+        """Await Online event."""
+        async with asyncio.timeout(MQTT_API_TIMEOUT):
+            await self.event_online.wait()
+
+    async def await_event_status(self) -> None:
+        """Await Get Status event."""
+        async with asyncio.timeout(MQTT_API_TIMEOUT):
+            await self.event_status.wait()

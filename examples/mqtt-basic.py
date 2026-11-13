@@ -48,12 +48,23 @@ async def main() -> None:
     print("***")
 
     mqtt_helper.connect_helper()
+
+    update_start = timeit.default_timer()
     mqtt_helper.subscribe_helper()
+    await airzone.mqtt.await_event_online()
+    update_end = timeit.default_timer()
+    print(f"online time: {update_end - update_start}")
+    print("***")
+
     topic, payload = airzone.mqtt.cmd_get_status(MQTT_TOPIC)
+    update_start = timeit.default_timer()
     mqtt_helper.publish(
         topic=topic,
         payload=json.dumps(payload),
     )
+    await airzone.mqtt.await_event_status()
+    update_end = timeit.default_timer()
+    print(f"cmd get_status time: {update_end - update_start}")
     print("***")
 
     print("Sleeping...")

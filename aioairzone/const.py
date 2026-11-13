@@ -280,13 +280,13 @@ MQTT_API_SETPOINT_COOL: Final[str] = "setpoint_cool"
 MQTT_API_SETPOINT_HEAT: Final[str] = "setpoint_heat"
 MQTT_API_SPEED_CONF: Final[str] = "speed_conf"
 MQTT_API_SYSTEM_ID: Final[str] = "system_id"
+MQTT_API_TIMEOUT: Final[int] = 15
 MQTT_API_TS: Final[str] = "ts"
 MQTT_API_UNITS: Final[str] = "units"
 MQTT_API_ZONE_WORK_TEMP: Final[str] = "zone_work_temp"
 
 MQTT_CMD_AZ_GET_STATUS: Final[str] = "az.get_status"
 
-MQTT_TIMEOUT: Final[int] = 15
 MQTT_TOPIC_EVENTS: Final[str] = "events"
 MQTT_TOPIC_GET_STATUS: Final[str] = "get_status"
 MQTT_TOPIC_INVOKE: Final[str] = "invoke"

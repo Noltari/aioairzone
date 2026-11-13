@@ -16,7 +16,7 @@ from paho.mqtt.enums import CallbackAPIVersion
 from paho.mqtt.properties import Properties
 from paho.mqtt.reasoncodes import ReasonCode
 
-from aioairzone.const import MQTT_TIMEOUT
+from aioairzone.const import MQTT_API_TIMEOUT
 from aioairzone.mqtt import AirzoneMqttUpdate
 
 _LOGGER = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ class AirzoneMqttHelper:
         """MQTT connection helper."""
         connect_start = timeit.default_timer()
         self.connect()
-        self.mqtt_event_connect.wait(MQTT_TIMEOUT)
+        self.mqtt_event_connect.wait(MQTT_API_TIMEOUT)
         connect_end = timeit.default_timer()
         print(f"MQTT connect time: {connect_end - connect_start}")
 
@@ -140,7 +140,7 @@ class AirzoneMqttHelper:
         """MQTT disconnection helper."""
         disconnect_start = timeit.default_timer()
         self.disconnect()
-        self.mqtt_event_disconnect.wait(MQTT_TIMEOUT)
+        self.mqtt_event_disconnect.wait(MQTT_API_TIMEOUT)
         disconnect_end = timeit.default_timer()
         print(f"MQTT disconnect time: {disconnect_end - disconnect_start}")
 
@@ -152,7 +152,7 @@ class AirzoneMqttHelper:
         """MQTT subscription helper."""
         subscribe_start = timeit.default_timer()
         self.subscribe()
-        self.mqtt_event_subscribe.wait(MQTT_TIMEOUT)
+        self.mqtt_event_subscribe.wait(MQTT_API_TIMEOUT)
         subscribe_end = timeit.default_timer()
         print(f"MQTT subscribe time: {subscribe_end - subscribe_start}")
 
