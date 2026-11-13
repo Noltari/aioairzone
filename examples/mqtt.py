@@ -156,7 +156,7 @@ class AirzoneMqttHelper:
         subscribe_end = timeit.default_timer()
         print(f"MQTT subscribe time: {subscribe_end - subscribe_start}")
 
-    async def publish(
+    def publish(
         self,
         topic: str,
         payload: PayloadType = None,

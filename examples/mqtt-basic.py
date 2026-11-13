@@ -50,7 +50,7 @@ async def main() -> None:
     mqtt_helper.connect_helper()
     mqtt_helper.subscribe_helper()
     topic, payload = airzone.mqtt.cmd_get_status(MQTT_TOPIC)
-    await mqtt_helper.publish(
+    mqtt_helper.publish(
         topic=topic,
         payload=json.dumps(payload),
     )
