@@ -53,7 +53,6 @@ async def main() -> None:
     await mqtt_helper.publish(
         topic=topic,
         payload=json.dumps(payload),
-        qos=1,
     )
     print("***")
 

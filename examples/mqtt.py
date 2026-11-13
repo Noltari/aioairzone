@@ -160,7 +160,7 @@ class AirzoneMqttHelper:
         self,
         topic: str,
         payload: PayloadType = None,
-        qos: int = 0,
+        qos: int = 2,
         retain: bool = False,
     ) -> None:
         """Publish message on MQTT topic."""
