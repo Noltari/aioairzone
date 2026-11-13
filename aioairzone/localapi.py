@@ -557,9 +557,6 @@ class AirzoneLocalApi:
         device_type = parse_str(data.get(MQTT_API_DEVICE_TYPE))
         system_id = parse_int(data.get(MQTT_API_SYSTEM_ID))
 
-        if device_type is None:
-            return
-
         entity_type = EntityType.from_mqtt(device_type)
         if entity_type == EntityType.Unknown:
             return
