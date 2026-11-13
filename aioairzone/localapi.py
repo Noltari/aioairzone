@@ -164,6 +164,7 @@ class AirzoneLocalApi:
         self._api_semaphore: Semaphore = Semaphore(HTTP_MAX_REQUESTS)
         self._api_timeout: ClientTimeout = ClientTimeout(total=HTTP_CALL_TIMEOUT)
         self._first_update: bool = True
+        self._update_lock = Lock()
         self.aiohttp_session = aiohttp_session
         self.api_features: int = ApiFeature.HVAC
         self.api_features_checked = False
@@ -527,29 +528,29 @@ class AirzoneLocalApi:
 
     async def update(self) -> None:
         """Gather Airzone data."""
+        async with self._update_lock:
+            hvac = await self.get_hvac()
+            if hvac is None:
+                self.handle_empty_response("update", "HVAC")
+                return
 
-        hvac = await self.get_hvac()
-        if hvac is None:
-            self.handle_empty_response("update", "HVAC")
-            return
+            for system in self.systems.values():
+                system.set_available(False)
+            for zone in self.zones.values():
+                zone.set_available(False)
 
-        for system in self.systems.values():
-            system.set_available(False)
-        for zone in self.zones.values():
-            zone.set_available(False)
+            if self.options.system_id == DEFAULT_SYSTEM_ID:
+                hvac_systems = hvac.get(API_SYSTEMS)
+                if hvac_systems is None:
+                    raise APIError(f"update: {API_SYSTEMS} not in API response")
+                for system_data in hvac_systems:
+                    self.parse_system_zones(system_data)
+            else:
+                self.parse_system_zones(hvac)
 
-        if self.options.system_id == DEFAULT_SYSTEM_ID:
-            hvac_systems = hvac.get(API_SYSTEMS)
-            if hvac_systems is None:
-                raise APIError(f"update: {API_SYSTEMS} not in API response")
-            for system_data in hvac_systems:
-                self.parse_system_zones(system_data)
-        else:
-            self.parse_system_zones(hvac)
+            await self.update_features()
 
-        await self.update_features()
-
-        self._first_update = False
+            self._first_update = False
 
     def mqtt_update_entity(self, data: dict[str, Any]) -> None:
         """Update MQTT entity."""
@@ -575,14 +576,15 @@ class AirzoneLocalApi:
 
         entity.update_mqtt(data)
 
-    def mqtt_update_events_status(self, update: AirzoneMqttUpdate) -> None:
+    async def mqtt_update_events_status(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT events status."""
         body: dict[str, Any] | None = update.data.get(MQTT_API_BODY)
         headers: dict[str, Any] | None = update.data.get(MQTT_API_HEADERS)
         if headers is None or body is None:
             return
 
-        self.mqtt_update_entity(body)
+        async with self._update_lock:
+            self.mqtt_update_entity(body)
 
     async def mqtt_update_get_status(self, update: AirzoneMqttUpdate) -> None:
         """Update MQTT get status."""
@@ -591,11 +593,15 @@ class AirzoneLocalApi:
         if headers is None or body is None:
             return
 
+        devices: list[dict[str, Any]] | None = body.get(MQTT_API_DEVICES)
+        if devices is None:
+            return
+
         await self.set_api_raw_data(RAW_MQTT, update.data)
 
-        devices: list[dict[str, Any]] = body.get(MQTT_API_DEVICES, [])
-        for device in devices:
-            self.mqtt_update_entity(device)
+        async with self._update_lock:
+            for device in devices:
+                self.mqtt_update_entity(device)
 
         self.mqtt.event_status.set()
 
@@ -610,7 +616,7 @@ class AirzoneLocalApi:
         if update.type == AirzoneMqttUpdateType.Online:
             self.mqtt_update_online(update)
         elif update.type == AirzoneMqttUpdateType.EventsStatus:
-            self.mqtt_update_events_status(update)
+            await self.mqtt_update_events_status(update)
         elif update.type == AirzoneMqttUpdateType.GetStatus:
             await self.mqtt_update_get_status(update)
         elif update.type == AirzoneMqttUpdateType.Invoke:
